@@ -12,7 +12,7 @@
   function T(id, type, cust, value, due, owner, extra) { var t = { id: id, type: type, cust: cust, value: value, due: due, orig: due, owner: owner || "Rahul", status: "open", resched: 0, hist: [] }; for (var k in extra || {}) t[k] = extra[k]; return t; }
   function seed() {
     var t = [
-      T("B", "Follow up quote", "ABC Corp", 2, -5), T("D", "Approve discount", "XYZ Ltd", 5, -2, "Rahul"), T("C", "Qualify lead", "Mahesh Electronics", 50, 0),
+      T("B", "Follow up quote", "ABC Corp", 2, -5), T("D", "Approve discount", "XYZ Ltd", 5, -2, "Rahul", { ask: 6, floor: 4, arOverdue: 0 }), T("L", "Follow up quote", "XYZ Ltd", 5, -1), T("C", "Qualify lead", "Mahesh Electronics", 50, 0),
       T("A", "Follow up quote", "Apex Logistics", 20, 2), T("E", "Callback", "Patil Traders", 3, 0, "Rahul", { time: "16:00" }),
       T("F", "Follow up quote", "Sharma Steel", 8, -7), T("G", "Qualify lead", "Nova Pharma", 12, -1), T("H", "Prepare quotation", "Bright Textiles", 6, -3),
       T("I", "Follow up quote", "Om Packaging", 4, -4), T("J", "Qualify lead", "Kiran Foods", 9, 0), T("K", "Prepare quotation", "Vega Motors", 15, -6),
@@ -29,7 +29,8 @@
   function log(rule, text) { S.log.unshift({ day: S.day, rule: rule, text: text }); }
 
   /* ---------- rules ---------- */
-  function late(t) { return S.day - t.due; }
+  function late(t) { return S.day - (t.resched >= 2 ? t.orig : t.due); }
+  function blocked(t) { return t.type !== "Approve discount" && S.tasks.some(function (x) { return x.type === "Approve discount" && x.cust === t.cust && x.status === "open"; }); }
   function tier(t) { var l = late(t); return l >= 5 ? "P1" : l >= 1 ? "P2" : l === 0 ? "P3" : null; }
   function active(t) { return t.status === "open" || (t.status === "hold" && S.day >= t.revisit); }
   function rank(a, b) {
@@ -42,12 +43,12 @@
   function views(owner) {
     var ts = mine(owner), act = ts.filter(active);
     var pinned = act.filter(function (t) { return t.type === "Callback" && t.due <= S.day; });
-    var due = act.filter(function (t) { return t.type !== "Callback" && t.due <= S.day; }).sort(rank);
+    var due = act.filter(function (t) { return t.type !== "Callback" && t.due <= S.day && !blocked(t); }).sort(rank);
     return {
       pinned: pinned, today: due.slice(0, Math.max(0, CAP - pinned.length)), overdue: due.filter(function (t) { return late(t) > 0; }),
       inbox: ts.filter(function (t) { return t.status === "open" && t.due > S.day; }),
       approvals: act.filter(function (t) { return t.type === "Approve discount"; }),
-      hold: ts.filter(function (t) { return t.status === "hold" && S.day < t.revisit; }), dueCount: due.length, all: due
+      hold: ts.filter(function (t) { return (t.status === "hold" && S.day < t.revisit) || (t.status === "open" && blocked(t)); }), dueCount: due.length, all: due
     };
   }
   function find(id) { return S.tasks.filter(function (t) { return t.id === id; })[0]; }
@@ -59,7 +60,7 @@
 
   /* ---------- actions ---------- */
   function done(t) { t.status = "done"; t.doneDay = S.day; S.done.push({ id: t.id, onTime: S.day <= t.orig, resched: t.resched }); log("Done", t.type + " · " + t.cust + " completed" + (S.day <= t.orig ? " within its original target." : ", " + (S.day - t.orig) + " day(s) after its original target.")); }
-  function reschedule(t, days) { t.due = S.day + days; t.resched++; log("Reschedule", t.type + " · " + t.cust + " moved to day " + t.due + " (rescheduled " + t.resched + "×). Original target stays day " + t.orig + "."); }
+  function reschedule(t, days, blocker) { if (t.resched >= 1 && !blocker) { log("Blocked", "A second reschedule needs a blocker. " + t.cust + " stays in Today."); return false; } t.due = S.day + days; t.resched++; if (blocker) t.blocker = blocker; log("Reschedule", t.type + " · " + t.cust + " moved to day " + t.due + " (rescheduled " + t.resched + "×" + (blocker ? ", blocker: " + blocker : "") + "). " + (t.resched >= 2 ? "It keeps ageing from its original target, day " + t.orig + "." : "Original target stays day " + t.orig + ".")); return true; }
   function hold(t, reason, days) {
     if (!reason || !days) { log("Blocked", "On hold needs a reason and a revisit date. " + t.cust + " stays active."); return false; }
     t.status = "hold"; t.reason = reason; t.revisit = S.day + days; t.holds = (t.holds || 0) + 1; log("Hold", t.cust + " on hold: " + reason + ". Returns on day " + t.revisit + "."); return true;
@@ -87,6 +88,8 @@
     var p = pinned ? "Pinned " + (t.time || "") : tier(t) || "Inbox", l = late(t);
     var why = t.type === "Callback" ? "Customer's time · pinned, not ranked" : l > 0 ? l + " day" + (l > 1 ? "s" : "") + " past target" : l === 0 ? "Due today" : "Due day " + t.due;
     if (t.status === "hold") why = "On hold: " + t.reason + " · back day " + t.revisit;
+    if (t.status === "open" && blocked(t)) why = "Blocked: waiting on the discount approval";
+    if (t.type === "Approve discount" && t.ask) why = "Ask " + t.ask + "% off · floor " + t.floor + "% · customer overdue " + (t.arOverdue ? L(t.arOverdue) : "₹0") + " · " + why;
     return "<li class='tk' data-id='" + t.id + "'><div class='tk-h'><b>" + esc(t.type) + "</b><span class='pp pp-" + p.slice(0, 2).toLowerCase() + "'>" + esc(p) + "</span></div><p>" + esc(t.cust) + " · " + L(t.value) + " · " + esc(why) + (t.resched ? " · rescheduled " + t.resched + "×" : "") + "</p>" +
       (t.status === "open" || active(t) ? "<div class='tk-a'><button data-a='done'>✓ Done</button><button data-a='res'>Reschedule</button><button data-a='hold'>On hold</button><button data-a='stage'>Stage moved</button></div>" : "") + "</li>";
   }
@@ -109,7 +112,7 @@
   }
   function openSheet(t, kind) {
     sheet = { t: t, kind: kind };
-    var h = kind === "res" ? "<b>Reschedule " + esc(t.cust) + "</b><div class='sh-o'><button data-r='1'>Tomorrow</button><button data-r='3'>In 3 days</button><button data-r='7'>Next week</button></div><p class='sm'>The original target (day " + t.orig + ") still counts for the metric.</p>"
+    var h = kind === "res" ? "<b>Reschedule " + esc(t.cust) + "</b>" + (t.resched >= 1 ? "<label>Second reschedule: what is blocking it?<select id='sh-blk'><option value=''>Choose a blocker…</option><option>Customer unreachable</option><option>Awaiting competitor quote</option><option>Price pushback</option></select></label>" : "") + "<div class='sh-o'><button data-r='1'>Tomorrow</button><button data-r='3'>In 3 days</button><button data-r='7'>Next week</button></div><p class='sm'>The original target (day " + t.orig + ") still counts for the metric.</p>"
       : "<b>Put " + esc(t.cust) + " on hold</b><label>Reason<select id='sh-reason'><option value=''>Choose a reason…</option><option>Customer travelling</option><option>Waiting for customer budget</option><option>Internal approval pending</option></select></label><label>Revisit<select id='sh-days'><option value=''>Choose a date…</option><option value='2'>In 2 days</option><option value='5'>In 5 days</option></select></label><button class='sh-go' data-go='hold'>Put on hold</button>";
     $("sheet").innerHTML = h + "<button class='sh-x' data-x='1'>Cancel</button>"; $("sheet").classList.add("on");
   }
@@ -132,6 +135,10 @@
     ["UAT-11", "Reassignment only to an eligible owner (negative)", "Move approval D to another rep", function () { var ok = reassign(find("D"), "Asha"); return { pass: !ok && find("D").owner === "Rahul", actual: (ok ? "moved" : "blocked") + ", owner " + find("D").owner }; }],
     ["UAT-12", "Ageing into P1 at 5 days late", "Task 4 days late, advance 1 day", function () { var t = find("I"); var a = tier(t); nextDay(); return { pass: a === "P2" && tier(t) === "P1", actual: a + " → " + tier(t) }; }]
   ];
+  TESTS.push(
+    ["UAT-13", "Second reschedule needs a blocker; ageing keeps counting", "Reschedule F twice, second time with no blocker", function () { var t = find("F"); reschedule(t, 1); var ok2 = reschedule(t, 1, ""); var ok3 = reschedule(t, 1, "Price pushback"); return { pass: !ok2 && ok3 && late(t) === S.day - t.orig, actual: "no blocker: " + (ok2 ? "allowed" : "blocked") + " · with blocker: " + (ok3 ? "allowed" : "blocked") + " · ageing from day " + t.orig }; }],
+    ["UAT-14", "Pending approval freezes the rep's task for that customer", "XYZ Ltd follow-up while discount approval is open", function () { var hid = !views("Rahul").all.some(function (t) { return t.id === "L"; }); done(find("D")); var back = views("Rahul").all.some(function (t) { return t.id === "L"; }); return { pass: hid && back, actual: "hidden while approval open: " + hid + " · back after approval: " + back }; }]
+  );
   function runUAT() {
     var rows = TESTS.map(function (t) { var o = sc(t[3]); return [t[0], t[1], t[2], o.actual, o.pass]; }), pass = rows.filter(function (r) { return r[4]; }).length;
     $("uat-sum").textContent = pass + " of " + rows.length + " passed · run on fresh data, your session untouched";
@@ -166,7 +173,7 @@
   document.addEventListener("click", function (e) {
     var tb = e.target.closest("[data-tab]"); if (tb) { tab = tb.dataset.tab; render(); return; }
     var a = e.target.closest("[data-a]"); if (a) { var t = find(a.closest("[data-id]").dataset.id); if (a.dataset.a === "done") { var li = a.closest(".tk"); li.classList.add("gone"); setTimeout(function () { done(t); after(); }, 260); } else if (a.dataset.a === "stage") { stageMoved(t); after(); } else openSheet(t, a.dataset.a); return; }
-    var r = e.target.closest("[data-r]"); if (r && sheet) { reschedule(sheet.t, +r.dataset.r); closeSheet(); after(); return; }
+    var r = e.target.closest("[data-r]"); if (r && sheet) { var bk = $("sh-blk"); if (reschedule(sheet.t, +r.dataset.r, bk ? bk.value : "")) closeSheet(); else $("sheet").querySelector("b").textContent = "Choose a blocker first"; after(); return; }
     if (e.target.closest("[data-go]") && sheet) { if (hold(sheet.t, $("sh-reason").value, +$("sh-days").value)) closeSheet(); else $("sheet").querySelector("b").textContent = "Choose a reason and a revisit date"; after(); return; }
     if (e.target.closest("[data-x]")) closeSheet();
   });
