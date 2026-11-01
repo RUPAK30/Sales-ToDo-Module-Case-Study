@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ten Today · Sales To-Do Module Case Study</title>
+<meta name="description" content="Product and business analysis case study by Rupak Ghanpathi: a mobile To-Do module that turns 100+ open leads into 10 ranked, explainable actions, with an executable specification.">
+<meta property="og:title" content="Ten Today: a sales To-Do module case study">
+<meta property="og:description" content="100 open leads. 10 actions today. Explainable ranking, workflow-driven tasks, a manager workload view and 12 executable UAT cases.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="product.css">
+<link rel="stylesheet" href="app.css">
+<style>
+.hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
+.mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:330px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
+.mini-ph .tk{margin-bottom:6px}.mini-ph .foot2{display:flex;justify-content:space-between;font-size:.76rem;font-weight:600;margin-top:6px}
+.skills{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(min-width:760px){.skills{grid-template-columns:repeat(3,1fr)}}
+.skills a{display:block;height:100%;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none}
+.skills b{display:block;font-size:.92rem}.skills span{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+.wwh-grid{display:grid;gap:10px}@media(min-width:760px){.wwh-grid{grid-template-columns:repeat(3,1fr)}}
+.wwh-c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}.wwh-c b{display:block;margin-bottom:4px}.wwh-c p,.wwh-c ol{margin:0;font-size:.92rem}.wwh-c ol{padding-left:18px}
+.mini{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;font-weight:700;margin-right:6px}
+details.fold{margin-bottom:10px}details.fold>summary{cursor:pointer;list-style:none;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:12px}
+details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
+</style>
+</head>
+<body>
+<header class="appbar"><div class="in"><a class="logo" href="./"><img src="favicon.svg" width="34" height="34" alt=""><span class="lw"><b>Ten Today</b><small>Sales to-do module</small></span></a><nav><a href="./" class="hide-s on">Overview</a><a href="https://github.com/RUPAK30/Sales-ToDo-Module-Case-Study" class="hide-s">GitHub</a><a href="cockpit.html" class="pri">Executable spec</a></nav></div></header>
+
+<header class="wrap hero">
+  <div class="hero-grid"><div>
+    <p class="eyebrow">Product case study · B2B sales execution · Rupak Ghanpathi</p>
+    <h1>100 open leads. 10 actions today.</h1>
+    <p class="lede">A mobile To-Do module that tells a salesperson what to act on now, why, and what comes next, without becoming another CRM or a tool for watching people.</p>
+  </div>
+  <a class="mini-ph" href="cockpit.html" aria-label="Open the executable specification">
+    <p class="ph-hi" style="margin:0 0 8px">The case study's worked example</p>
+    <ul class="ph-list" style="padding:0">
+      <li class="tk"><div class="tk-h"><b>Follow up quote</b><span class="pp pp-p1">P1</span></div><p>ABC Corp · ₹2L · 5 days past target</p></li>
+      <li class="tk"><div class="tk-h"><b>Approve discount</b><span class="pp pp-p2">P2</span></div><p>XYZ Ltd · ₹5L · approvals go first in a tier</p></li>
+      <li class="tk"><div class="tk-h"><b>Qualify lead</b><span class="pp pp-p3">P3</span></div><p>Mahesh Electronics · ₹50L · due today; value doesn't lift it</p></li>
+      <li class="tk"><div class="tk-h"><b>Callback</b><span class="pp pp-pi">16:00</span></div><p>Patil Traders · customer's time, pinned</p></li>
+    </ul>
+    <div class="foot2"><span class="pp pp-ok">12 / 12 UAT passing</span><span>Open →</span></div>
+  </a></div>
+
+  <p class="kicker" style="margin:26px 0 8px;color:#6B7280">Six skills, each with its proof · tap one</p>
+  <ol class="skills">
+    <li><a href="#why"><b>Problem framing</b><span>Due isn't the same as urgent</span></a></li>
+    <li><a href="#life"><b>Workflow &amp; state design</b><span>How a task lives and ends</span></a></li>
+    <li><a href="#rank"><b>Prioritisation rules</b><span>One explicit sort order</span></a></li>
+    <li><a href="cockpit.html?uat=1"><b>Edge cases &amp; UAT</b><span>12 tests you can run</span></a></li>
+    <li><a href="#scope"><b>MVP scoping</b><span>What ships first, what waits</span></a></li>
+    <li><a href="#metric"><b>Metrics &amp; guardrails</b><span>On time against the original target</span></a></li>
+  </ol>
+</header>
+
+<section class="wrap" id="why" style="padding-top:8px">
+  <p class="kicker" style="color:#6B7280">Problem, trigger and proposed design</p>
+  <div class="wwh-grid">
+    <div class="wwh-c"><b>Why: the problem</b><p>On a phone, a list of everything is a list of nothing. The quote going cold looks exactly like the 40 records around it.</p></div>
+    <div class="wwh-c"><b>When: the trigger</b><p>A workflow event: a new lead, a quote sent, an approval needed, a callback agreed.<br><span class="mini">Today</span>it joins 100+ open records.<br><span class="mini">Proposed</span>it becomes a task with a target and a reason.</p></div>
+    <div class="wwh-c"><b>How: the design</b><ol><li>Tasks come from workflow events</li><li>Today shows only 10, ranked by rules</li><li>Tasks close when the stage moves</li><li>Managers see exceptions, not activity</li></ol></div>
+  </div>
+  <p style="margin:16px 0 8px"><a class="cta" href="cockpit.html">Open the executable specification →</a></p>
+</section>
+
+<section class="wrap" style="padding-top:8px">
+<details class="fold" id="rank"><summary><b>The ranking rule</b> · applied in this order</summary><div class="in2">
+  <ol class="plain"><li><b>Priority tier:</b> P1 = 5+ days past target · P2 = 1–4 days · P3 = due today</li><li><b>Blocking stage:</b> within a tier, approvals first</li><li><b>Days overdue:</b> older before newer</li><li><b>Deal value:</b> only a tie-break, so a big deal doesn't jump the queue</li></ol>
+  <p class="sm">Callbacks are pinned at the time the customer agreed. Future tasks wait in an Inbox. Rules, not AI, in V1: less clever, but a salesperson can see why a task is on top.</p></div></details>
+<details class="fold" id="life"><summary><b>How a task lives and ends</b> · created → Inbox → Today → Done, or on hold, auto-closed, escalated</summary><div class="in2">
+  <table><tr><th>Workflow event</th><th>Task</th><th>Target</th><th>Owner</th></tr><tr><td>New lead</td><td>Qualify lead</td><td>1 working day</td><td>Salesperson</td></tr><tr><td>Lead qualified</td><td>Prepare quotation</td><td>Configurable</td><td>Salesperson</td></tr><tr><td>Quotation sent</td><td>Follow up</td><td>3 days</td><td>Salesperson</td></tr><tr><td>Approval required</td><td>Approve or reject</td><td>1 working day</td><td>Manager</td></tr><tr><td>Callback requested</td><td>Call the customer</td><td>Agreed time</td><td>Salesperson</td></tr></table>
+  <p class="sm" style="margin-top:8px">If the stage moves first, the old task auto-closes and the next one is created. From HDFC: completing an action and completing the business process aren't the same thing.</p></div></details>
+<details class="fold" id="scope"><summary><b>What ships first, and what waits</b></summary><div class="in2">
+  <p><b>V1:</b> Today · Inbox · Overdue · Approvals · On hold with reason and revisit date · auto and manual tasks · complete, reschedule, reassign · four push triggers · manager workload view · history.</p>
+  <p><b>Later:</b> AI prioritisation, recurring tasks, outcome-based completion, productivity scoring (it would turn a work tool into performance management).</p></div></details>
+<details class="fold" id="metric"><summary><b>How I'd know it worked</b> · one metric and a guardrail</summary><div class="in2">
+  <p><b>% of tasks completed within their original target</b>, measured against the original date so rescheduling can't fake "on time". Guardrail: tasks rescheduled 3+ times or on hold past their revisit date. Revenue is a downstream outcome, not the result.</p>
+  <p class="sm">Validate first: shadow three salespeople for a day, review a month of CRM history, test the Today screen as a clickable prototype with five reps.</p></div></details>
+<details class="fold"><summary><b>The original case study</b> · PDF and one-pager</summary><div class="in2"><p><a href="Sales_ToDo_Module_Case_Study.pdf">Case study (PDF, 4 pages)</a> · <a href="Sales_ToDo_Module_One_Pager.pdf">One-pager (PDF)</a></p></div></details>
+</section>
+<p class="wrap sm" style="padding:16px 16px 40px">Independent product design case study by Rupak Ghanpathi: a concept, not a shipped product. Targets are configurable defaults; names and figures are illustrative.</p>
+</body>
+</html>

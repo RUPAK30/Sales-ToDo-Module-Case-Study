@@ -4,6 +4,11 @@
 
 A mobile To-Do module that tells a salesperson what to act on now, why, and what to do next, without becoming another CRM or a tool for watching people.
 
+**Live site:** the `site/` folder (overview + executable specification). Deploy on Vercel with Root Directory `site`.
+
+## Executable specification (new)
+`site/cockpit.html`: the rules, running. A phone with the Today queue capped at 10 and ranked by the four rules; ✓ Done, Reschedule (original target still counts), On hold (blocked without a reason and revisit date), Stage moved (auto-closes and creates the next task once). Beside it, the manager's workload view with a confirm-first rebalance that never moves approvals to a rep, the live metric (% done within original target) and guardrail, an audit trail, 12 executable UAT cases covering every edge case in the study, and Jira-ready story and UAT CSVs. Synthetic data; runs in the browser.
+
 **[Read the full case study (PDF, 4 pages)](Sales_ToDo_Module_Case_Study.pdf)** · **[One-pager (PDF)](Sales_ToDo_Module_One_Pager.pdf)**
 
 [![One-pager preview](preview.png)](Sales_ToDo_Module_One_Pager.pdf)
