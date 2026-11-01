@@ -33,3 +33,15 @@ tr.flag td{background:#FFF7ED}
 #log{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto;font-size:.8rem}#log li{padding:6px 0;border-bottom:1px solid var(--line)}
 .rl{font-family:var(--mono);font-size:.68rem;background:#F3F4F6;border-radius:4px;padding:1px 5px}
 .empty{color:var(--muted);font-size:.85rem;padding:10px}
+/* Ten Today identity: morning sunrise, coral energy. */
+.hero::before,.appbar+.dk::before{background:radial-gradient(40% 60% at 80% 20%,rgba(255,120,80,.32),transparent 70%),radial-gradient(38% 55% at 98% 2%,rgba(255,190,90,.38),transparent 70%),radial-gradient(45% 60% at 50% -10%,rgba(255,226,180,.55),transparent 70%),radial-gradient(35% 50% at 12% 6%,rgba(255,200,170,.3),transparent 70%)!important}
+.eyebrow,.kicker,.step{color:#E8492C!important}
+.cta,.btn.primary,.appbar nav a.pri{background:linear-gradient(135deg,#FF5A3C,#FF8A3D)!important;border-color:#FF5A3C!important;color:#fff!important}
+.cta:hover,.btn.primary:hover,.appbar nav a.pri:hover{background:linear-gradient(135deg,#E8492C,#F2762A)!important}
+.ph-tabs button.on,.tk-a button:first-child,.sh-go{background:#FF5A3C;border-color:#FF5A3C}
+.phone,.mini-ph{border-color:#1F1A17}
+.flow{display:grid;gap:8px;margin:22px 0 4px}@media(min-width:860px){.flow{grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch}}
+.flow>div{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.flow b{display:block;font-family:var(--mono);font-size:1.6rem;font-weight:500;letter-spacing:-.02em}.flow span{display:block;font-size:.78rem;color:var(--muted);line-height:1.35}
+.flow i{display:none;font-style:normal;color:#C4B5A5;font-size:1.3rem;align-self:center}@media(min-width:860px){.flow i{display:block}}
+.f-a b{color:#9CA3AF}.f-b{border-top:3px solid #FFB547!important}.f-c{background:linear-gradient(135deg,#FF5A3C,#FF8A3D)!important;border:0!important}.f-c b,.f-c span{color:#fff}
