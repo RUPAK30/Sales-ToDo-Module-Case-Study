@@ -62,3 +62,4 @@ tr.flag td{background:#FFF7ED}
 body{background:linear-gradient(180deg,#FFF6EC 0%,#FDF1F4 38%,#F7F7FB 75%,#FFFFFF 100%)!important;background-attachment:fixed!important}
 .hero::before,.appbar+.dk::before{background:radial-gradient(42% 60% at 82% 12%,rgba(255,214,170,.55),transparent 70%),radial-gradient(40% 55% at 12% 4%,rgba(252,205,220,.45),transparent 70%)!important}
 .appbar{background:rgba(255,250,246,.75)!important}
+.ph-close{font-size:.72rem;color:#374151;background:#F9FAFB;border-top:1px solid var(--line);margin:0 -12px;padding:8px 14px;min-height:0}.ph-close:empty{display:none}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Executable Specification · Ten Today</title>
-<meta name="description" content="The sales To-Do module's rules, running: a Today queue capped at 10, explainable ranking, on-hold with reason, auto-close on stage change, a manager workload view and 14 executable UAT cases.">
+<meta name="description" content="The sales To-Do module's rules, running: a Today queue capped at 10, explainable ranking, on-hold with reason, auto-close on stage change, a manager workload view and 15 executable UAT cases.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
@@ -17,7 +17,7 @@
   <p class="eyebrow">Executable specification · synthetic data</p>
   <h1>The rules, running</h1>
   <p class="lede">Act as a salesperson on the phone, or as the manager beside it. Every action is logged with the rule behind it.</p>
-  <p class="row"><button class="btn primary" id="run-uat">Run the 14 UAT cases</button><span class="ctl"><span class="day" id="day">Day 0</span><label>Phone of <select id="who"><option>Rahul</option><option>Asha</option><option>Imran</option><option>Neha</option></select></label><button class="btn small" id="next-day">Next day →</button><button class="btn small" id="reset">Reset</button></span></p>
+  <p class="row"><button class="btn primary" id="run-uat">Run the 15 UAT cases</button><span class="ctl"><span class="day" id="day">Day 0</span><label>Phone of <select id="who"><option>Rahul</option><option>Asha</option><option>Imran</option><option>Neha</option></select></label><button class="btn small" id="close-day">Close the day</button><button class="btn small" id="next-day">Next day →</button><button class="btn small" id="reset">Reset</button></span></p>
 </div>
 
 <section class="wrap" id="uat" hidden>
@@ -35,9 +35,10 @@
       <div class="ph-tabs" id="ph-tabs"></div>
       <p class="ph-sum" id="ph-sum"></p>
       <ul class="ph-list" id="ph-list"></ul>
+      <p class="ph-close" id="ph-close"></p>
       <div class="sheet" id="sheet"></div>
     </div>
-    <p class="sm" style="text-align:center">Try: ✓ Done · Reschedule · On hold (needs a reason) · Stage moved</p>
+    <p class="sm" style="text-align:center">Try: ✓ Done · Reschedule · On hold (needs a reason) · Stage moved · then Close the day</p>
   </div>
   <div class="side-col">
     <div class="card">

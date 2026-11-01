@@ -74,6 +74,14 @@
     if (t.type === "Approve discount" && to.indexOf("manager") < 0) { log("Blocked", "Approvals can only go to an approver. " + t.cust + " stays with " + t.owner + "."); return false; }
     log("Reassign", t.type + " · " + t.cust + " moved from " + t.owner + " to " + to + " by " + MGR + "."); t.owner = to; return true;
   }
+  /* Close the loop (the daily review in the 1-3-5 method): the day ends with a decision, not a silent rollover.
+     Unfinished work carries over and keeps ageing; nothing is quietly postponed. */
+  function closeDay(owner) {
+    var v = views(owner), list = v.pinned.concat(v.today), doneToday = S.tasks.filter(function (t) { return t.owner === owner && t.status === "done" && t.doneDay === S.day; }).length;
+    var left = list.filter(function (t) { return t.status === "open"; }), p1 = left.filter(function (t) { return tier(t) === "P1"; }).length;
+    var summary = "Day " + S.day + " closed for " + owner + ": " + doneToday + " done · " + left.length + " carried over against their original targets" + (p1 ? " (" + p1 + " P1, first tomorrow)" : "") + ".";
+    log("Close day", summary); S.lastClose = summary; nextDay(); return { done: doneToday, carried: left.length };
+  }
   function nextDay() {
     S.day++;
     S.tasks.forEach(function (t) {
@@ -139,6 +147,7 @@
     ["UAT-13", "Second reschedule needs a blocker; ageing keeps counting", "Reschedule F twice, second time with no blocker", function () { var t = find("F"); reschedule(t, 1); var ok2 = reschedule(t, 1, ""); var ok3 = reschedule(t, 1, "Price pushback"); return { pass: !ok2 && ok3 && late(t) === S.day - t.orig, actual: "no blocker: " + (ok2 ? "allowed" : "blocked") + " · with blocker: " + (ok3 ? "allowed" : "blocked") + " · ageing from day " + t.orig }; }],
     ["UAT-14", "Pending approval freezes the rep's task for that customer", "XYZ Ltd follow-up while discount approval is open", function () { var hid = !views("Rahul").all.some(function (t) { return t.id === "L"; }); done(find("D")); var back = views("Rahul").all.some(function (t) { return t.id === "L"; }); return { pass: hid && back, actual: "hidden while approval open: " + hid + " · back after approval: " + back }; }]
   );
+  TESTS.push(["UAT-15", "Closing the day carries work over without resetting it", "Complete 1 task, close the day", function () { var t = views("Rahul").today[0], before = t ? late(views("Rahul").today[1]) : 0, other = views("Rahul").today[1]; done(t); var r = closeDay("Rahul"); return { pass: r.done === 1 && r.carried >= 1 && late(other) === before + 1, actual: r.done + " done, " + r.carried + " carried; next task's lateness " + before + " → " + late(other) }; }]);
   function runUAT() {
     var rows = TESTS.map(function (t) { var o = sc(t[3]); return [t[0], t[1], t[2], o.actual, o.pass]; }), pass = rows.filter(function (r) { return r[4]; }).length;
     $("uat-sum").textContent = pass + " of " + rows.length + " passed · run on fresh data, your session untouched";
@@ -160,6 +169,7 @@
   load(); render();
   $("who").onchange = function () { who = this.value; render(); };
   $("next-day").onclick = function () { nextDay(); after(); };
+  $("close-day").onclick = function () { closeDay(who); after(); $("ph-close").textContent = S.lastClose; };
   $("reset").onclick = function () { S = seed(); who = "Rahul"; tab = "today"; after(); };
   $("run-uat").onclick = runUAT; if (/[?&]uat=1/.test(location.search)) setTimeout(runUAT, 300);
   $("dl-jira").onclick = function () { dl("ten-today-stories-jira.csv", [["Summary", "Issue Type", "Description", "Acceptance Criteria", "Labels"]].concat(STORIES.map(function (s) { return [s[0], "Story", s[1], s[2], "sales-todo"]; }))); };
