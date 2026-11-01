@@ -56,3 +56,9 @@ tr.flag td{background:#FFF7ED}
 .tt-wm{display:inline-flex;align-items:baseline;gap:.18em;font-weight:650;font-size:1.32rem;letter-spacing:-.045em;color:#111827;line-height:1}.tt-tick{width:.78em;height:.5em;align-self:flex-end;margin-bottom:.06em}.tt-wm{align-items:flex-end}
 .appbar .logo .tt-tick{width:.8em;height:.52em;flex:none}
 .mini-ph{cursor:pointer;transition:transform .2s,box-shadow .2s}.mini-ph:hover{transform:translateY(-4px);box-shadow:0 32px 60px -28px rgba(17,24,39,.55)}.mini-ph .tk{transition:background .15s}.mini-ph:hover .tk:first-child{background:#F9FAFB}.ground{font-size:.86rem;color:#374151;border-left:3px solid #111827;padding:2px 0 2px 10px;margin-top:6px}
+/* Button and backdrop: ink action, first-light gradient. */
+.cta{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;font-weight:600;font-size:.95rem;text-decoration:none!important;color:#fff!important;background:linear-gradient(135deg,#1F2937,#111827)!important;box-shadow:0 10px 24px -12px rgba(17,24,39,.55);transition:transform .15s,box-shadow .15s}
+.cta:hover{transform:translateY(-1px);box-shadow:0 14px 28px -12px rgba(17,24,39,.6)}
+body{background:linear-gradient(180deg,#FFF6EC 0%,#FDF1F4 38%,#F7F7FB 75%,#FFFFFF 100%)!important;background-attachment:fixed!important}
+.hero::before,.appbar+.dk::before{background:radial-gradient(42% 60% at 82% 12%,rgba(255,214,170,.55),transparent 70%),radial-gradient(40% 55% at 12% 4%,rgba(252,205,220,.45),transparent 70%)!important}
+.appbar{background:rgba(255,250,246,.75)!important}
