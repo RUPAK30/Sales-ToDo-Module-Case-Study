@@ -44,7 +44,7 @@
     var pinned = act.filter(function (t) { return t.type === "Callback" && t.due <= S.day; });
     var due = act.filter(function (t) { return t.type !== "Callback" && t.due <= S.day; }).sort(rank);
     return {
-      pinned: pinned, today: due.slice(0, CAP), overdue: due.filter(function (t) { return late(t) > 0; }),
+      pinned: pinned, today: due.slice(0, Math.max(0, CAP - pinned.length)), overdue: due.filter(function (t) { return late(t) > 0; }),
       inbox: ts.filter(function (t) { return t.status === "open" && t.due > S.day; }),
       approvals: act.filter(function (t) { return t.type === "Approve discount"; }),
       hold: ts.filter(function (t) { return t.status === "hold" && S.day < t.revisit; }), dueCount: due.length, all: due
@@ -97,11 +97,11 @@
     $("ph-tabs").innerHTML = tabs.map(function (x) { return "<button data-tab='" + x[0] + "' class='" + (tab === x[0] ? "on" : "") + "'>" + x[1] + " <i>" + x[2] + "</i></button>"; }).join("");
     var list = tab === "today" ? v.pinned.map(function (t) { return card(t, true); }).concat(v.today.map(function (t) { return card(t); })) : (v[tab] || []).map(function (t) { return card(t); });
     $("ph-list").innerHTML = list.length ? list.join("") : "<li class='empty'>Nothing here.</li>";
-    $("ph-sum").textContent = tab === "today" ? (v.dueCount > CAP ? "Top " + CAP + " of " + v.dueCount + " due · the rest wait in Overdue" : v.dueCount + " due today") : "";
+    $("ph-sum").textContent = tab === "today" ? (v.dueCount + v.pinned.length > CAP ? CAP + " of " + (v.dueCount + v.pinned.length) + " due (incl. " + v.pinned.length + " pinned callback) · the rest wait in Overdue" : (v.dueCount + v.pinned.length) + " due today") : "";
     var p1 = v.today.filter(function (t) { return tier(t) === "P1"; }).length;
     $("ph-hi").textContent = "Good morning, " + who + " · " + (v.today.length + v.pinned.length) + " actions, " + p1 + " P1";
     /* manager view */
-    $("mgr").innerHTML = REPS.map(function (r) { var w = views(r), held = mine(r).filter(function (t) { return t.status === "hold" && t.holds > 1; }).length, flag = w.overdue.length >= 8; return "<tr" + (flag ? " class='flag'" : "") + "><td><b>" + r + "</b>" + (flag ? " <span class='pp pp-p1'>workload</span>" : "") + "</td><td class='n'>" + w.dueCount + "</td><td class='n'>" + w.overdue.length + "</td><td class='n'>" + w.hold.length + (held ? " · " + held + " again" : "") + "</td><td class='n'>" + w.approvals.length + "</td></tr>"; }).join("");
+    $("mgr").innerHTML = REPS.map(function (r) { var w = views(r), held = mine(r).filter(function (t) { return t.status === "hold" && t.holds > 1; }).length, flag = w.overdue.length >= 8; return "<tr" + (flag ? " class='flag'" : "") + "><td><b>" + r + "</b>" + (flag ? " <span class='pp pp-p1'>Overloaded</span>" : "") + "</td><td class='n'>" + w.dueCount + "</td><td class='n'>" + w.overdue.length + "</td><td class='n'>" + w.hold.length + (held ? " · " + held + " again" : "") + "</td><td class='n'>" + w.approvals.length + "</td></tr>"; }).join("");
     var d = S.done, ot = d.filter(function (x) { return x.onTime; }).length, rs = S.tasks.filter(function (t) { return t.resched > 2; }).length;
     $("m-ontime").textContent = d.length ? Math.round(ot / d.length * 100) + "%" : "—";
     $("m-done").textContent = d.length; $("m-guard").textContent = rs;
@@ -119,7 +119,7 @@
   /* ---------- UAT: the case study's edge cases, executed ---------- */
   function sc(fn) { var keep = S; QUIET = true; S = seed(); var o; try { o = fn(); } catch (e) { o = { pass: false, actual: "Error: " + e.message }; } S = keep; QUIET = false; return o; }
   var TESTS = [
-    ["UAT-01", "Today is capped at 10", "15 due tasks → Today shows 10, Overdue holds the rest", function () { var v = views("Rahul"); return { pass: v.today.length === 10 && v.dueCount > 10, actual: v.today.length + " shown of " + v.dueCount + " due" }; }],
+    ["UAT-01", "Today is capped at 10", "15 due tasks → Today shows 10, Overdue holds the rest", function () { var v = views("Rahul"); return { pass: v.today.length + v.pinned.length === 10 && v.dueCount > 10, actual: (v.today.length + v.pinned.length) + " shown of " + (v.dueCount + v.pinned.length) + " due" }; }],
     ["UAT-02", "Ranking follows the stated order", "Worked example: B (P1) before D (P2 approval) before C (P3, ₹50L)", function () { var o = views("Rahul").all.map(function (t) { return t.id; }); var b = o.indexOf("B"), d = o.indexOf("D"), c = o.indexOf("C"); return { pass: b > -1 && b < d && d < c, actual: "B #" + (b + 1) + ", D #" + (d + 1) + ", C #" + (c + 1) }; }],
     ["UAT-03", "Value only breaks ties", "₹50L lead due today stays below P1/P2 work", function () { var o = views("Rahul").all, c = find("C"), small = o.filter(function (t) { return tier(t) !== "P3"; }).length; return { pass: o.indexOf(c) >= small, actual: "₹50L lead ranked " + (o.indexOf(c) + 1) + " of " + o.length + ", after all " + small + " P1/P2 tasks" }; }],
     ["UAT-04", "Not-yet-due waits in Inbox; callbacks pinned", "A in Inbox, E pinned at 16:00", function () { var v = views("Rahul"); return { pass: v.inbox.some(function (t) { return t.id === "A"; }) && v.pinned.some(function (t) { return t.id === "E"; }), actual: "A in Inbox: " + v.inbox.some(function (t) { return t.id === "A"; }) + " · E pinned: " + v.pinned.some(function (t) { return t.id === "E"; }) }; }],
