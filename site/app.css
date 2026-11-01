@@ -55,3 +55,4 @@ tr.flag td{background:#FFF7ED}
 .pp-p1{background:#111827;color:#fff}.pp-p2{background:#4B5563;color:#fff}.pp-p3{background:#E5E7EB;color:#111827}.pp-pi{background:#fff;color:#111827;border:1px solid #111827}
 .tt-wm{display:inline-flex;align-items:baseline;gap:.18em;font-weight:650;font-size:1.32rem;letter-spacing:-.045em;color:#111827;line-height:1}.tt-tick{width:.78em;height:.5em;align-self:flex-end;margin-bottom:.06em}.tt-wm{align-items:flex-end}
 .appbar .logo .tt-tick{width:.8em;height:.52em;flex:none}
+.mini-ph{cursor:pointer;transition:transform .2s,box-shadow .2s}.mini-ph:hover{transform:translateY(-4px);box-shadow:0 32px 60px -28px rgba(17,24,39,.55)}.mini-ph .tk{transition:background .15s}.mini-ph:hover .tk:first-child{background:#F9FAFB}.ground{font-size:.86rem;color:#374151;border-left:3px solid #111827;padding:2px 0 2px 10px;margin-top:6px}
