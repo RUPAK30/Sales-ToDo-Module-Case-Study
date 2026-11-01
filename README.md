@@ -1,10 +1,10 @@
 # Sales To-Do Module: "100 open leads. 10 actions today."
 
-> Product case study by **Rupak Ghanpathi** · B2B sales execution
+> **Live:** [tentoday.vercel.app](https://tentoday.vercel.app) · Product case study by **Rupak Ghanpathi** · B2B sales execution
 
 A mobile To-Do module that tells a salesperson what to act on now, why, and what to do next, without becoming another CRM or a tool for watching people.
 
-**Live site:** the `site/` folder (overview + executable specification). Deploy on Vercel with Root Directory `site`.
+**Live site:** [tentoday.vercel.app](https://tentoday.vercel.app) · [Executable specification](https://tentoday.vercel.app/cockpit.html)
 
 ## Executable specification (new)
 `site/cockpit.html`: the rules, running. A phone with the Today queue capped at 10 and ranked by the four rules; ✓ Done, Reschedule (original target still counts), On hold (blocked without a reason and revisit date), Stage moved (auto-closes and creates the next task once). Beside it, the manager's workload view with a confirm-first rebalance that never moves approvals to a rep, the live metric (% done within original target) and guardrail, an audit trail, 12 executable UAT cases covering every edge case in the study, and Jira-ready story and UAT CSVs. Synthetic data; runs in the browser.
