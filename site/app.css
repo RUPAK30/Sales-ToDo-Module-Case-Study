@@ -45,3 +45,11 @@ tr.flag td{background:#FFF7ED}
 .flow b{display:block;font-family:var(--mono);font-size:1.6rem;font-weight:500;letter-spacing:-.02em}.flow span{display:block;font-size:.78rem;color:var(--muted);line-height:1.35}
 .flow i{display:none;font-style:normal;color:#C4B5A5;font-size:1.3rem;align-self:center}@media(min-width:860px){.flow i{display:block}}
 .f-a b{color:#9CA3AF}.f-b{border-top:3px solid #FFB547!important}.f-c{background:linear-gradient(135deg,#FF5A3C,#FF8A3D)!important;border:0!important}.f-c b,.f-c span{color:#fff}
+/* Monochrome identity: ink on white, one soft neutral glow. */
+.hero::before,.appbar+.dk::before{background:radial-gradient(45% 60% at 80% 15%,rgba(17,24,39,.06),transparent 70%),radial-gradient(40% 55% at 15% 5%,rgba(253,230,210,.45),transparent 70%)!important}
+.eyebrow,.kicker,.step{color:#6B7280!important}
+.cta,.btn.primary,.appbar nav a.pri{background:#111827!important;border-color:#111827!important}
+.cta:hover,.btn.primary:hover,.appbar nav a.pri:hover{background:#000!important}
+.ph-tabs button.on,.tk-a button:first-child,.sh-go{background:#111827;border-color:#111827}
+.f-b{border-top:3px solid #111827!important}.f-c{background:#111827!important}
+.pp-p1{background:#111827;color:#fff}.pp-p2{background:#4B5563;color:#fff}.pp-p3{background:#E5E7EB;color:#111827}.pp-pi{background:#fff;color:#111827;border:1px solid #111827}
