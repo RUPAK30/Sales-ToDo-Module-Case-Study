@@ -6,6 +6,9 @@ A mobile To-Do module that tells a salesperson what to act on now, why, and what
 
 **Live site:** [tentoday.vercel.app](https://tentoday.vercel.app) · [Executable specification](https://tentoday.vercel.app/cockpit.html)
 
+## Where it fits
+Deals stall between the rep and the approver. Industry surveys suggest slow approvals cost deals: in Conga's own survey, 45% of companies lost a deal in six months to slow quote approval ([Conga](https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle), vendor survey). Ten Today freezes the rep's follow-up while a discount approval is pending, puts the clock on the approver, and shows the three numbers needed to decide: ask, margin floor and the customer's overdue balance. Validate with sales heads before relying on it.
+
 ## Executable specification (new)
 `site/cockpit.html`: the rules, running. A phone with the Today queue capped at 10 and ranked by the four rules; ✓ Done, Reschedule (original target still counts), On hold (blocked without a reason and revisit date), Stage moved (auto-closes and creates the next task once). Beside it, the manager's workload view with a confirm-first rebalance that never moves approvals to a rep, the live metric (% done within original target) and guardrail, an audit trail, 15 executable UAT cases covering every edge case in the study, a "Close the day" review (the daily loop from the 1-3-5 method: unfinished work carries over and keeps ageing, never silently postponed), plus two anti-gaming rules (a second reschedule needs a blocker and keeps ageing from the original target; a pending discount approval freezes the rep's task for that customer and shows ask, margin floor and the customer's overdue balance), and Jira-ready story and UAT CSVs. Synthetic data; runs in the browser.
 
