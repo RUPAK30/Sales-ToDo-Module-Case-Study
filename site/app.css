@@ -53,3 +53,5 @@ tr.flag td{background:#FFF7ED}
 .ph-tabs button.on,.tk-a button:first-child,.sh-go{background:#111827;border-color:#111827}
 .f-b{border-top:3px solid #111827!important}.f-c{background:#111827!important}
 .pp-p1{background:#111827;color:#fff}.pp-p2{background:#4B5563;color:#fff}.pp-p3{background:#E5E7EB;color:#111827}.pp-pi{background:#fff;color:#111827;border:1px solid #111827}
+.tt-wm{display:inline-flex;align-items:baseline;gap:.18em;font-weight:650;font-size:1.32rem;letter-spacing:-.045em;color:#111827;line-height:1}.tt-tick{width:.78em;height:.5em;align-self:flex-end;margin-bottom:.06em}.tt-wm{align-items:flex-end}
+.appbar .logo .tt-tick{width:.8em;height:.52em;flex:none}
