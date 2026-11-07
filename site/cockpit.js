@@ -19,12 +19,15 @@
       T("M", "Follow up quote", "Delta Agro", 3, -2), T("N", "Qualify lead", "Shiv Plastics", 2, -1), T("O", "Follow up quote", "Ruby Ceramics", 7, -9),
       T("P", "Prepare quotation", "Metro Cables", 11, 1), T("Q", "Qualify lead", "Zen Logistics", 5, 3),
       T("R1", "Follow up quote", "Lotus Paints", 6, -1, "Asha"), T("R2", "Qualify lead", "Aqua Pure", 3, 0, "Asha"), T("R3", "Prepare quotation", "Iris Labs", 9, -2, "Imran"),
-      T("R4", "Follow up quote", "Sun Agro", 4, 0, "Neha"), T("R5", "Qualify lead", "Pine Infra", 7, -6, "Neha")
+      T("R4", "Follow up quote", "Sun Agro", 4, 0, "Neha"), T("R5", "Qualify lead", "Pine Infra", 7, -6, "Neha"),
+      /* A distributor discount: the approval becomes a shared record Every Rupee matches deductions against.
+         feed = Every Rupee's BR-11 view of this distributor's open deductions (snapshot, sample data). */
+      T("KM", "Approve discount", "Krishna Marketing, Surat", 3, 1, "Rahul", { ask: 5, floor: 4, arOverdue: 0, distId: "CELLOVA0005", capINR: 8000, taxIncl: false, windowEnd: "2026-11-30", feed: { financePending: 18000, blocking: 9440, young: 0 } })
     ];
-    return { day: 0, tasks: t, log: [], done: [], seq: 0 };
+    return { day: 0, tasks: t, log: [], done: [], seq: 0, approvals: [], apvSeq: 42 };
   }
   var S;
-  function load() { try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; } if (!S || !S.tasks) S = seed(); }
+  function load() { try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; } if (!S || !S.tasks || !S.approvals) S = seed(); }
   function save() { if (QUIET) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   function log(rule, text) { S.log.unshift({ day: S.day, rule: rule, text: text }); }
 
@@ -59,7 +62,17 @@
   }
 
   /* ---------- actions ---------- */
-  function done(t) { t.status = "done"; t.doneDay = S.day; S.done.push({ id: t.id, onTime: S.day <= t.orig, resched: t.resched }); log("Done", t.type + " · " + t.cust + " completed" + (S.day <= t.orig ? " within its original target." : ", " + (S.day - t.orig) + " day(s) after its original target.")); }
+  /* R7: before a distributor discount is approved, Every Rupee's feed is checked. Claims waiting on Finance never block;
+     rep-owned or unverified claims older than 15 days do, until the rep shows proof or collects. */
+  function approve(t) {
+    if (t.feed && t.feed.blocking > 0) { log("Blocked", "R7: " + t.cust + " has ₹" + t.feed.blocking.toLocaleString("en-IN") + " of rep-owned or unverified deductions older than 15 days in Every Rupee. Discount not approved until " + t.owner + " shows proof or collects it. (₹" + t.feed.financePending.toLocaleString("en-IN") + " waiting on Finance does not count.)"); return false; }
+    S.apvSeq++; var a = { Approval_ID: "APV-2026-0" + S.apvSeq, Distributor_ID: t.distId, Rep_ID: t.owner, Approver_ID: MGR, Approved_Cap_INR: t.capINR, Tax_Inclusive: t.taxIncl, Invoice_Window_End: t.windowEnd };
+    S.approvals.push(a); t.apv = a.Approval_ID;
+    log("R7", a.Approval_ID + " issued for " + t.cust + ": cap ₹" + t.capINR.toLocaleString("en-IN") + (t.taxIncl ? " incl. GST" : " before GST") + ", invoices up to " + t.windowEnd + ". Sent to Every Rupee to match against the distributor's deduction.");
+    return true;
+  }
+  function proof(t) { if (!t.feed) return; log("R7", t.owner + " attached the credit-note proof for " + t.cust + "'s ₹" + t.feed.blocking.toLocaleString("en-IN") + " deduction. Every Rupee re-checks it; the discount block lifts."); t.feed.blocking = 0; }
+  function done(t) { if (t.type === "Approve discount" && t.distId && !approve(t)) return false; t.status = "done"; t.doneDay = S.day; S.done.push({ id: t.id, onTime: S.day <= t.orig, resched: t.resched }); log("Done", t.type + " · " + t.cust + " completed" + (S.day <= t.orig ? " within its original target." : ", " + (S.day - t.orig) + " day(s) after its original target.")); }
   function reschedule(t, days, blocker) { if (t.resched >= 1 && !blocker) { log("Blocked", "A second reschedule needs a blocker. " + t.cust + " stays in Today."); return false; } t.due = S.day + days; t.resched++; if (blocker) t.blocker = blocker; log("Reschedule", t.type + " · " + t.cust + " moved to day " + t.due + " (rescheduled " + t.resched + "×" + (blocker ? ", blocker: " + blocker : "") + "). " + (t.resched >= 2 ? "It keeps ageing from its original target, day " + t.orig + "." : "Original target stays day " + t.orig + ".")); return true; }
   function hold(t, reason, days) {
     if (!reason || !days) { log("Blocked", "On hold needs a reason and a revisit date. " + t.cust + " stays active."); return false; }
@@ -98,8 +111,9 @@
     if (t.status === "hold") why = "On hold: " + t.reason + " · back day " + t.revisit;
     if (t.status === "open" && blocked(t)) why = "Blocked: waiting on the discount approval";
     if (t.type === "Approve discount" && t.ask) why = "Ask " + t.ask + "% off · floor " + t.floor + "% · customer overdue " + (t.arOverdue ? L(t.arOverdue) : "₹0") + " · " + why;
+    if (t.feed) why += " · Every Rupee: waiting on Finance ₹" + t.feed.financePending.toLocaleString("en-IN") + " (doesn't block) · rep-owned >15 days ₹" + t.feed.blocking.toLocaleString("en-IN") + (t.feed.blocking ? " (blocks)" : "") + (t.apv ? " · issued " + t.apv : "");
     return "<li class='tk' data-id='" + t.id + "'><div class='tk-h'><b>" + esc(t.type) + "</b><span class='pp pp-" + p.slice(0, 2).toLowerCase() + "'>" + esc(p) + "</span></div><p>" + esc(t.cust) + " · " + L(t.value) + " · " + esc(why) + (t.resched ? " · rescheduled " + t.resched + "×" : "") + "</p>" +
-      (t.status === "open" || active(t) ? "<div class='tk-a'><button data-a='done'>✓ Done</button><button data-a='res'>Reschedule</button><button data-a='hold'>On hold</button><button data-a='stage'>Stage moved</button></div>" : "") + "</li>";
+      (t.status === "open" || active(t) ? "<div class='tk-a'><button data-a='done'>✓ Done</button><button data-a='res'>Reschedule</button><button data-a='hold'>On hold</button><button data-a='stage'>Stage moved</button>" + (t.feed && t.feed.blocking ? "<button data-a='proof'>Attach proof</button>" : "") + "</div>" : "") + "</li>";
   }
   function render() {
     var v = views(who);
@@ -148,6 +162,9 @@
     ["UAT-14", "Pending approval freezes the rep's task for that customer", "XYZ Ltd follow-up while discount approval is open", function () { var hid = !views("Rahul").all.some(function (t) { return t.id === "L"; }); done(find("D")); var back = views("Rahul").all.some(function (t) { return t.id === "L"; }); return { pass: hid && back, actual: "hidden while approval open: " + hid + " · back after approval: " + back }; }]
   );
   TESTS.push(["UAT-15", "Closing the day carries work over without resetting it", "Complete 1 task, close the day", function () { var t = views("Rahul").today[0], before = t ? late(views("Rahul").today[1]) : 0, other = views("Rahul").today[1]; done(t); var r = closeDay("Rahul"); return { pass: r.done === 1 && r.carried >= 1 && late(other) === before + 1, actual: r.done + " done, " + r.carried + " carried; next task's lateness " + before + " → " + late(other) }; }]);
+  TESTS.push(["UAT-16", "Finance backlog doesn't block; rep-owned over 15 days does", "Krishna Marketing discount: ₹18,000 waiting on Finance, ₹9,440 rep-owned for 16 days", function () { var t = find("KM"); var ok1 = done(t) !== false; var blk = t.status === "open"; t.feed.blocking = 0; t.feed.financePending = 18000; var ok2 = done(t) !== false; return { pass: !ok1 && blk && ok2 && t.status === "done", actual: "with rep-owned ₹9,440: " + (ok1 ? "approved" : "blocked") + " · Finance-pending only: " + (ok2 ? "approved" : "blocked") }; }]);
+  TESTS.push(["UAT-17", "Rep's proof lifts the block", "Attach proof, then approve", function () { var t = find("KM"); proof(t); done(t); return { pass: t.status === "done" && !!t.apv, actual: "status " + t.status + ", " + (t.apv || "no approval") }; }]);
+  TESTS.push(["UAT-18", "Approval creates the shared record", "Approve after proof: 5 fields Every Rupee matches on", function () { var t = find("KM"); proof(t); done(t); var a = S.approvals[0] || {}; var keys = ["Approval_ID", "Distributor_ID", "Rep_ID", "Approver_ID", "Approved_Cap_INR", "Invoice_Window_End"]; var ok = keys.every(function (k) { return a[k] != null && a[k] !== ""; }); return { pass: ok && a.Approved_Cap_INR === 8000 && a.Tax_Inclusive === false, actual: a.Approval_ID + " · " + a.Distributor_ID + " · " + a.Rep_ID + " / " + a.Approver_ID + " · ₹" + a.Approved_Cap_INR + (a.Tax_Inclusive ? " incl. GST" : " before GST") + " · to " + a.Invoice_Window_End }; }]);
   function runUAT() {
     var rows = TESTS.map(function (t) { var o = sc(t[3]); return [t[0], t[1], t[2], o.actual, o.pass]; }), pass = rows.filter(function (r) { return r[4]; }).length;
     $("uat-sum").textContent = pass + " of " + rows.length + " passed · run on fresh data, your session untouched";
@@ -162,7 +179,8 @@
     ["US-4 On hold with reason", "As a manager, I want held work to carry a reason and revisit date, so nothing hides.", "Given On hold, when no reason or date is chosen, then the action is blocked; when the date arrives, the task returns."],
     ["US-5 Honest on-time metric", "As a sales head, I want on-time measured against the original target, so rescheduling can't fake it.", "Given a rescheduled task completed after its original target, then it counts as late."],
     ["US-6 Workload view", "As a manager, I want overdue, held and approval counts per rep, so I rebalance stuck work.", "Given a rep with 8+ overdue tasks, then the row is flagged as workload, not performance."],
-    ["US-7 Eligible reassignment", "As a manager, I want to reassign only to eligible owners, with a logged change.", "Given an approval task, when reassigned to a rep without approval rights, then it is blocked and logged."]
+    ["US-7 Eligible reassignment", "As a manager, I want to reassign only to eligible owners, with a logged change.", "Given an approval task, when reassigned to a rep without approval rights, then it is blocked and logged."],
+    ["US-8 Discount backed by the ledger", "As an approver, I want to see whose action a distributor's open deductions wait on before I approve a discount, and the approval sent to Every Rupee as a record it can match.", "Given rep-owned or unverified deductions older than 15 days, then approval is blocked until proof; Finance-pending amounts never block; an approval creates a record with ID, distributor, rep, approver, cap (tax flag) and invoice window."]
   ];
 
   /* ---------- wiring ---------- */
@@ -182,7 +200,7 @@
   function confirmMove(f, t, n) { var b = $("rebalance"); if (b.dataset.armed) { delete b.dataset.armed; b.textContent = "Suggest a rebalance"; return true; } b.dataset.armed = "1"; b.textContent = "Confirm: move " + n + " overdue tasks " + f + " → " + t; return false; }
   document.addEventListener("click", function (e) {
     var tb = e.target.closest("[data-tab]"); if (tb) { tab = tb.dataset.tab; render(); return; }
-    var a = e.target.closest("[data-a]"); if (a) { var t = find(a.closest("[data-id]").dataset.id); if (a.dataset.a === "done") { var li = a.closest(".tk"); li.classList.add("gone"); setTimeout(function () { done(t); after(); }, 260); } else if (a.dataset.a === "stage") { stageMoved(t); after(); } else openSheet(t, a.dataset.a); return; }
+    var a = e.target.closest("[data-a]"); if (a) { var t = find(a.closest("[data-id]").dataset.id); if (a.dataset.a === "proof") { proof(t); after(); } else if (a.dataset.a === "done") { if (t.feed && t.feed.blocking) { done(t); after(); return; } var li = a.closest(".tk"); li.classList.add("gone"); setTimeout(function () { done(t); after(); }, 260); } else if (a.dataset.a === "stage") { stageMoved(t); after(); } else openSheet(t, a.dataset.a); return; }
     var r = e.target.closest("[data-r]"); if (r && sheet) { var bk = $("sh-blk"); if (reschedule(sheet.t, +r.dataset.r, bk ? bk.value : "")) closeSheet(); else $("sheet").querySelector("b").textContent = "Choose a blocker first"; after(); return; }
     if (e.target.closest("[data-go]") && sheet) { if (hold(sheet.t, $("sh-reason").value, +$("sh-days").value)) closeSheet(); else $("sheet").querySelector("b").textContent = "Choose a reason and a revisit date"; after(); return; }
     if (e.target.closest("[data-x]")) closeSheet();
