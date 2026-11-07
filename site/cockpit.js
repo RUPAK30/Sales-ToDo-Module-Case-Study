@@ -111,9 +111,10 @@
     if (t.status === "hold") why = "On hold: " + t.reason + " · back day " + t.revisit;
     if (t.status === "open" && blocked(t)) why = "Blocked: waiting on the discount approval";
     if (t.type === "Approve discount" && t.ask) why = "Ask " + t.ask + "% off · floor " + t.floor + "% · customer overdue " + (t.arOverdue ? L(t.arOverdue) : "₹0") + " · " + why;
-    if (t.feed) why += " · Every Rupee: waiting on Finance ₹" + t.feed.financePending.toLocaleString("en-IN") + " (doesn't block) · rep-owned >15 days ₹" + t.feed.blocking.toLocaleString("en-IN") + (t.feed.blocking ? " (blocks)" : "") + (t.apv ? " · issued " + t.apv : "");
+    var R = function (n) { return "₹" + n.toLocaleString("en-IN"); };
+    var feed = t.feed ? "<div class='er" + (t.feed.blocking ? " blk" : "") + "'><p class='er-h'>From Every Rupee · this distributor's open deductions</p><div class='er-r'><span>Waiting on finance</span><b>" + R(t.feed.financePending) + "</b><i class='ok'>doesn't block</i></div><div class='er-r'><span>Rep's claims, over 15 days</span><b>" + R(t.feed.blocking) + "</b><i class='" + (t.feed.blocking ? "no'>blocks approval" : "ok'>clear") + "</i></div><p class='er-f'>" + (t.feed.blocking ? "Rahul owes proof for the ₹9,440 before Kavita can approve." : "Ready to approve: cap " + R(t.capINR) + " before GST, invoices to " + t.windowEnd + ".") + "</p></div>" : "";
     return "<li class='tk' data-id='" + t.id + "'><div class='tk-h'><b>" + esc(t.type) + "</b><span class='pp pp-" + p.slice(0, 2).toLowerCase() + "'>" + esc(p) + "</span></div><p>" + esc(t.cust) + " · " + L(t.value) + " · " + esc(why) + (t.resched ? " · rescheduled " + t.resched + "×" : "") + "</p>" +
-      (t.status === "open" || active(t) ? "<div class='tk-a'><button data-a='done'>✓ Done</button><button data-a='res'>Reschedule</button><button data-a='hold'>On hold</button><button data-a='stage'>Stage moved</button>" + (t.feed && t.feed.blocking ? "<button data-a='proof'>Attach proof</button>" : "") + "</div>" : "") + "</li>";
+      feed + (t.status === "open" || active(t) ? "<div class='tk-a'>" + (t.feed ? (t.feed.blocking ? "<button data-a='proof'>Attach proof</button><button data-a='done' class='dim'>Approve</button>" : "<button data-a='done'>✓ Approve discount</button>") : "<button data-a='done'>✓ Done</button>") + "<button data-a='res'>Reschedule</button><button data-a='hold'>On hold</button>" + (t.feed ? "" : "<button data-a='stage'>Stage moved</button>") + "</div>" : "") + "</li>";
   }
   function render() {
     var v = views(who);
@@ -140,6 +141,7 @@
   }
   function closeSheet() { sheet = null; $("sheet").classList.remove("on"); }
   function after() { save(); render(); }
+  function toast(html, kind) { var el = $("toast"); if (!el) return; el.innerHTML = html; el.className = "toast on " + (kind || ""); clearTimeout(toast.t); toast.t = setTimeout(function () { el.className = "toast " + (kind || ""); }, 6500); }
 
   /* ---------- UAT: the case study's edge cases, executed ---------- */
   function sc(fn) { var keep = S; QUIET = true; S = seed(); var o; try { o = fn(); } catch (e) { o = { pass: false, actual: "Error: " + e.message }; } S = keep; QUIET = false; return o; }
@@ -184,7 +186,10 @@
   ];
 
   /* ---------- wiring ---------- */
-  load(); render();
+  load();
+  if (/[?&]km=1/.test(location.search)) { S = seed(); who = "Rahul"; tab = "approvals"; }
+  render();
+  if (/[?&]km=1/.test(location.search)) setTimeout(function () { var el = document.querySelector("[data-id='KM']"); if (el) { el.classList.add("spot"); el.scrollIntoView({ behavior: "smooth", block: "center" }); } }, 300);
   $("who").onchange = function () { who = this.value; render(); };
   $("next-day").onclick = function () { nextDay(); after(); };
   $("close-day").onclick = function () { closeDay(who); after(); $("ph-close").textContent = S.lastClose; };
@@ -200,7 +205,7 @@
   function confirmMove(f, t, n) { var b = $("rebalance"); if (b.dataset.armed) { delete b.dataset.armed; b.textContent = "Suggest a rebalance"; return true; } b.dataset.armed = "1"; b.textContent = "Confirm: move " + n + " overdue tasks " + f + " → " + t; return false; }
   document.addEventListener("click", function (e) {
     var tb = e.target.closest("[data-tab]"); if (tb) { tab = tb.dataset.tab; render(); return; }
-    var a = e.target.closest("[data-a]"); if (a) { var t = find(a.closest("[data-id]").dataset.id); if (a.dataset.a === "proof") { proof(t); after(); } else if (a.dataset.a === "done") { if (t.feed && t.feed.blocking) { done(t); after(); return; } var li = a.closest(".tk"); li.classList.add("gone"); setTimeout(function () { done(t); after(); }, 260); } else if (a.dataset.a === "stage") { stageMoved(t); after(); } else openSheet(t, a.dataset.a); return; }
+    var a = e.target.closest("[data-a]"); if (a) { var t = find(a.closest("[data-id]").dataset.id); if (a.dataset.a === "proof") { proof(t); after(); toast("<b>Proof attached.</b> Every Rupee re-checks the ₹9,440; the block on " + esc(t.cust) + " is lifted.", "ok"); return; } else if (a.dataset.a === "done") { if (t.feed && t.feed.blocking) { done(t); after(); toast("<b>Can't approve yet.</b> Rahul's ₹9,440 claim is over 15 days old. Attach proof first. Finance's ₹18,000 backlog doesn't count against him.", "no"); return; } if (t.feed) { done(t); after(); toast("<b>" + t.apv + " issued</b> · cap ₹8,000 before GST · sent to Every Rupee. <a href='https://everyrupee-o2c.vercel.app/route.html#pre'>See what finance does with it →</a>", "ok"); return; } var li = a.closest(".tk"); li.classList.add("gone"); setTimeout(function () { done(t); after(); }, 260); } else if (a.dataset.a === "stage") { stageMoved(t); after(); } else openSheet(t, a.dataset.a); return; }
     var r = e.target.closest("[data-r]"); if (r && sheet) { var bk = $("sh-blk"); if (reschedule(sheet.t, +r.dataset.r, bk ? bk.value : "")) closeSheet(); else $("sheet").querySelector("b").textContent = "Choose a blocker first"; after(); return; }
     if (e.target.closest("[data-go]") && sheet) { if (hold(sheet.t, $("sh-reason").value, +$("sh-days").value)) closeSheet(); else $("sheet").querySelector("b").textContent = "Choose a reason and a revisit date"; after(); return; }
     if (e.target.closest("[data-x]")) closeSheet();

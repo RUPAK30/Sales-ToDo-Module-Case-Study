@@ -9,7 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-</head>
+<style>
+.er{margin-top:8px;border:1px solid #CCFBF1;background:#F0FDFA;border-radius:10px;padding:8px 10px}.er.blk{border-color:#FECACA;background:#FEF2F2}
+.er-h{margin:0 0 4px!important;font-size:.62rem!important;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0F766E!important}.er.blk .er-h{color:#B91C1C!important}
+.er-r{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;font-size:.74rem;padding:2px 0}.er-r b{font-family:ui-monospace,Menlo,monospace;color:#111827}
+.er-r i{font-style:normal;font-size:.64rem;font-weight:700;padding:2px 6px;border-radius:5px}.er-r i.ok{background:#DCFCE7;color:#15803D}.er-r i.no{background:#B91C1C;color:#fff}
+.er-f{margin:5px 0 0!important;font-size:.72rem!important;color:#334155!important}
+.tk-a button.dim{opacity:.55}
+.tk.spot{outline:3px solid #0F766E;outline-offset:2px;border-radius:12px;animation:sp 1.4s ease 2}@keyframes sp{50%{outline-color:#5EEAD4}}
+.toast{position:absolute;left:10px;right:10px;bottom:12px;z-index:20;background:#111827;color:#fff;border-radius:12px;padding:10px 12px;font-size:.78rem;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);pointer-events:none;transition:.25s}
+.toast.on{opacity:1;transform:none;pointer-events:auto}.toast.no{background:#7F1D1D}.toast.ok{background:#0F2742}.toast a{color:#5EEAD4;font-weight:700}
+</style></head>
 <body>
 <header class="appbar"><div class="in"><a class="logo" href="./"><span class="tt-wm" aria-label="Ten Today">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav><a href="./" class="hide-s">Overview</a><a href="https://github.com/RUPAK30/Sales-ToDo-Module-Case-Study" class="hide-s">GitHub</a><a href="mailto:rupakr2g@gmail.com?subject=Regarding%20Ten%20Today" class="hide-s">Get in touch</a><a href="cockpit.html" class="on">Executable spec</a></nav></div></header>
 
@@ -36,7 +46,7 @@
       <p class="ph-sum" id="ph-sum"></p>
       <ul class="ph-list" id="ph-list"></ul>
       <p class="ph-close" id="ph-close"></p>
-      <div class="sheet" id="sheet"></div>
+      <div class="sheet" id="sheet"></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>
     <p class="sm" style="text-align:center">Try: ✓ Done · Reschedule · On hold (needs a reason) · Stage moved · then Close the day</p>
   </div>
