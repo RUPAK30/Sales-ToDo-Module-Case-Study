@@ -63,3 +63,17 @@ body{background:linear-gradient(180deg,#FFF6EC 0%,#FDF1F4 38%,#F7F7FB 75%,#FFFFF
 .hero::before,.appbar+.dk::before{background:radial-gradient(42% 60% at 82% 12%,rgba(255,214,170,.55),transparent 70%),radial-gradient(40% 55% at 12% 4%,rgba(252,205,220,.45),transparent 70%)!important}
 .appbar{background:rgba(255,250,246,.75)!important}
 .ph-close{font-size:.72rem;color:#374151;background:#F9FAFB;border-top:1px solid var(--line);margin:0 -12px;padding:8px 14px;min-height:0}.ph-close:empty{display:none}
+/* Final palette: warm, light and professional. Terracotta action on a soft apricot-to-white sky. */
+:root{--tt:#C2410C;--tt-d:#9A3412;--tt-soft:#FFF7ED;--tt-line:#FED7AA}
+body{background:linear-gradient(180deg,#FFF8F1 0%,#FFFBF6 30%,#FFFFFF 70%)!important;background-attachment:fixed!important}
+.hero::before,.appbar+.dk::before{background:radial-gradient(45% 65% at 85% 8%,rgba(253,186,116,.45),transparent 70%),radial-gradient(40% 55% at 10% 0%,rgba(254,215,170,.5),transparent 72%),radial-gradient(35% 50% at 55% 30%,rgba(255,237,213,.55),transparent 75%)!important}
+.appbar{background:rgba(255,251,246,.85)!important;backdrop-filter:blur(10px);border-bottom:1px solid #F5E6D6!important}
+.cta,.btn.primary,.appbar nav a.pri{background:var(--tt)!important;border-color:var(--tt)!important;color:#fff!important;box-shadow:0 6px 16px -8px rgba(194,65,12,.55)!important}
+.cta:hover,.btn.primary:hover,.appbar nav a.pri:hover{background:var(--tt-d)!important}
+.appbar nav a.q2c{color:var(--tt-d)!important;font-weight:600;border:1px solid var(--tt-line);background:var(--tt-soft)}
+.appbar nav a.q2c:hover{background:#FFEDD5}
+.appbar nav a.on{background:#fff!important;border:1px solid #F5E6D6}
+.ph-tabs button.on,.tk-a button:first-child,.sh-go{background:var(--tt)!important;border-color:var(--tt)!important;color:#fff!important}
+.eyebrow,.kicker{color:var(--tt-d)!important}
+.day{background:#1F2937!important}
+blockquote,.hero .ins,.hero [class*=quote]{border-left-color:var(--tt-line)!important}
