@@ -125,3 +125,4 @@ html,body{overflow-x:clip}
 .appbar nav{grid-column:3;justify-self:end;margin-left:0}
 .bar-top{top:64px}.tabs2{top:64px}html{scroll-padding-top:128px}
 @media(max-width:640px){.appbar .in{grid-template-columns:auto 1fr auto}.appbar .logo{grid-column:1;justify-self:start}}
+.appbar nav a.q2c{color:#0F766E;font-weight:600;border:1px solid #99F6E4;background:#F0FDFA}@media(max-width:480px){.appbar nav a{font-size:.8rem;padding:6px 8px}.appbar .tt-wm{font-size:1.15rem}}
