@@ -35,10 +35,8 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
     <p class="lede">A mobile To-Do module that tells a salesperson what to act on now, why, and what comes next, without becoming another CRM or a tool for watching people.</p>
     <p class="ground"><b>Built for dealer and distributor sales in Indian B2B</b> (FMCG, building materials, pharma), where every deal runs through schemes, discounts and dealer credit.</p>
     <p class="ground">Informed by the ownership buckets, approval queues and ageing MIS I worked with at HDFC Bank.</p>
-    <p class="ground">Deals stall between the rep and the approver. Ten Today freezes the follow-up, puts the clock on the approver, and gives them the three numbers to decide in seconds: ask, margin floor and the customer's overdue balance.</p>
-    <p style="margin:18px 0 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center"><a class="cta" href="app.html">Try the product →</a><span style="font-size:.85rem;color:#6B6460">Act as a rep, the sales manager or the sales head. Every rule is enforced.</span></p>
   </div>
-  <a class="mini-ph" href="app.html" aria-label="Open the product">
+  <a class="mini-ph" href="#live" aria-label="Open the product">
     <p class="ph-hi" style="margin:0 0 8px">The case study's worked example</p>
     <ul class="ph-list" style="padding:0">
       <li class="tk"><div class="tk-h"><b>Follow up quote</b><span class="pp pp-p1">P1</span></div><p>ABC Corp · ₹2L · 5 days past target</p></li>
@@ -46,7 +44,7 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
       <li class="tk"><div class="tk-h"><b>Qualify lead</b><span class="pp pp-p3">P3</span></div><p>Mahesh Electronics · ₹50L · due today; value doesn't lift it</p></li>
       <li class="tk"><div class="tk-h"><b>Callback</b><span class="pp pp-pi">16:00</span></div><p>Patil Traders · customer's time, pinned</p></li>
     </ul>
-    <div class="foot2"><span class="pp pp-ok">18 / 18 UAT passing</span><span>Open →</span></div>
+    <div class="foot2"><span class="pp pp-ok">18 / 18 UAT passing</span><span>See it live ↓</span></div>
   </a></div>
 
   <div class="flow" aria-label="From 100 records to 10 actions">
@@ -60,26 +58,25 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
     <li><a href="#life"><b>Workflow &amp; state design</b><span>How a task lives and ends</span></a></li>
     <li><a href="#rank"><b>Prioritisation rules</b><span>One explicit sort order</span></a></li>
     <li><a href="cockpit.html?uat=1"><b>Edge cases &amp; UAT</b><span>18 tests you can run</span></a></li>
-    <li><a href="https://everyrupee-o2c.vercel.app/route.html"><b>Where the discount ends up</b><span>One approval, followed into finance</span></a></li>
+    
     <li><a href="#scope"><b>MVP scoping</b><span>What ships first, what waits</span></a></li>
     <li><a href="#metric"><b>Metrics &amp; guardrails</b><span>On time against the original target</span></a></li>
   </ol>
 </header>
-<section class="wrap" aria-labelledby="live"><h2 id="live">Live demo</h2>
-<p style="max-width:720px">This is the product itself, running below. Play the 60-second tour, or click around as a rep, the sales manager or the sales head.</p>
+<section class="wrap" aria-labelledby="live" style="padding-top:36px"><h2 id="live">Live demo</h2>
+<p style="max-width:720px">The product itself, running below. Act as a rep, the sales manager or the sales head; every rule is enforced.</p>
 <p style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px"><button type="button" class="cta" id="play-tour" style="cursor:pointer;border:0">▶ Play the 60-second tour here</button><a href="app.html" style="align-self:center;font-weight:600">Open full screen ↗</a></p>
 <iframe id="live-demo" src="app.html" title="Ten Today live demo" loading="lazy" style="width:100%;height:min(780px,85vh);border:1px solid #ECE7E1;border-radius:16px;background:#fff"></iframe>
 <script>document.getElementById('play-tour').addEventListener('click',function(){var f=document.getElementById('live-demo');f.src='app.html?tour=1&t='+Date.now();f.scrollIntoView({behavior:'smooth',block:'start'});});</script>
 </section>
 <section class="wrap" aria-labelledby="pains"><h2 id="pains">Three problems the product handles</h2>
 <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
-<div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Cherry-picking</b><p style="margin:6px 0 0;font-size:.92rem">Reps call the easy dealers first. Today ranks by days past target and money-blocking stage. Deal size only breaks ties, and a reschedule keeps ageing from the original date.</p></div>
+<div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Cherry-picking</b><p style="margin:6px 0 0;font-size:.92rem">Reps call the easy dealers first. The ranking puts what's late and what's blocking money on top, and moving a task doesn't reset its age.</p></div>
 <div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Discounts stuck with the approver</b><p style="margin:6px 0 0;font-size:.92rem">An ask freezes the rep's task and goes to the person allowed to decide it. If it isn't decided within a day, it escalates to the sales head. Dealers over their credit limit or credit days need a written override.</p></div>
 <div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Scheme leakage</b><p style="margin:6px 0 0;font-size:.92rem">A live slab scheme applies without an ask. Creating one needs a second person (maker-checker), which is the control KPMG lists as missing where schemes leak.</p></div>
 </div>
 <h2 style="margin-top:26px">Connected to Every Rupee, in both directions</h2>
 <p style="max-width:760px">The two are separate products, so they exchange a small versioned record (contract v1) in the link, and each side rejects anything malformed. An approved discount goes to finance with <b>Send to finance</b>, and Every Rupee checks the customer's short payment against <i>that</i> cap. A short payment with no approval comes back to the rep's Today as a recovery task. There's no server and no live sync: one record per link.</p>
-<p><a class="cta" href="app.html">Try it: approve a discount, then send it to finance →</a></p>
 </section>
 
 <section class="wrap" id="why" style="padding-top:8px">
@@ -87,9 +84,9 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
   <div class="wwh-grid">
     <div class="wwh-c"><b>Why: the problem</b><p>On a phone, a list of everything is a list of nothing. The quote going cold looks exactly like the 40 records around it.</p></div>
     <div class="wwh-c"><b>When: the trigger</b><p>A workflow event: a new lead, a quote sent, an approval needed, a callback agreed.<br><span class="mini">Today</span>it joins 100+ open records.<br><span class="mini">Proposed</span>it becomes a task with a target and a reason.</p></div>
-    <div class="wwh-c"><b>How: the design</b><ol><li>Tasks come from workflow events</li><li>Today shows only 10, ranked by rules</li><li>Tasks close when the stage moves</li><li>Managers see exceptions, not activity</li></ol></div>
+    <div class="wwh-c"><b>How: the design</b><ol><li>Tasks come from workflow events</li><li>Tasks close when the stage moves</li><li>Managers see exceptions, not activity</li></ol></div>
   </div>
-  <p style="margin:16px 0 8px"><a class="cta" href="cockpit.html">Open the executable specification →</a></p>
+  
 </section>
 
 <section class="wrap" style="padding-top:8px">
