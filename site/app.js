@@ -8,7 +8,7 @@ const inr = n => '₹' + Number(n).toLocaleString('en-IN');
 const fmt = d => new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const time = t => new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-let w, actor = 'Rahul', panel = null, result = null, flashId = null;
+let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
 
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.w && s.w.today === realToday) { w = s.w; actor = s.actor || actor; return; } } catch { /* storage unavailable */ }
@@ -36,6 +36,17 @@ function renderActors() {
   }).join('');
 }
 function switchTo(n) { actor = n; result = null; panel = null; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+/* ---------- sealed record: visible on every screen ---------- */
+function renderSeal() {
+  const el = $('#seal'); const v = E.verifyChain(w); const n = w.chain.length;
+  const res = sealRes ? (sealRes.ok ? `<div class="res ok">✓ All ${sealRes.count} entries intact. Every fingerprint was recomputed just now and matches.</div>` : `<div class="res no">✗ Entry ${sealRes.brokenAt} was changed after it was recorded: “${esc(sealRes.entry.text)}”. Its fingerprint no longer matches, so it and everything after it can't be trusted.</div>`) : '';
+  el.className = 'seal' + (sealRes && !sealRes.ok ? ' bad' : '');
+  el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record</b> · ${n} entr${n === 1 ? 'y' : 'ies'} · latest fingerprint <code>${n ? esc(w.chain.at(-1).hash.slice(0, 12)) : '—'}</code></div>
+    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the edit' : 'Simulate an insider edit'}</button><button class="btn" type="button" data-seal="view">${sealOpen ? 'Hide' : 'Show'} entries</button></div></div>
+    <p class="hint" style="margin:0">Every ask, approval, counter, hand-over and order is fingerprinted (SHA-256) together with the entry before it. Change or backdate any entry and verification fails. This proves the record wasn't altered; it doesn't prove a decision was right. Not a blockchain: one company keeps it.</p>
+    ${res}${sealOpen ? `<ol class="chain">${w.chain.slice().reverse().map(e => `<li class="${!v.ok && e.n >= v.brokenAt ? 'x' : ''}"><b>#${e.n}</b> ${esc(E.label(e.who))}: ${esc(e.text)} <code>${esc(e.hash.slice(0, 10))}</code> ← <code>${esc(e.prev.slice(0, 10))}</code></li>`).join('')}</ol>` : ''}`;
+}
 
 /* ---------- do this next ---------- */
 function renderNext() {
@@ -120,7 +131,7 @@ function managerDesk() {
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
         ${others.length ? `<p class="more">${others.length} other ask(s) waiting for ${others.map(a => esc(E.label(a.approver))).join(', ')}.</p>` : ''}
       </div>
-      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
+      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
     </div>
     <div class="side">
       <div class="card" id="team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
@@ -132,6 +143,12 @@ function managerDesk() {
           <p class="hint">Original target is kept, so a moved task doesn't look newer. Tasks waiting on a discount can't be moved.</p>
         </div>
       </div>
+      ${E.person(actor).senior ? '' : (() => { const d = (w.delegations ?? []).find(x => x.from === actor); const subs = E.PEOPLE.filter(p => p.approver && p.name !== actor); return `<div class="card" id="leave"><h2>Going on leave?</h2><p class="sub">Hand your approvals to a stand-in for set dates. Every decision is logged as “acting for ${esc(actor)}”, with the same limits.</p>${d ? `<div class="wait">Handed to <b>${esc(E.label(d.to))}</b> from ${fmt(d.start)} to ${fmt(d.end)}. <button class="btn link" data-leave="end" type="button">End it now</button></div>` : `<div class="row"><label>Stand-in<select id="l-to">${subs.map(p => `<option value="${p.name}">${esc(E.label(p.name))}</option>`).join('')}</select></label><label>From<input type="date" id="l-from" value="${w.today}"></label><label>To<input type="date" id="l-end" value="${E.addDays(w.today, 3)}"></label></div><button class="btn" data-leave="go" type="button" style="margin-top:8px">Hand over</button><div id="l-err"></div>`}</div>`; })()}
+      ${(() => { const e = E.effectiveness(w); return `<div class="card" id="eff"><h2>Do discounts win deals?</h2><p class="sub">Last quarter plus every order and loss recorded here (${e.n} deals). Discount use, not rep scoring.</p><div class="metric"><div><b>${e.withDisc ?? '–'}%</b><span>won with a discount</span></div><div><b>${e.without ?? '–'}%</b><span>won without one</span></div></div><table style="margin-top:10px"><thead><tr><th>Rep</th><th>Deals</th><th>Discounted</th><th>Avg %</th><th>Won w/ disc.</th><th>Won w/o</th></tr></thead><tbody>${e.by.map(r => `<tr><td>${esc(r.rep)}</td><td>${r.deals}</td><td>${r.discounted}</td><td>${r.avgPct ?? '–'}</td><td>${r.withDisc ?? '–'}%</td><td>${r.without ?? '–'}%</td></tr>`).join('')}</tbody></table></div>`; })()}
+      <div class="card" id="data"><h2>Your data</h2><p class="sub">Import dealers or open tasks from CSV. A file with any bad row is rejected whole, with the line numbers. Export approvals and orders with their fingerprints.</p>
+        <div class="row"><label>Dealers CSV<input type="file" accept=".csv,text/csv" id="imp-dealers"></label><label>Tasks CSV<input type="file" accept=".csv,text/csv" id="imp-tasks"></label></div>
+        <p class="hint" style="margin-top:6px">Dealer columns: ${E.DEALER_COLS.join(', ')} · Task columns: ${E.TASK_COLS.join(', ')} · <button class="btn link" data-tpl="dealers" type="button">dealer template</button> · <button class="btn link" data-tpl="tasks" type="button">task template</button></p>
+        <div class="row" style="margin-top:6px"><button class="btn" data-exp="approvals" type="button">Export approvals</button><button class="btn" data-exp="orders" type="button">Export orders</button></div><div id="imp-res"></div></div>
       <div class="card" id="schemes"><h2>Schemes</h2><p class="sub">A live slab applies without an ask. A new scheme needs a second person to approve it.</p>
         <ul class="mini">${(w.schemes ?? []).map(sc => `<li><b>${sc.id}</b> · ${esc(sc.name)} <span class="chip ${sc.status === 'active' ? 'st-ok' : 'st-frozen'}">${sc.status === 'active' ? 'Live' : 'Waiting for approval'}</span><br><small class="hint">by ${esc(sc.maker)}${sc.checker ? `, approved by ${esc(sc.checker)}` : ''}</small>${sc.status === 'pending' ? (sc.maker === actor ? '<br><span class="hint">You proposed it, so someone else must approve it.</span>' : `<br><button class="btn" style="margin-top:4px" data-sch="${sc.id}" type="button">Approve ${sc.id}</button>`) : ''}</li>`).join('')}</ul>
         <div class="box" style="margin-top:10px"><b>Propose a scheme</b><div class="row"><label style="flex:1">Name<input id="s-name" maxlength="60" placeholder="e.g. Festive slab 2%"></label><label>Min order (₹)<input id="s-min" type="number" value="100000" style="width:120px"></label><label>%<input id="s-pct" type="number" step="0.5" value="2" style="width:70px"></label></div><button class="btn" id="s-go" type="button">Propose</button><div id="s-err"></div></div>
@@ -150,15 +167,18 @@ function renderPanel() {
   const tabs = [];
   if (mine && t.status === 'open') tabs.push(['done', '✓ Done'], ['move', 'Reschedule'], ['hold', 'On hold']);
   const scheme = (w.schemes ?? []).find(x => x.status === 'active' && t.value >= x.minValue);
-  if (mine && t.status === 'open' && ['Quote sent', 'Negotiation'].includes(t.stage)) { if (scheme && !t.scheme) tabs.push(['scheme', 'Apply scheme']); tabs.push(['ask', 'Ask discount']); }
+  if (mine && t.status === 'open' && ['Quote sent', 'Negotiation'].includes(t.stage)) { tabs.push(['order', 'Place order']); if (scheme && !t.scheme) tabs.push(['scheme', 'Apply scheme']); if (!(a && a.status === 'approved' && !a.used)) tabs.push(['ask', 'Ask discount']); tabs.push(['lost', 'Deal lost']); }
+  const al = E.allowedPct(w, t);
   if (mine && a?.status === 'countered') tabs.unshift(['counter', 'Answer counter']);
   if (!panel.tab || !tabs.some(x => x[0] === panel.tab)) panel.tab = tabs[0]?.[0] ?? null;
   const tomorrow = E.addDays(w.today, 1);
   const forms = {
-    done: `<label>What happened? (one line)<input id="f-out" maxlength="160" placeholder="e.g. Spoke to owner; sending the quote today"></label><label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="f-moved" ${t.stage !== 'Order placed' ? '' : 'disabled'}> The deal moved to the next stage${E.STAGES[E.STAGES.indexOf(t.stage) + 1] ? ` (${E.STAGES[E.STAGES.indexOf(t.stage) + 1]})` : ''}: create the next task</label><button class="btn pri" data-do="done" type="button">Mark done</button>`,
+    done: `<label>What happened? (one line)<input id="f-out" maxlength="160" placeholder="e.g. Spoke to owner; sending the quote today"></label><label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="f-moved" ${t.stage === 'Negotiation' || t.kind === 'recovery' ? 'disabled' : ''}> The deal moved to the next stage${E.STAGES[E.STAGES.indexOf(t.stage) + 1] ? ` (${E.STAGES[E.STAGES.indexOf(t.stage) + 1]})` : ''}: create the next task</label><button class="btn pri" data-do="done" type="button">Mark done</button>`,
     move: `<div class="row"><label>New date<input type="date" id="f-date" min="${tomorrow}" value="${tomorrow}"></label><label style="flex:1">${t.reschedules.length ? 'What is blocking it? (required)' : 'Blocker (optional the first time)'}<input id="f-block" maxlength="120"></label></div><p class="hint">It keeps ageing from the original target (${fmt(t.due)}) wherever you move it.</p><button class="btn pri" data-do="move" type="button">Reschedule</button>`,
     hold: `<div class="row"><label style="flex:1">Why on hold?<input id="f-why" maxlength="120" placeholder="e.g. Customer budget frozen till month end"></label><label>Revisit on<input type="date" id="f-rev" min="${tomorrow}" value="${E.addDays(w.today, 7)}"></label></div><p class="hint">It comes back into Today by itself on the revisit date.</p><button class="btn pri" data-do="hold" type="button">Put on hold</button>`,
     ask: `<div class="row"><label>Discount (%)<input type="number" id="f-pct" min="0.5" max="30" step="0.5" value="8" style="width:100px"></label><label style="flex:1">Why does the customer need it?<input id="f-reason" maxlength="160" placeholder="e.g. Competitor quoted 9% lower"></label></div><p class="route" id="f-route"></p><p class="hint">Asking freezes this task until the approver decides. The clock moves to them.</p><button class="btn pri" data-do="ask" type="button">Send the ask</button>`,
+    order: `<div class="row"><label>Order value (₹)<input type="number" id="f-val" min="1" value="${t.value}" style="width:140px"></label><label>Discount given (% before GST)<input type="number" id="f-disc" min="0" step="0.5" value="${al.pct}" style="width:110px"></label></div><p class="hint">Allowed here: <b>${al.pct}%</b>${al.approval ? ` (${al.approval.capPct}% approved in ${al.approval.id}, valid to ${fmt(al.approval.validTo)}${al.approval.used ? ', already used' : ''})` : ' (nothing approved)'}${t.scheme ? ` + scheme ${t.scheme.pct}%` : ''}. Anything above is blocked. One approval covers one order.</p><button class="btn pri" data-do="order" type="button">Place order</button>`,
+    lost: `<label>Why was it lost?<input id="f-lost" maxlength="120" placeholder="e.g. Competitor 4% cheaper; customer delayed purchase"></label><p class="hint">Lost deals feed the discount-effectiveness view, so managers see whether discounts actually win deals.</p><button class="btn" data-do="lost" type="button">Mark as lost</button>`,
     scheme: scheme ? `<p><b>${scheme.id}</b> · ${esc(scheme.name)}</p><p class="hint">This order is ${inr(t.value)}, so it qualifies: ${scheme.pct}% before GST = <b>${inr(E.rupeesOff(t.value, scheme.pct))}</b>. The scheme is pre-approved, so no ask is needed.</p><button class="btn pri" data-do="scheme" data-s="${scheme.id}" type="button">Apply ${scheme.pct}%</button>` : '',
     counter: a?.status === 'countered' ? `<p>${esc(E.label(a.decidedBy))} offered <b>${a.capPct}%</b> instead of ${a.askPct}%, valid to ${fmt(a.validTo)}. “${esc(a.counterWhy)}”</p><div class="row"><button class="btn pri" data-do="accept" type="button">Accept ${a.capPct}%</button><button class="btn" data-do="decline" type="button">Decline</button></div>` : '',
   };
@@ -193,6 +213,8 @@ function panelAction(kind) {
   if (kind === 'move') act(() => E.reschedule(w, t.id, actor, v('#f-date'), v('#f-block')), 'Rescheduled.', () => ok(`✓ Moved to ${fmt(v('#f-date'))}. It's in “Coming up” and still ages from ${fmt(t.due)}.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'hold') act(() => E.putOnHold(w, t.id, actor, v('#f-why'), v('#f-rev')), 'On hold.', () => ok(`✓ On hold until ${fmt(v('#f-rev'))}. It returns to Today by itself then.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'scheme') { const sc = w.schemes.find(x => x.id === $('[data-do="scheme"]').dataset.s); act(() => E.applyScheme(w, t.id, actor, sc.id), 'Scheme applied.', () => ok(`✓ ${sc.id} applied: ${sc.pct}% before GST = ${inr(E.rupeesOff(t.value, sc.pct))} off. Pre-approved, so no ask was needed.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`)); }
+  if (kind === 'order') act(() => E.placeOrder(w, t.id, actor, Number(v('#f-val')), Number(v('#f-disc'))), 'Order placed.', out => ok(`✓ ${out.order.id} placed: ${inr(out.order.value)} at ${out.order.discountPct}% before GST (${inr(out.order.discountAmt)} off). Sealed as <code>${esc(out.order.seal.slice(0, 12))}</code>.${out.order.approvalId ? ` ${esc(out.order.approvalId)} is now used and can't cover another order.` : ''}<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
+  if (kind === 'lost') act(() => E.markLost(w, t.id, actor, v('#f-lost')), 'Marked lost.', () => ok('✓ Marked lost. It counts in the discount-effectiveness view.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>'));
   if (kind === 'resume') act(() => E.resume(w, t.id, actor), 'Back in Today.', () => ok('✓ Back in Today.'));
   if (kind === 'ask') act(() => E.askDiscount(w, t.id, actor, Number(v('#f-pct')), v('#f-reason')), 'Ask sent.', out => { const a = out.approvals.at(-1); ok(`✓ Sent ${a.id} to <b>${esc(E.label(a.approver))}</b>. This task is frozen until they decide, so it has left your Today.<div class="row"><button class="btn pri" data-actor="${a.approver}" type="button">See it as ${esc(a.approver)} →</button><button class="btn" data-close type="button">Back to Today</button></div>`); });
   if (kind === 'accept' || kind === 'decline') { const a = apvOf(t); act(() => E.respondCounter(w, a.id, actor, kind === 'accept'), kind === 'accept' ? 'Counter accepted.' : 'Counter declined.', () => ok(kind === 'accept' ? `✓ Accepted ${a.capPct}%. The task is back in Today: send the revised quote.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>` : '✓ Declined. The task is back in Today to negotiate without a discount.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>')); }
@@ -203,12 +225,12 @@ function decide(kind, id) {
   const run = { approve: () => E.approve(w, id, actor, Number(f('cap')), f('exp'), f('why')), counter: () => E.counter(w, id, actor, Number(f('cap')), f('exp'), f('why')), back: () => E.sendBack(w, id, actor, f('why')) }[kind];
   const text = { approve: `Approved ${f('cap')}% for ${a.customer}, valid to ${fmt(f('exp'))}.`, counter: `Offered ${f('cap')}% to ${a.rep} for ${a.customer}.`, back: `Sent ${a.customer}'s ask back to ${a.rep}.` }[kind];
   const sub = { approve: `${a.rep}'s task is unfrozen and back in Today as “send the revised quote”. Use “Send to finance” under Decided so Every Rupee checks payments against this cap.`, counter: `${a.rep} must accept or decline. Their task stays frozen until then.`, back: `${a.rep}'s task is back in Today with your note, so they can fix it and ask again.` }[kind];
-  try { w = run(); save(); toast(text); result = { text, sub, switchTo: a.rep }; flashId = a.taskId; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  try { w = run(); save(); toast(text); const sealed = w.approvals.find(x => x.id === id)?.seal; sealRes = null; result = { text: text + (kind === 'approve' && sealed ? ` Sealed as ${sealed.slice(0, 12)}.` : ''), sub, switchTo: a.rep }; flashId = a.taskId; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   catch (e) { let el = card.querySelector('.err'); if (!el) { el = document.createElement('div'); el.className = 'err'; el.setAttribute('role', 'alert'); card.prepend(el); } el.textContent = e.message; }
 }
 
 function render() {
-  renderActors(); renderNext();
+  renderActors(); renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
@@ -227,11 +249,20 @@ document.addEventListener('click', e => {
   if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; $('#mv-confirm').innerHTML = `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') return render();
+  if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { w = E.simulateTamper(w); save(); sealRes = null; toast('An old entry was edited quietly. Now verify.'); } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealRes = E.verifyChain(w); } if (b.dataset.seal === 'view') sealOpen = !sealOpen; return renderSeal(); }
+  if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
+  if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.id === 's-go') { try { w = E.proposeScheme(w, actor, $('#s-name').value, Number($('#s-min').value), Number($('#s-pct').value)); save(); const sc = w.schemes.at(-1); toast('Scheme proposed.'); result = { text: `${sc.id} proposed: ${sc.name}.`, sub: 'It is not usable until a second person approves it.', switchTo: actor === 'Kavita' ? 'Arjun' : 'Kavita' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#s-err').innerHTML = `<div class="err" role="alert" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.id === 'mv-yes') { try { w = E.rebalance(w, b.dataset.t, actor, b.dataset.to); save(); const t = w.tasks.find(x => x.id === b.dataset.t); toast('Task moved.'); result = { text: `Moved ${t.customer} to ${E.label(t.rep)}.`, sub: 'The original target is kept, so it keeps its place in their ranking.', switchTo: t.rep }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#mv-confirm').innerHTML = `<div class="err" role="alert">${esc(err.message)}</div><button type="button" class="btn" id="mv-no" style="margin-top:6px">OK</button>`; } }
 });
 document.addEventListener('input', e => { if (e.target.id === 'f-pct') routePreview(); });
+document.addEventListener('change', async e => {
+  if (!['imp-dealers', 'imp-tasks'].includes(e.target.id) || !e.target.files[0]) return;
+  const text = await e.target.files[0].text(); const out = $('#imp-res');
+  try { const r = e.target.id === 'imp-dealers' ? E.importDealers(w, text) : E.importTasks(w, text); w = r.w; save(); result = { text: `Imported ${r.count} ${e.target.id === 'imp-dealers' ? 'dealer(s)' : 'task(s)'}.`, sub: 'Credit checks and ranking now use your data.' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  catch (err) { out.innerHTML = `<div class="err" role="alert" style="margin-top:8px">${esc(err.message)}</div>`; e.target.value = ''; }
+});
 $('#panel').addEventListener('close', () => { panel = null; });
 
 load(); w = E.escalate(E.wakeHolds(w));
@@ -249,10 +280,11 @@ const TOUR = [
   { who: 'Rahul', k: 'Scheme, no ask', h: 'A live scheme applies by itself', p: 'Aarav’s ₹4.8L order qualifies for the 3% volume slab. Pre-approved, so it applies at once: ₹14,400 off before GST, logged.', run: () => { w = E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01'); }, open: 'T-101', at: () => $('#panel') },
   { who: 'Rahul', k: 'Discount ask', h: 'He asks for 6% more. The task freezes.', p: 'The ask goes to Kavita, who is allowed to decide up to 10% within the margin floor. Rahul’s task leaves Today; the clock is now on her.', run: () => { w = E.askDiscount(w, 'T-101', 'Rahul', 6, 'Rival quoted 7% lower'); }, at: () => document.querySelectorAll('#desk .side .card')[0] },
   { who: 'Kavita', k: 'The approver', h: 'Three numbers to decide', p: 'Kavita sees the ask in rupees before GST, the margin floor and the dealer’s credit. She can approve, counter or send back. She can’t decide her own asks.', at: () => [...document.querySelectorAll('.ask')].find(x => x.textContent.includes('Aarav')) },
-  { who: 'Kavita', k: 'Decision', h: 'Approved with a cap and an expiry', p: 'Rahul’s task comes back as “send the revised quote”. “Send to finance” passes this approval to Every Rupee, which checks the customer’s short payment against this exact cap.', run: () => { const a = w.approvals.find(x => x.taskId === 'T-101' && x.status === 'pending'); w = E.approve(w, a.id, 'Kavita', 6, E.addDays(w.today, 14)); }, at: () => document.querySelector('a[href*="every-rupee"]')?.closest('.card') },
+  { who: 'Kavita', k: 'Decision', h: 'Approved with a cap and an expiry', p: 'Rahul’s task comes back as “send the revised quote”. The decision is sealed in the record above. “Send to finance” passes it, fingerprint included, to Every Rupee, which checks the short payment against this exact cap.', run: () => { const a = w.approvals.find(x => x.taskId === 'T-101' && x.status === 'pending'); w = E.approve(w, a.id, 'Kavita', 6, E.addDays(w.today, 14)); }, at: () => document.querySelector('a[href*="every-rupee"]')?.closest('.card') },
   { who: 'Arjun', k: 'Controls', h: 'Nothing sits, nothing slips', p: 'An ask Kavita left for 2 days escalated to Arjun. A dealer past his credit days can only be approved with a written override, like a post-dated cheque.', at: () => $('#asks') },
+  { who: 'Arjun', k: 'Sealed record', h: 'Someone quietly edits an old approval', p: 'We changed an old entry the way an insider might, then verified. Its fingerprint no longer matches, so the record shows exactly which entry was altered. Rahul can’t claim 10% was approved when 6% was.', run: () => { w = E.simulateTamper(w); sealOpen = true; sealRes = null; }, after: () => { sealRes = E.verifyChain(w); renderSeal(); }, at: () => $('#seal') },
 ];
-let tStep = -1, tTimer = null, tPaused = false; const STEP_MS = 10000;
+let tStep = -1, tTimer = null, tPaused = false; const STEP_MS = 9000;
 const tourEl = Object.assign(document.createElement('div'), { id: 'tour' }); tourEl.setAttribute('role', 'dialog'); tourEl.setAttribute('aria-label', 'Guided tour'); document.body.append(tourEl);
 function tourShow(i) {
   clearTimeout(tTimer); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
@@ -261,6 +293,7 @@ function tourShow(i) {
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null; result = null;
   s.run?.(); actor = s.who; save(); render();
   if (s.open) { openTask(s.open); const d = $('#panel'); d.close(); d.show(); }
+  s.after?.();
   const t = s.at?.(); if (t) { t.classList.add('tour-hi'); if (!s.open) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   tourEl.innerHTML = `<p class="k">${i + 1} / ${TOUR.length} · ${s.k} · acting as ${esc(E.label(s.who))}</p><h3>${esc(s.h)}</h3><p>${esc(s.p)}</p><div class="bar2"><i></i></div><div class="ctl"><button type="button" data-t="exit">Exit</button><button type="button" data-t="pause">${tPaused ? 'Play' : 'Pause'}</button><button type="button" class="go" data-t="next">${i === TOUR.length - 1 ? 'Finish' : 'Next →'}</button></div>`;
   tourEl.classList.add('on');
@@ -270,7 +303,7 @@ function tourShow(i) {
 function tourEnd(finished) {
   clearTimeout(tTimer); tStep = -1; tourEl.classList.remove('on'); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null;
-  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; save();
+  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; sealRes = null; sealOpen = false; save();
   result = finished ? { text: 'That’s the loop. Your turn: the sample is fresh.', sub: 'Act as any of the four people. Every rule you saw is enforced here.' } : null;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }

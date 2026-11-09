@@ -10,6 +10,7 @@ export const PEOPLE = [
   { name: 'Rahul', role: 'Sales rep', rep: true },
   { name: 'Neha', role: 'Sales rep', rep: true },
   { name: 'Kavita', role: 'Sales manager', approver: true, manager: true },
+  { name: 'Sanjay', role: 'Area sales manager', approver: true, manager: true },
   { name: 'Arjun', role: 'Sales head', approver: true, manager: true, senior: true },
 ];
 export const person = n => PEOPLE.find(p => p.name === n);
@@ -72,9 +73,15 @@ export function sample(today) {
       'Royal Foods': { marginFloorPct: 10, creditLimit: 400000, outstanding: 50000, creditDays: 30, oldestBillDays: 5 },
       'Sunrise Medicals': { marginFloorPct: 9, creditLimit: 300000, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
     },
-    approvals: [],
+    approvals: [], orders: [], chain: [], delegations: [], lost: [],
+    // Last quarter's closed deals, so discount effectiveness has a baseline.
+    past: [
+      { rep: 'Rahul', pct: 8, won: true }, { rep: 'Rahul', pct: 10, won: false }, { rep: 'Rahul', pct: 9, won: false }, { rep: 'Rahul', pct: 7, won: true },
+      { rep: 'Rahul', pct: 0, won: true }, { rep: 'Rahul', pct: 0, won: false }, { rep: 'Rahul', pct: 12, won: false },
+      { rep: 'Neha', pct: 4, won: true }, { rep: 'Neha', pct: 0, won: true }, { rep: 'Neha', pct: 0, won: true }, { rep: 'Neha', pct: 5, won: true }, { rep: 'Neha', pct: 0, won: false },
+    ],
     schemes: [{ id: 'SCH-01', name: 'Volume slab: 3% on orders of ₹2,00,000+', minValue: 200000, pct: 3, status: 'active', maker: 'Kavita', checker: 'Arjun', log: [] }],
-    seq: { task: 300, apv: 31, sch: 1 },
+    seq: { task: 300, apv: 31, sch: 1, ord: 500 },
     audit: [],
   };
   // One ask is already waiting for Kavita, so her desk has work from the start.
@@ -155,6 +162,7 @@ export function complete(w0, id, actor, outcome, stageMoved) {
   task.status = 'done'; task.doneAt = w.today; task.outcome = outcome.trim();
   note(w, task, actor, `Done: ${outcome.trim()}${task.doneAt > task.due ? ` (${daysOver(w, task)} days after the original target)` : ' (on time)'}`);
   let next = null;
+  if (stageMoved && task.stage === 'Negotiation') fail('To close the deal, use Place order: it checks the discount against what was approved.');
   if (stageMoved && task.kind !== 'recovery') { next = spawnNext(w, task, actor); if (next) note(w, task, actor, `Stage moved to ${next.stage}. Next task ${next.id} created.`); else note(w, task, actor, 'Order placed. Nothing more for sales.'); }
   return { w, next };
 }
@@ -220,6 +228,8 @@ export function askDiscount(w0, id, actor, pct, reason) {
   w.approvals.push(a);
   task.status = 'frozen'; task.approvalId = a.id;
   a.log.push({ at: stamp(), who: actor, text: `Asked ${pct}%: ${a.reason}` });
+  const dg = activeDelegate(w, approver); if (dg) { a.approver = dg.to; a.actingFor = approver; }
+  record(w, actor, `Asked ${pct}% before GST for ${task.customer} (${task.id}), routed to ${a.approver}${a.actingFor ? ` acting for ${a.actingFor}` : ''}`, a.id);
   note(w, task, actor, `Asked ${label(approver)} for ${pct}% (${a.id}). Task frozen until they decide${why.length ? `. Routed to the sales head: ${why.join(', ')}` : ''}.`);
   return w;
 }
@@ -244,6 +254,7 @@ export function approve(w0, apvId, actor, capPct, validTo, overrideNote) {
   if (!validTo || validTo <= w.today) fail('Set an expiry date after today. Approvals never stay open forever.');
   Object.assign(a, { status: 'approved', capPct, validTo, decidedBy: actor, decidedOn: w.today, amount: rupeesOff(a.value, capPct), override: hold ? overrideNote.trim() : null });
   a.log.push({ at: stamp(), who: actor, text: `Approved ${capPct}% before GST (₹${a.amount.toLocaleString('en-IN')}), valid to ${validTo}${hold ? `. Credit hold overridden: ${overrideNote.trim()}` : ''}` });
+  a.seal = record(w, actor, `Approved ${capPct}% before GST for ${a.customer}, valid to ${validTo}${a.actingFor ? `, acting for ${a.actingFor}` : ''}${hold ? `, credit override: ${overrideNote.trim()}` : ''}`, a.id);
   const t = unfreeze(w, a, actor, `${a.id} approved: ${capPct}% before GST, valid to ${validTo}. Send the revised quote.`);
   t.title = `Send revised quote at ${capPct}% (${a.id})`;
   return w;
@@ -258,6 +269,7 @@ export function counter(w0, apvId, actor, capPct, validTo, why) {
   if (a.routedBecause.some(r => r.startsWith('credit hold'))) fail('This dealer is on credit hold. Approve with an override note, or send it back.');
   Object.assign(a, { status: 'countered', capPct, validTo, decidedBy: actor, counterWhy: why.trim(), amount: rupeesOff(a.value, capPct) });
   a.log.push({ at: stamp(), who: actor, text: `Countered at ${capPct}%: ${why.trim()}` });
+  record(w, actor, `Countered at ${capPct}% for ${a.customer}: ${why.trim()}`, a.id);
   const t = findTask(w, a.taskId); note(w, t, actor, `${a.id}: ${label(actor)} offered ${capPct}% instead of ${a.askPct}%. ${a.rep} to accept or decline.`);
   return w;
 }
@@ -267,10 +279,12 @@ export function respondCounter(w0, apvId, actor, accept) {
   if (actor !== a.rep) fail(`Only ${a.rep} can answer this counter-offer.`);
   if (accept) {
     a.status = 'approved'; a.decidedOn = w.today; a.log.push({ at: stamp(), who: actor, text: `Accepted ${a.capPct}%` });
+    a.seal = record(w, actor, `Accepted the ${a.capPct}% counter for ${a.customer}, valid to ${a.validTo}`, a.id);
     const t = unfreeze(w, a, actor, `Accepted ${a.capPct}% (${a.id}), valid to ${a.validTo}. Send the revised quote.`);
     t.title = `Send revised quote at ${a.capPct}% (${a.id})`;
   } else {
     a.status = 'declined'; a.log.push({ at: stamp(), who: actor, text: 'Declined the counter-offer' });
+    record(w, actor, `Declined the counter for ${a.customer}`, a.id);
     unfreeze(w, a, actor, `Declined ${a.capPct}%. Back to negotiating without a discount.`);
   }
   return w;
@@ -281,12 +295,13 @@ export function sendBack(w0, apvId, actor, why) {
   if (!why || !why.trim()) fail('Say what is missing, so the rep can fix it.');
   Object.assign(a, { status: 'sent_back', decidedBy: actor, counterWhy: why.trim() });
   a.log.push({ at: stamp(), who: actor, text: `Sent back: ${why.trim()}` });
+  record(w, actor, `Sent back ${a.customer}'s ask: ${why.trim()}`, a.id);
   unfreeze(w, a, actor, `${a.id} sent back by ${label(actor)}: ${why.trim()}. Fix it and ask again, or continue without a discount.`);
   return w;
 }
 /* What each approver must decide now. Senior sees everything routed to him. */
 export const decisionsFor = (w, actor) => w.approvals.filter(a => a.status === 'pending' && a.approver === actor);
-export const waitingDays = (w, a) => daysBetween(a.askedOn, w.today);
+export const waitingDays = (w, a) => workingDaysBetween(a.askedOn, w.today);
 
 /* ---------- manager: workload and rebalance ---------- */
 export function workload(w) {
@@ -299,6 +314,7 @@ export function workload(w) {
 export function rebalance(w0, id, actor, toRep) {
   const w = clone(w0); const task = findTask(w, id);
   if (!person(actor)?.manager) fail('Only a sales manager can move work between reps.');
+  if (task.kind === 'recovery') fail('Recovery tasks stay with the rep finance named.');
   if (!person(toRep)?.rep) fail('Work can only move to a sales rep.');
   if (task.status === 'frozen') fail('This task is waiting on a discount decision. It stays with the rep who asked.');
   if (task.status !== 'open') fail('Only open tasks can be moved.');
@@ -320,9 +336,10 @@ export function metrics(w) {
 /* An ask Kavita hasn't decided within SLA_DAYS moves to the sales head. Run on every load. */
 export function escalate(w0) {
   const w = clone(w0);
-  for (const a of w.approvals) if (a.status === 'pending' && a.approver !== 'Arjun' && daysBetween(a.askedOn, w.today) >= SLA_DAYS) {
+  for (const a of w.approvals) if (a.status === 'pending' && a.approver !== 'Arjun' && workingDaysBetween(a.askedOn, w.today) >= SLA_DAYS) {
     const from = a.approver; a.approver = 'Arjun'; a.escalated = true; a.routedBecause.push(`${from} did not decide within ${SLA_DAYS} day`);
-    a.log.push({ at: stamp(), who: 'System', text: `Escalated from ${label(from)} after ${daysBetween(a.askedOn, w.today)} days` });
+    a.log.push({ at: stamp(), who: 'System', text: `Escalated from ${label(from)} after ${workingDaysBetween(a.askedOn, w.today)} working days` });
+    record(w, 'System', `Escalated ${a.customer}'s ask from ${from} to Arjun`, a.id);
     note(w, findTask(w, a.taskId), 'System', `${a.id} escalated to the sales head: ${from} did not decide within ${SLA_DAYS} day.`);
   }
   return w;
@@ -373,7 +390,8 @@ export const EVERY_RUPEE = 'https://every-rupee-gets-owner.lovable.app/demo';
 export function financeLink(w, apvId) {
   const a = findApv(w, apvId);
   if (a.status !== 'approved') fail('Only approved discounts go to finance.');
-  return `${EVERY_RUPEE}?apv=${enc({ v: 1, id: a.id, customer: a.customer, rep: a.rep, approver: a.decidedBy, capPct: a.capPct, validTo: a.validTo })}`;
+  const o = { v: 1, id: a.id, customer: a.customer, rep: a.rep, approver: a.decidedBy, capPct: a.capPct, validTo: a.validTo };
+  return `${EVERY_RUPEE}?apv=${enc({ ...o, seal: contractSeal(o) })}`;
 }
 /* A short payment finance handed back to the rep arrives as a recovery task. Same link twice = same task. */
 export function importRecovery(w0, token) {
@@ -389,4 +407,173 @@ export function importRecovery(w0, token) {
   const task = { id, rep: o.rep, customer: o.customer.trim(), stage: 'Recovery', kind: 'recovery', source: o.invoiceId, title: `Recover ₹${Number(o.short).toLocaleString('en-IN')} on ${o.invoiceId}, or get it approved`, due: w.today, target: w.today, value: Number(o.short), status: 'open', reschedules: [], hold: null, approvalId: null, log: [] };
   w.tasks.push(task); note(w, task, 'System', `Sent from Every Rupee: ${o.customer} paid ₹${Number(o.short).toLocaleString('en-IN')} short on ${o.invoiceId} with no sales approval.`);
   return { w, task, fresh: true };
+}
+
+/* ---------- tamper-evident record (a hash chain, not a blockchain) ---------- */
+/* Compact synchronous SHA-256 so the engine stays pure and testable. Input is UTF-8 encoded first. */
+export function sha256(str) {
+  const ascii = unescape(encodeURIComponent(str));
+  const rr = (v, a) => (v >>> a) | (v << (32 - a)); const maxWord = 2 ** 32; let result = '';
+  const words = []; const bitLen = ascii.length * 8; let hash = []; const k = [];
+  let pc = 0; const comp = {};
+  for (let c = 2; pc < 64; c++) { if (!comp[c]) { for (let i = 0; i < 313; i += c) comp[i] = c; hash[pc] = (c ** 0.5 * maxWord) | 0; k[pc++] = (c ** (1 / 3) * maxWord) | 0; } }
+  hash = hash.slice(0, 8); let m = ascii + '\x80'; while (m.length % 64 - 56) m += '\x00';
+  for (let i = 0; i < m.length; i++) words[i >> 2] |= m.charCodeAt(i) << ((3 - i) % 4) * 8;
+  words[words.length] = (bitLen / maxWord) | 0; words[words.length] = bitLen;
+  for (let j = 0; j < words.length;) {
+    const W = words.slice(j, j += 16); const old = hash; hash = hash.slice(0, 8);
+    for (let i = 0; i < 64; i++) {
+      const w15 = W[i - 15], w2 = W[i - 2], a = hash[0], e = hash[4];
+      const t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ (~e & hash[6])) + k[i] + (W[i] = i < 16 ? W[i] : (W[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + W[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+      const t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(t1 + t2) | 0].concat(hash); hash[4] = (hash[4] + t1) | 0;
+    }
+    for (let i = 0; i < 8; i++) hash[i] = (hash[i] + old[i]) | 0;
+  }
+  for (let i = 0; i < 8; i++) for (let j = 3; j + 1; j--) { const b = (hash[i] >> (j * 8)) & 255; result += (b < 16 ? '0' : '') + b.toString(16); }
+  return result;
+}
+const entryHash = e => sha256(JSON.stringify({ n: e.n, at: e.at, who: e.who, text: e.text, ref: e.ref, prev: e.prev }));
+/* Every approval decision is appended with the fingerprint of the entry before it. Returns the new hash. */
+export function record(w, who, text, ref) {
+  const prev = w.chain.length ? w.chain.at(-1).hash : 'GENESIS';
+  const e = { n: w.chain.length + 1, at: stamp(), who, text, ref: ref ?? null, prev };
+  e.hash = entryHash(e); w.chain.push(e); return e.hash;
+}
+/* Recompute every fingerprint. Any edit, deletion, reorder or backdating breaks the chain from that entry on. */
+export function verifyChain(w) {
+  let prev = 'GENESIS';
+  for (let i = 0; i < w.chain.length; i++) {
+    const e = w.chain[i];
+    if (e.n !== i + 1 || e.prev !== prev || entryHash(e) !== e.hash) return { ok: false, brokenAt: i + 1, entry: e };
+    prev = e.hash;
+  }
+  return { ok: true, count: w.chain.length, head: prev };
+}
+/* Demo only: quietly edit an old entry the way an insider might, without re-sealing it. */
+export function simulateTamper(w0) {
+  const w = clone(w0); const e = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0];
+  if (!e) fail('Nothing recorded yet.');
+  w.tampered = { n: e.n, original: e.text }; e.text = e.text.replace(/(\d+(\.\d+)?)%/, (m, n) => `${Number(n) + 4}%`);
+  return w;
+}
+export function undoTamper(w0) { const w = clone(w0); if (w.tampered) { w.chain[w.tampered.n - 1].text = w.tampered.original; delete w.tampered; } return w; }
+/* The fingerprint carried to Every Rupee: the receiver recomputes it from the fields it received. */
+export const contractSeal = o => sha256(JSON.stringify([o.v, o.id, o.customer, o.rep, o.approver, o.capPct, o.validTo]));
+
+/* ---------- working days: Sundays and national holidays don't count against an approver ---------- */
+export const HOLIDAYS = ['2026-01-26', '2026-03-04', '2026-08-15', '2026-10-02', '2026-10-20', '2026-11-08', '2026-12-25'];
+export const isWorkingDay = d => { const [y, m, dd] = d.split('-').map(Number); return new Date(y, m - 1, dd).getDay() !== 0 && !HOLIDAYS.includes(d); };
+export function workingDaysBetween(a, b) { let n = 0; for (let d = addDays(a, 1); d <= b; d = addDays(d, 1)) if (isWorkingDay(d)) n++; return n; }
+
+/* ---------- leave and delegation ---------- */
+export function activeDelegate(w, name) { return (w.delegations ?? []).find(d => d.from === name && d.start <= w.today && w.today <= d.end) ?? null; }
+export function delegate(w0, actor, to, start, end) {
+  const w = clone(w0);
+  if (!person(actor)?.approver || person(actor).senior) fail('Only a manager who approves discounts can hand over their approvals.');
+  if (!person(to)?.approver) fail('Hand over to someone who can approve discounts.');
+  if (to === actor) fail('Pick someone else.');
+  if (!start || !end || end < start) fail('Set a start and an end date.');
+  if (end < w.today) fail('The end date has passed.');
+  if (daysBetween(start, end) > 30) fail('Hand over for 30 days at most; longer needs a role change, not a delegation.');
+  if (activeDelegate(w, to)?.to === actor) fail(`${to} has already handed over to you. That would loop.`);
+  w.delegations = (w.delegations ?? []).filter(d => d.from !== actor);
+  w.delegations.push({ from: actor, to, start, end });
+  let moved = 0;
+  if (start <= w.today) for (const a of w.approvals) if (a.status === 'pending' && a.approver === actor) { a.approver = to; a.actingFor = actor; moved++; a.log.push({ at: stamp(), who: 'System', text: `Moved to ${to}: ${actor} is away` }); }
+  record(w, actor, `Handed approvals to ${to} from ${start} to ${end}${moved ? ` (${moved} waiting ask moved)` : ''}`, null);
+  return { w, moved };
+}
+export function endDelegation(w0, actor) {
+  const w = clone(w0); if (!activeDelegate(w, actor) && !(w.delegations ?? []).some(d => d.from === actor)) fail('No hand-over to end.');
+  w.delegations = w.delegations.filter(d => d.from !== actor); record(w, actor, 'Back: ended the approval hand-over', null); return w;
+}
+
+/* ---------- placing the order: the discount given can't exceed what was approved ---------- */
+export function allowedPct(w, task) {
+  const a = w.approvals.find(x => x.id === task.approvalId && x.status === 'approved');
+  return { approval: a ?? null, pct: (a && !a.used ? a.capPct : 0) + (task.scheme?.pct ?? 0) };
+}
+export function placeOrder(w0, id, actor, orderValue, discountPct) {
+  const w = clone(w0); const task = findTask(w, id); mustBeRep(task, actor);
+  if (task.status !== 'open' || !BLOCKING.includes(task.stage)) fail('Orders are placed from an open quote or negotiation.');
+  if (!(orderValue > 0)) fail('Enter the order value.');
+  if (!(discountPct >= 0)) fail('Enter the discount given (0 if none).');
+  const { approval, pct } = allowedPct(w, task);
+  if (approval?.used) fail(`${approval.id} was already used on order ${approval.orderId}. One approval covers one order.`);
+  if (approval && approval.validTo < w.today) fail(`${approval.id} expired on ${approval.validTo}. Ask again before booking the order.`);
+  if (discountPct > pct + 1e-9) fail(`You can give at most ${pct}% here (${approval ? `${approval.capPct}% approved` : 'nothing approved'}${task.scheme ? ` + ${task.scheme.pct}% scheme` : ''}). Book at ${pct}% or ask again.`);
+  const ord = { id: `ORD-${++w.seq.ord}`, taskId: id, rep: actor, customer: task.customer, value: orderValue, discountPct, discountAmt: rupeesOff(orderValue, discountPct), approvalId: approval?.id ?? null, scheme: task.scheme?.id ?? null, on: w.today };
+  w.orders.push(ord);
+  if (approval) { approval.used = true; approval.orderId = ord.id; }
+  task.status = 'done'; task.doneAt = w.today; task.outcome = `Order ${ord.id} placed at ${discountPct}%`; task.stage = 'Order placed';
+  note(w, task, actor, `Order ${ord.id}: ₹${orderValue.toLocaleString('en-IN')} at ${discountPct}% before GST (₹${ord.discountAmt.toLocaleString('en-IN')} off)${approval ? `, within ${approval.id}` : ''}.`);
+  ord.seal = record(w, actor, `Order ${ord.id} for ${task.customer}: ₹${orderValue.toLocaleString('en-IN')} at ${discountPct}%${approval ? ` under ${approval.id}` : ''}`, ord.id);
+  return { w, order: ord };
+}
+export function markLost(w0, id, actor, reason) {
+  const w = clone(w0); const task = findTask(w, id); mustBeRep(task, actor);
+  if (task.status !== 'open' || !BLOCKING.includes(task.stage)) fail('Only an open quote or negotiation can be marked lost.');
+  if (!reason || !reason.trim()) fail('Say why it was lost (price, competitor, timing…).');
+  const a = w.approvals.find(x => x.id === task.approvalId && x.status === 'approved');
+  w.lost.push({ rep: actor, customer: task.customer, pct: a?.capPct ?? 0, reason: reason.trim(), on: w.today });
+  task.status = 'done'; task.doneAt = w.today; task.outcome = `Lost: ${reason.trim()}`;
+  note(w, task, actor, `Deal lost: ${reason.trim()}`); record(w, actor, `Deal lost for ${task.customer}${a ? ` despite ${a.capPct}% approved` : ''}: ${reason.trim()}`, task.id);
+  return w;
+}
+/* Did discounts buy deals? Past quarter plus everything closed here. */
+export function effectiveness(w) {
+  const rows = [...(w.past ?? []), ...w.orders.map(o => ({ rep: o.rep, pct: o.discountPct, won: true })), ...(w.lost ?? []).map(l => ({ rep: l.rep, pct: l.pct, won: false }))];
+  const rate = r => (r.length ? Math.round(100 * r.filter(x => x.won).length / r.length) : null);
+  const by = PEOPLE.filter(p => p.rep).map(p => { const r = rows.filter(x => x.rep === p.name); const d = r.filter(x => x.pct > 0); return { rep: p.name, deals: r.length, discounted: d.length, withDisc: rate(d), without: rate(r.filter(x => !x.pct)), avgPct: d.length ? +(d.reduce((s, x) => s + x.pct, 0) / d.length).toFixed(1) : null }; });
+  return { by, withDisc: rate(rows.filter(x => x.pct > 0)), without: rate(rows.filter(x => !x.pct)), n: rows.length };
+}
+
+/* ---------- bring your own data: all-or-nothing CSV import, CSV export ---------- */
+const rowsOf = (text, cols) => {
+  const lines = String(text ?? '').replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) fail('The file needs a header row and at least one data row.');
+  const head = lines[0].split(',').map(h => h.trim().toLowerCase());
+  const missing = cols.filter(c => !head.includes(c)); if (missing.length) fail(`Missing column(s): ${missing.join(', ')}. Expected: ${cols.join(', ')}.`);
+  if (lines.length > 501) fail('Import at most 500 rows at a time.');
+  return lines.slice(1).map((l, i) => { const v = l.split(','); return { line: i + 2, get: c => (v[head.indexOf(c)] ?? '').trim() }; });
+};
+export const DEALER_COLS = ['customer', 'credit_limit', 'outstanding', 'credit_days', 'oldest_bill_days', 'margin_floor_pct'];
+export const TASK_COLS = ['rep', 'customer', 'stage', 'due', 'value'];
+export function importDealers(w0, text) {
+  const w = clone(w0); const errs = []; const out = {};
+  for (const r of rowsOf(text, DEALER_COLS)) {
+    const name = r.get('customer'); const n = c => Number(r.get(c));
+    if (!name || name.length > 80) errs.push(`Line ${r.line}: customer name missing`);
+    for (const c of DEALER_COLS.slice(1)) if (!(n(c) >= 0) || r.get(c) === '') errs.push(`Line ${r.line}: ${c} must be a number ≥ 0`);
+    if (n('margin_floor_pct') > 50) errs.push(`Line ${r.line}: margin_floor_pct over 50`);
+    if (out[name]) errs.push(`Line ${r.line}: ${name} appears twice`);
+    out[name] = { marginFloorPct: n('margin_floor_pct'), creditLimit: n('credit_limit'), outstanding: n('outstanding'), creditDays: n('credit_days'), oldestBillDays: n('oldest_bill_days') };
+  }
+  if (errs.length) fail(`Nothing imported. Fix these first: ${errs.slice(0, 5).join('; ')}${errs.length > 5 ? ` (+${errs.length - 5} more)` : ''}.`);
+  Object.assign(w.customers, out); w.audit.push({ at: stamp(), who: 'Import', text: `${Object.keys(out).length} dealer(s) imported` });
+  return { w, count: Object.keys(out).length };
+}
+export function importTasks(w0, text) {
+  const w = clone(w0); const errs = []; const add = [];
+  for (const r of rowsOf(text, TASK_COLS)) {
+    const rep = r.get('rep'), stage = r.get('stage'), due = r.get('due'), value = Number(r.get('value')), customer = r.get('customer');
+    if (!person(rep)?.rep) errs.push(`Line ${r.line}: rep must be one of ${PEOPLE.filter(p => p.rep).map(p => p.name).join(', ')}`);
+    if (!customer) errs.push(`Line ${r.line}: customer missing`);
+    if (!NEXT_STEP[stage]) errs.push(`Line ${r.line}: stage must be one of ${Object.keys(NEXT_STEP).join(', ')}`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) errs.push(`Line ${r.line}: due must be yyyy-mm-dd`);
+    if (!(value > 0)) errs.push(`Line ${r.line}: value must be above 0`);
+    add.push({ rep, customer, stage, due, value });
+  }
+  if (errs.length) fail(`Nothing imported. Fix these first: ${errs.slice(0, 5).join('; ')}${errs.length > 5 ? ` (+${errs.length - 5} more)` : ''}.`);
+  for (const t of add) w.tasks.push({ id: `T-${++w.seq.task}`, rep: t.rep, customer: t.customer, stage: t.stage, title: NEXT_STEP[t.stage], due: t.due, target: t.due, value: t.value, status: 'open', reschedules: [], hold: null, approvalId: null, log: [{ at: stamp(), who: 'Import', text: 'Imported from CSV' }] });
+  w.audit.push({ at: stamp(), who: 'Import', text: `${add.length} task(s) imported` });
+  return { w, count: add.length };
+}
+const csvCell = v => { const x = String(v ?? ''); return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+export function exportCsv(w, kind) {
+  const rows = kind === 'orders'
+    ? [['order', 'customer', 'rep', 'value', 'discount_pct_before_gst', 'discount_rs', 'approval', 'scheme', 'date', 'seal'], ...w.orders.map(o => [o.id, o.customer, o.rep, o.value, o.discountPct, o.discountAmt, o.approvalId, o.scheme, o.on, o.seal])]
+    : [['approval', 'customer', 'rep', 'asked_pct', 'status', 'approved_pct_before_gst', 'approved_rs', 'valid_to', 'decided_by', 'acting_for', 'used_on_order', 'seal'], ...w.approvals.map(a => [a.id, a.customer, a.rep, a.askPct, a.status, a.capPct, a.status === 'approved' ? a.amount : '', a.validTo, a.decidedBy, a.actingFor, a.orderId, a.seal])];
+  return rows.map(r => r.map(csvCell).join(',')).join('\n');
 }

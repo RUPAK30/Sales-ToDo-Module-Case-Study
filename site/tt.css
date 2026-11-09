@@ -78,3 +78,13 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 #tour .bar2{height:4px;background:#44403C;border-radius:2px;margin:10px 0;overflow:hidden}#tour .bar2 i{display:block;height:100%;background:#FB923C;width:0}
 #tour .ctl{display:flex;gap:8px;justify-content:flex-end}#tour .ctl button{border:1px solid #57534E;background:transparent;color:#fff;border-radius:9px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:.84rem}#tour .ctl .go{background:#FB923C;border-color:#FB923C;color:#1C1917}
 @media(max-width:600px){.hide-m{display:none}}
+
+.seal{margin:12px 0 0;border:1px solid #D1FAE5;background:linear-gradient(180deg,#F0FDF4,#fff);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.seal.bad{border-color:#FECACA;background:linear-gradient(180deg,#FEF2F2,#fff)}
+.seal .top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.seal b.t{font-size:.95rem}.seal code{font:600 .78rem ui-monospace,Menlo,monospace;background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.seal .acts{display:flex;flex-wrap:wrap;gap:6px}.seal .acts .btn{padding:6px 10px;font-size:.8rem}
+.seal .res{border-radius:10px;padding:8px 10px;font-size:.86rem;font-weight:550}.seal .res.ok{background:#DCFCE7;color:#065F46}.seal .res.no{background:#FEE2E2;color:#991B1B}
+.chain{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-height:240px;overflow:auto}.chain li{font-size:.78rem;border-left:3px solid #86EFAC;padding:2px 8px;word-break:break-word}.chain li.x{border-color:#F87171;background:#FEF2F2}
+.chain code{font-size:.7rem}
+.sealchip{display:inline-block;font:600 .66rem ui-monospace,Menlo,monospace;background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;border-radius:6px;padding:1px 5px;vertical-align:1px}

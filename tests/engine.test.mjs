@@ -159,3 +159,48 @@ test('handoff v1: approved discounts go to finance; unapproved short payments co
   const done = E.complete(r.w, r.task.id, 'Rahul', 'Customer agreed to pay', true);
   assert.equal(done.next, null);
 });
+import { createHash } from 'node:crypto';
+test('sealed record: SHA-256 is correct, and any edit, deletion or reorder is caught', () => {
+  for (const s of ['', 'abc', '₹14,400 before GST']) assert.equal(E.sha256(s), createHash('sha256').update(s).digest('hex'));
+  let w = E.askDiscount(w0(), 'T-101', 'Rahul', 6, 'x'); w = E.approve(w, w.approvals.at(-1).id, 'Kavita', 6, E.addDays(D, 10));
+  assert.ok(E.verifyChain(w).ok); assert.equal(w.approvals.at(-1).seal, w.chain.at(-1).hash);
+  const t = E.simulateTamper(w); assert.equal(E.verifyChain(t).ok, false); assert.ok(E.verifyChain(E.undoTamper(t)).ok);
+  const del = structuredClone(w); del.chain.splice(1, 1); assert.equal(E.verifyChain(del).ok, false);
+  const swap = structuredClone(w); [swap.chain[0], swap.chain[1]] = [swap.chain[1], swap.chain[0]]; assert.equal(E.verifyChain(swap).ok, false);
+  const back = structuredClone(w); back.chain[2].at = '2026-01-01T00:00:00Z'; assert.equal(E.verifyChain(back).brokenAt, 3);
+  const o = JSON.parse(Buffer.from(new URL(E.financeLink(w, w.approvals.at(-1).id)).searchParams.get('apv'), 'base64url').toString());
+  assert.equal(o.seal, E.contractSeal(o)); assert.notEqual(o.seal, E.contractSeal({ ...o, capPct: 10 }));
+});
+test('order must match the approval: cap, expiry and one order per approval', () => {
+  let w = E.askDiscount(w0(), 'T-101', 'Rahul', 6, 'x'); w = E.approve(w, w.approvals.at(-1).id, 'Kavita', 6, E.addDays(D, 10));
+  assert.throws(() => E.complete(w, 'T-101', 'Rahul', 'closed', true), /Place order/);
+  assert.throws(() => E.placeOrder(w, 'T-101', 'Rahul', 480000, 8), /at most 6%/);
+  w = E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01');
+  const r = E.placeOrder(w, 'T-101', 'Rahul', 480000, 9); assert.equal(r.order.discountAmt, 43200); assert.ok(r.w.approvals.at(-1).used);
+  assert.throws(() => E.placeOrder(w0(), 'T-102', 'Rahul', 1000, 2), /nothing approved/);
+  const late = { ...w, today: E.addDays(D, 11) }; assert.throws(() => E.placeOrder(late, 'T-101', 'Rahul', 480000, 6), /expired/);
+  assert.match(E.exportCsv(r.w, 'orders'), /ORD-501,Aarav Distributors,Rahul,480000,9,43200/);
+});
+test('working days: Sunday and holidays do not count toward escalation', () => {
+  assert.equal(E.workingDaysBetween('2026-11-07', '2026-11-09'), 1); // Sat → Mon, Sun 8 Nov (also Diwali) skipped
+  const w = { ...w0(), today: '2026-11-08' }; w.approvals.forEach(a => { a.approver = 'Kavita'; a.escalated = false; a.askedOn = '2026-11-07'; a.status = 'pending'; });
+  assert.equal(E.decisionsFor(E.escalate(w), 'Arjun').length, 0);
+});
+test('delegation: approvals go to the stand-in, logged as acting for; limits still apply', () => {
+  assert.throws(() => E.delegate(w0(), 'Rahul', 'Sanjay', D, D), /Only a manager/);
+  assert.throws(() => E.delegate(w0(), 'Kavita', 'Sanjay', D, E.addDays(D, 40)), /30 days/);
+  const { w, moved } = E.delegate(w0(), 'Kavita', 'Sanjay', D, E.addDays(D, 3));
+  assert.equal(moved, 1); assert.equal(E.decisionsFor(w, 'Sanjay').length, 1);
+  const n = E.askDiscount(w, 'T-101', 'Rahul', 6, 'x'); assert.equal(n.approvals.at(-1).approver, 'Sanjay'); assert.equal(n.approvals.at(-1).actingFor, 'Kavita');
+  assert.throws(() => E.approve(n, n.approvals.at(-1).id, 'Sanjay', 11, E.addDays(D, 5)), /more than was asked|limit/);
+  assert.equal(E.decisionsFor(E.endDelegation(w, 'Kavita'), 'Kavita').length, 0);
+});
+test('discount effectiveness, lost deals and CSV import are all-or-nothing', () => {
+  const e = E.effectiveness(w0()); assert.equal(e.n, 12); assert.ok(e.without > e.withDisc);
+  const l = E.markLost(w0(), 'T-102', 'Rahul', 'Competitor cheaper'); assert.equal(E.effectiveness(l).n, 13);
+  assert.throws(() => E.importDealers(w0(), 'customer,credit_limit\nX,1'), /Missing column/);
+  assert.throws(() => E.importDealers(w0(), E.DEALER_COLS.join(',') + '\nA,1,2,30,5,10\nB,x,2,30,5,10'), /Nothing imported.*Line 3/);
+  assert.equal(E.importDealers(w0(), E.DEALER_COLS.join(',') + '\nNew Co,100,0,30,0,10').w.customers['New Co'].creditLimit, 100);
+  assert.throws(() => E.importTasks(w0(), E.TASK_COLS.join(',') + '\nKavita,A,New lead,2026-11-10,5'), /rep must be/);
+  assert.equal(E.importTasks(w0(), E.TASK_COLS.join(',') + '\nNeha,A,New lead,2026-11-10,5').count, 1);
+});
