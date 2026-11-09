@@ -15,7 +15,7 @@ Deals stall between the rep and the approver. Industry surveys suggest slow appr
 - **Discount ask:** freezes the task and routes it. Kavita takes up to 10% within the margin floor. The sales head takes anything above that, or any customer 30+ days overdue.
 - **Approver:** sees the ask, the margin floor and the overdue balance, then approves with a cap and an expiry, counters (the rep accepts or declines) or sends it back with a reason. Nobody decides their own ask, and nothing stays stuck.
 - **Manager:** sees the workload, and a move needs confirming first. Frozen tasks and tasks with an approved discount stay with their rep.
-- Every rule lives in `site/engine.js` and is tested in `tests/engine.test.mjs` (26 tests, `node --test tests/engine.test.mjs`), including approval escalation, dealer credit (limit and credit days), schemes with maker-checker and the Every Rupee handoff contract v1. Every action shows its result and the next step.
+- Every rule lives in `site/engine.js` and is tested in `tests/engine.test.mjs` (27 tests, `node --test tests/engine.test.mjs`), including approval escalation, dealer credit (limit and credit days), schemes with maker-checker and the Every Rupee handoff contract v1. Every action shows its result and the next step.
 
 **Also enforced:** a placed order can't carry more discount than was approved (cap plus scheme), an expired approval blocks the order, and one approval covers one order. Sundays and holidays don't count toward the approval deadline. A manager on leave hands approvals to a stand-in for set dates, logged as "acting for". Discount effectiveness shows win rate with and without discounts. CSV import of dealers and tasks is all-or-nothing, and approvals and orders export to CSV.
 

@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794244847';
+import * as E from './engine.js?v=1794245868';
 
 const KEY = 'tentoday-product-v3';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -9,13 +9,13 @@ const inr = n => '₹' + Number(n).toLocaleString('en-IN');
 const fmt = d => new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const time = t => new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-let sealEdit = 0; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
+let sealEdit = 0, signedIn = false; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
 
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; return; } } catch { /* storage unavailable */ }
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; signedIn = !!s.signedIn; return; } } catch { /* storage unavailable */ }
   w = E.sample(realToday);
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify({ w, actor })); } catch { /* fine without */ } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ w, actor, signedIn })); } catch { /* fine without */ } }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2600); }
 
 /* Run an engine action. On success: save, toast, re-render. On failure: show the engine's own words. */
@@ -31,12 +31,19 @@ const counters = rep => w.approvals.filter(a => a.status === 'countered' && a.re
 
 /* ---------- actor switch ---------- */
 function renderActors() {
-  $('#actors').innerHTML = E.PEOPLE.map(p => {
-    const n = p.rep ? E.today(w, p.name).list.length + counters(p.name).length : E.decisionsFor(w, p.name).length + E.transfersFor(w, p.name).length;
-    return `<button type="button" class="who ${p.name === actor ? 'on' : ''}" data-actor="${p.name}">${p.name} <small>${p.role}</small>${n ? `<span class="badge" title="${p.rep ? 'in Today' : 'waiting for a decision'}">${n}</span>` : ''}</button>`;
-  }).join('');
+  const p = E.person(actor);
+  $('#actors').innerHTML = signedIn ? `<span class="who on">${esc(actor)} <small>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</small></span><button type="button" class="btn link" id="signout">Sign out</button>` : '';
+  document.querySelector('.actor > span').textContent = signedIn ? 'Signed in as' : '';
+  document.querySelector('.actor').hidden = !signedIn;
 }
-function switchTo(n) { actor = n; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function renderSignIn() {
+  const badge = n => { const p = E.person(n); return p.rep ? E.today(w, n).list.length + counters(n).length : E.decisionsFor(w, n).length + E.transfersFor(w, n).length; };
+  $('#desk').innerHTML = `<section class="signin card"><h2>Sign in</h2><p class="sub">Demo accounts: no passwords, and your data stays in this browser. In the real product each person signs in with their company account and sees only their own desk. Nobody can switch to someone else's view.</p>
+    <div class="accts">${E.PEOPLE.map(p => `<button type="button" class="acct" data-signin="${p.name}"><b>${p.name}</b><span>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</span>${badge(p.name) ? `<i>${badge(p.name)} waiting</i>` : ''}</button>`).join('')}</div>
+    <p class="hint" style="margin-top:10px">New here? Press <b>▶ 60-second tour</b> at the top: it signs in as each person for you.</p></section>`;
+  $('#seal').hidden = true; $('#next').hidden = true;
+}
+function switchTo(n) { actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 /* ---------- sealed record: visible on every screen ---------- */
 function renderSeal() {
@@ -101,7 +108,7 @@ function renderNext() {
   if (result) {
     el.className = 'next' + (result.err ? '' : ' calm');
     el.innerHTML = result.err ? `<div><p class="k">Not allowed</p><p>${esc(result.err)}</p></div>` :
-      `<div><p class="k">✓ Done</p><p>${esc(result.text)}</p>${result.sub ? `<p class="s">${esc(result.sub)}</p>` : ''}</div>${result.switchTo ? `<button class="btn pri" data-actor="${result.switchTo}" type="button">See it as ${esc(E.label(result.switchTo))} →</button>` : ''}`;
+      `<div><p class="k">✓ Done</p><p>${esc(result.text)}</p>${result.sub ? `<p class="s">${esc(result.sub)}</p>` : ''}</div>${result.switchTo ? `<button class="btn pri" data-actor="${result.switchTo}" type="button">Sign in as ${esc(E.label(result.switchTo))} →</button>` : ''}`;
     return;
   }
   let k = 'Do this next', text, sub = '', btn = '', calm = false;
@@ -203,6 +210,7 @@ function managerDesk() {
         <div class="box" id="movebox" style="margin-top:12px"><b>Move a task</b>
           <div class="row"><label style="flex:1">Task<select id="mv-task">${opts.map(t => `<option value="${t.id}" ${t.transferPending ? 'disabled' : ''}>${esc(t.rep)} · ${esc(t.customer)} · ${E.bucketOf(w, t.customer)} · P${E.tier(w, t)}${t.transferPending ? ' · transfer waiting' : ''}</option>`).join('')}</select></label>
           <label>To<select id="mv-to">${wl.slice().sort((x, y) => x.actionable - y.actionable).map(r => `<option value="${r.rep}">${r.rep} (${E.person(r.rep).buckets.join(', ')})</option>`).join('')}</select></label></div>
+          ${(() => { const sg = E.suggestMoves(w); return sg.length ? `<div class="box" style="margin:8px 0;border-color:#A7F3D0;background:#F0FDF4"><b>Suggested by the rules · same bucket only</b><p class="hint" style="margin:0">Reps over ${E.CAP} get their lowest-ranked tasks offered to a same-bucket rep with room. Cross-bucket moves are never suggested.</p>${sg.map(m => `<div class="row" style="justify-content:space-between;border-top:1px solid #D1FAE5;padding-top:6px"><span><b>${esc(m.customer)}</b> (${m.bucket}) · ${esc(m.from)} → ${esc(m.to)}</span><button type="button" class="btn ok" data-sug="${m.taskId}|${m.to}">Accept</button></div>`).join('')}</div>` : `<p class="hint" style="margin:6px 0">No suggested moves: nobody is over ${E.CAP} with a same-bucket colleague who has room.</p>`; })()}
           <p class="hint" id="mv-fit" style="margin:6px 0"></p>
           <div id="mv-confirm"><button type="button" class="btn" id="mv-ask">Move…</button></div>
           ${(() => { const tq = E.transfersFor(w, actor); const mine = (w.transfers ?? []).filter(x => x.status === 'pending' && x.by === actor); return (tq.length ? `<div class="box" style="margin-top:10px;border-color:var(--tt-line);background:var(--tt-soft)"><b>Transfers waiting for you</b>${tq.map(x => `<div style="display:grid;gap:6px;border-top:1px solid var(--tt-line);padding-top:8px"><span><b>${esc(x.customer)}</b> (${esc(x.bucket)}) · ${esc(x.from)} → ${esc(x.to)}, who handles ${esc(E.person(x.to).buckets.join(', '))} · asked by ${esc(x.by)}: “${esc(x.reason)}”</span><div class="row"><input id="tr-why-${x.id}" placeholder="Reason if you reject" maxlength="120" style="flex:1"><button type="button" class="btn ok" data-tr="${x.id}" data-ok="1">Approve</button><button type="button" class="btn" data-tr="${x.id}" data-ok="0">Reject</button></div></div>`).join('')}</div>` : '') + (mine.length ? `<p class="hint" style="margin-top:8px">Your request${mine.length > 1 ? 's' : ''} waiting for another manager: ${mine.map(x => `${esc(x.customer)} → ${esc(x.to)}`).join(', ')}.</p>` : ''); })()}
@@ -213,7 +221,7 @@ function managerDesk() {
       ${(() => { const e = E.effectiveness(w); return `<div class="card" id="eff"><h2>Do discounts win deals?</h2><p class="sub">Last quarter plus every order and loss recorded here (${e.n} deals). Discount use, not rep scoring.</p><div class="metric"><div><b>${e.withDisc ?? '–'}%</b><span>won with a discount</span></div><div><b>${e.without ?? '–'}%</b><span>won without one</span></div></div><table style="margin-top:10px"><thead><tr><th>Rep</th><th>Deals</th><th>Discounted</th><th>Avg %</th><th>Won w/ disc.</th><th>Won w/o</th></tr></thead><tbody>${e.by.map(r => `<tr><td>${esc(r.rep)}</td><td>${r.deals}</td><td>${r.discounted}</td><td>${r.avgPct ?? '–'}</td><td>${r.withDisc ?? '–'}%</td><td>${r.without ?? '–'}%</td></tr>`).join('')}</tbody></table></div>`; })()}
       <div class="card" id="data"><h2>Your data</h2><p class="sub">Import dealers or open tasks from CSV. A file with any bad row is rejected whole, with the line numbers. Export approvals and orders with their fingerprints.</p>
         <div class="row"><label>Dealers CSV<input type="file" accept=".csv,text/csv" id="imp-dealers"></label><label>Tasks CSV<input type="file" accept=".csv,text/csv" id="imp-tasks"></label></div>
-        <p class="hint" style="margin-top:6px">Dealer columns: ${E.DEALER_COLS.join(', ')} · Task columns: ${E.TASK_COLS.join(', ')} · <button class="btn link" data-tpl="dealers" type="button">dealer template</button> · <button class="btn link" data-tpl="tasks" type="button">task template</button></p>
+        <p class="hint" style="margin-top:6px">Dealer columns: ${E.DEALER_COLS.join(', ')} · Task columns: ${E.TASK_COLS.join(', ')} (leave rep blank to auto-assign by bucket) · <button class="btn link" data-tpl="dealers" type="button">dealer template</button> · <button class="btn link" data-tpl="tasks" type="button">task template</button></p>
         <div class="row" style="margin-top:6px"><button class="btn" data-exp="approvals" type="button">Export approvals</button><button class="btn" data-exp="orders" type="button">Export orders</button></div><div id="imp-res"></div></div>
       <div class="card" id="schemes"><h2>Schemes</h2><p class="sub">A live slab applies without an ask. A new scheme needs a second person to approve it.</p>
         <ul class="mini">${(w.schemes ?? []).map(sc => `<li><b>${sc.id}</b> · ${esc(sc.name)} <span class="chip ${sc.status === 'active' ? 'st-ok' : 'st-frozen'}">${sc.status === 'active' ? 'Live' : 'Waiting for approval'}</span><br><small class="hint">by ${esc(sc.maker)}${sc.checker ? `, approved by ${esc(sc.checker)}` : ''}</small>${sc.status === 'pending' ? (sc.maker === actor ? '<br><span class="hint">You proposed it, so someone else must approve it.</span>' : `<br><button class="btn" style="margin-top:4px" data-sch="${sc.id}" type="button">Approve ${sc.id}</button>`) : ''}</li>`).join('')}</ul>
@@ -249,10 +257,10 @@ function renderPanel() {
     counter: a?.status === 'countered' ? `<p>${esc(E.label(a.decidedBy))} offered <b>${a.capPct}%</b> instead of ${a.askPct}%, valid to ${fmt(a.validTo)}. “${esc(a.counterWhy)}”</p><div class="row"><button class="btn pri" data-do="accept" type="button">Accept ${a.capPct}%</button><button class="btn" data-do="decline" type="button">Decline</button></div>` : '',
   };
   let state = '';
-  if (t.status === 'frozen' && a?.status === 'pending') state = `<div class="wait">Frozen: waiting for <b>${esc(E.label(a.approver))}</b> to decide ${a.askPct}% (${a.id}).${a.routedBecause.length ? ` Sent to the sales head because ${esc(a.routedBecause.join(', '))}.` : ''} <button class="btn link" data-actor="${a.approver}" type="button">See it as ${esc(a.approver)} →</button></div>`;
+  if (t.status === 'frozen' && a?.status === 'pending') state = `<div class="wait">Frozen: waiting for <b>${esc(E.label(a.approver))}</b> to decide ${a.askPct}% (${a.id}).${a.routedBecause.length ? ` Sent to the sales head because ${esc(a.routedBecause.join(', '))}.` : ''} <button class="btn link" data-actor="${a.approver}" type="button">Sign in as ${esc(a.approver)} →</button></div>`;
   if (t.status === 'hold') state = `<div class="wait">On hold: ${esc(t.hold.reason)}. Back in Today on ${fmt(t.hold.revisit)}. ${mine ? '<button class="btn link" data-do="resume" type="button">Take it off hold now</button>' : ''}</div>`;
   if (t.status === 'done') state = `<div class="done">Done: ${esc(t.outcome)}</div>`;
-  if (!mine && t.status === 'open') state = `<div class="wait">This is ${esc(E.label(t.rep))}'s task. <button class="btn link" data-actor="${t.rep}" type="button">See it as ${esc(t.rep)} →</button></div>`;
+  if (!mine && t.status === 'open') state = `<div class="wait">This is ${esc(E.label(t.rep))}'s task. <button class="btn link" data-actor="${t.rep}" type="button">Sign in as ${esc(t.rep)} →</button></div>`;
   $('#panel-body').innerHTML = `
     <div class="ph"><div><h2 id="p-title" style="margin:0">${esc(t.customer)}</h2><p class="hint">${t.id} · ${esc(t.stage)} · ${inr(t.value)} · ${esc(E.label(t.rep))}</p></div><button class="x" data-close aria-label="Close" type="button">×</button></div>
     <p style="margin:0"><b>${esc(t.title)}</b></p>
@@ -282,7 +290,7 @@ function panelAction(kind) {
   if (kind === 'order') act(() => E.placeOrder(w, t.id, actor, Number(v('#f-val')), Number(v('#f-disc'))), 'Order placed.', out => ok(`✓ ${out.order.id} placed: ${inr(out.order.value)} at ${out.order.discountPct}% before GST (${inr(out.order.discountAmt)} off). Sealed as <code>${esc(out.order.seal.slice(0, 12))}</code>.${out.order.approvalId ? ` ${esc(out.order.approvalId)} is now used and can't cover another order.` : ''}<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'lost') act(() => E.markLost(w, t.id, actor, v('#f-lost')), 'Marked lost.', () => ok('✓ Marked lost. It counts in the discount-effectiveness view.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>'));
   if (kind === 'resume') act(() => E.resume(w, t.id, actor), 'Back in Today.', () => ok('✓ Back in Today.'));
-  if (kind === 'ask') act(() => E.askDiscount(w, t.id, actor, Number(v('#f-pct')), v('#f-reason')), 'Ask sent.', out => { const a = out.approvals.at(-1); ok(`✓ Sent ${a.id} to <b>${esc(E.label(a.approver))}</b>. This task is frozen until they decide, so it has left your Today.<div class="row"><button class="btn pri" data-actor="${a.approver}" type="button">See it as ${esc(a.approver)} →</button><button class="btn" data-close type="button">Back to Today</button></div>`); });
+  if (kind === 'ask') act(() => E.askDiscount(w, t.id, actor, Number(v('#f-pct')), v('#f-reason')), 'Ask sent.', out => { const a = out.approvals.at(-1); ok(`✓ Sent ${a.id} to <b>${esc(E.label(a.approver))}</b>. This task is frozen until they decide, so it has left your Today.<div class="row"><button class="btn pri" data-actor="${a.approver}" type="button">Sign in as ${esc(a.approver)} →</button><button class="btn" data-close type="button">Back to Today</button></div>`); });
   if (kind === 'accept' || kind === 'decline') { const a = apvOf(t); act(() => E.respondCounter(w, a.id, actor, kind === 'accept'), kind === 'accept' ? 'Counter accepted.' : 'Counter declined.', () => ok(kind === 'accept' ? `✓ Accepted ${a.capPct}%. The task is back in Today: send the revised quote.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>` : '✓ Declined. The task is back in Today to negotiate without a discount.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>')); }
 }
 function decide(kind, id) {
@@ -299,7 +307,7 @@ function render() {
   try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.sample(realToday)); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
 function renderInner() {
-  renderActors(); renderSeal(); renderNext();
+  renderActors(); if (!signedIn) { $('#next').hidden = true; return renderSignIn(); } $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
@@ -311,6 +319,9 @@ function renderInner() {
 document.addEventListener('click', e => {
   const b = e.target.closest('button,[data-open]'); if (!b) return;
   if (b.dataset.actor) return switchTo(b.dataset.actor);
+  if (b.dataset.signin) { signedIn = true; result = null; return switchTo(b.dataset.signin); }
+  if (b.id === 'signout') { signedIn = false; result = null; panel = null; sealRes = null; save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (b.dataset.sug) { const [id, to] = b.dataset.sug.split('|'); try { w = E.rebalance(w, id, actor, to); save(); sealRes = null; const t = w.tasks.find(x => x.id === id); toast('Suggested move accepted.'); result = { text: `Moved ${t.customer} to ${E.label(to)}: same ${E.bucketOf(w, t.customer)} bucket, suggested by the rules.`, sub: 'Original target kept. Sealed in the record.' }; render(); } catch (err) { result = { err: err.message }; render(); } return; }
   if (b.dataset.open) return openTask(b.dataset.open, b.dataset.tab);
   if (b.hasAttribute('data-close')) { panel = null; $('#panel').close(); return; }
   if (b.dataset.tab && panel) { panel.tab = b.dataset.tab; panel.err = ''; return renderPanel(); }
@@ -327,7 +338,7 @@ document.addEventListener('click', e => {
     if (b.dataset.seal === 'dbcancel') sealEdit = 0;
     if (b.dataset.seal === 'dbsave') { try { w = E.tamperEntry(w, Number($('#db-n').value), $('#db-text').value); save(); sealEdit = 0; sealRes = null; toast('Row changed in the database. Now press Verify record.'); } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; } } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyChain(w); } return renderSeal(); }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
-  if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
+  if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000\n,City Pharma,New lead,${w.today},40000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.id === 's-go') { try { w = E.proposeScheme(w, actor, $('#s-name').value, Number($('#s-min').value), Number($('#s-pct').value)); save(); const sc = w.schemes.at(-1); toast('Scheme proposed.'); result = { text: `${sc.id} proposed: ${sc.name}.`, sub: 'It is not usable until a second person approves it.', switchTo: actor === 'Kavita' ? 'Arjun' : 'Kavita' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#s-err').innerHTML = `<div class="err" role="alert" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.id === 'mv-yes') { try { w = E.rebalance(w, b.dataset.t, actor, b.dataset.to, $('#mv-why')?.value); save(); sealRes = null; const t = w.tasks.find(x => x.id === b.dataset.t);
@@ -349,7 +360,7 @@ $('#panel').addEventListener('close', () => { panel = null; });
 load(); w = E.escalate(E.wakeHolds(w));
 (() => {
   const tok = new URLSearchParams(location.search).get('task'); if (!tok) return;
-  try { const r = E.importRecovery(w, tok); w = r.w; actor = r.task.rep; save(); result = { text: r.fresh ? `New task from Every Rupee: ${r.task.title}.` : `Already in ${r.task.rep}'s list: ${r.task.title}.`, sub: `Finance handed this short payment to ${r.task.rep}. Recover it from ${r.task.customer}, or get it approved. Open it in Today.` }; setTimeout(() => openTask(r.task.id), 300); }
+  try { const r = E.importRecovery(w, tok); w = r.w; actor = r.task.rep; signedIn = true; save(); result = { text: r.fresh ? `New task from Every Rupee: ${r.task.title}.` : `Already in ${r.task.rep}'s list: ${r.task.title}.`, sub: `Finance handed this short payment to ${r.task.rep}. Recover it from ${r.task.customer}, or get it approved. Open it in Today.` }; setTimeout(() => openTask(r.task.id), 300); }
   catch (e) { result = { err: e.message }; }
   try { history.replaceState(null, '', location.pathname); } catch { }
 })();
@@ -372,7 +383,7 @@ function tourShow(i) {
   if (i >= TOUR.length) return tourEnd(true);
   tStep = i; const s = TOUR[i];
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null; result = null;
-  s.run?.(); actor = s.who; save(); render();
+  s.run?.(); actor = s.who; signedIn = true; save(); render();
   if (s.open) { openTask(s.open); const d = $('#panel'); d.close(); d.show(); }
   s.after?.();
   const t = s.at?.(); if (t) { t.classList.add('tour-hi'); if (!s.open) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
@@ -384,8 +395,8 @@ function tourShow(i) {
 function tourEnd(finished) {
   clearTimeout(tTimer); tStep = -1; tourEl.classList.remove('on'); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null;
-  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; sealRes = null; sealOpen = false; save();
-  result = finished ? { text: 'That’s the loop. Your turn: the sample is fresh.', sub: 'Act as any of the four people. Every rule you saw is enforced here.' } : null;
+  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; signedIn = false; sealRes = null; sealOpen = false; save();
+  result = null;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 tourEl.addEventListener('click', e => {

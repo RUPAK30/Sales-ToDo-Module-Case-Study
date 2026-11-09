@@ -69,6 +69,10 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
 <iframe id="live-demo" src="app.html" title="Ten Today live demo" loading="lazy" style="width:100%;height:min(780px,85vh);border:1px solid #ECE7E1;border-radius:16px;background:#fff"></iframe>
 <script>document.getElementById('play-tour').addEventListener('click',function(){var f=document.getElementById('live-demo');f.src='app.html?tour=1&t='+Date.now();f.scrollIntoView({behavior:'smooth',block:'start'});});</script>
 </section>
+<section class="wrap" aria-labelledby="ships" style="padding-top:8px"><h2 id="ships">How it ships</h2>
+<p style="max-width:760px">The demo simulates sign-in so you can try every seat in two minutes; its rules run in your browser. In production the same rules move to the server:</p>
+<ul style="max-width:760px;line-height:1.6"><li><b>Sign-in:</b> company accounts (Google or Microsoft) with each person's role and buckets stored on the server. No view switching.</li><li><b>Who sees what:</b> the database itself returns only a rep's own tasks (row-level security), even if the page is tampered with.</li><li><b>Decisions:</b> approvals, transfers and orders run as server functions, so "a different manager must approve" can't be skipped from the browser.</li><li><b>The sealed record:</b> written only by the server and copied to storage the app can't edit.</li></ul>
+<p class="hint" style="max-width:760px">The companion product, Every Rupee, already runs on real sign-in for its private workspace.</p></section>
 <section class="wrap" aria-labelledby="pains"><h2 id="pains">Three problems the product handles</h2>
 <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
 <div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Cherry-picking</b><p style="margin:6px 0 0;font-size:.92rem">Reps call the easy dealers first. The ranking puts what's late and what's blocking money on top, and moving a task doesn't reset its age.</p></div>

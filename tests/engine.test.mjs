@@ -202,6 +202,8 @@ test('discount effectiveness, lost deals and CSV import are all-or-nothing', () 
   assert.throws(() => E.importDealers(w0(), E.DEALER_COLS.join(',') + '\nA,1,2,30,5,10\nB,x,2,30,5,10'), /Nothing imported.*Line 3/);
   assert.equal(E.importDealers(w0(), E.DEALER_COLS.join(',') + '\nNew Co,100,0,30,0,10').w.customers['New Co'].creditLimit, 100);
   assert.throws(() => E.importTasks(w0(), E.TASK_COLS.join(',') + '\nKavita,A,New lead,2026-11-10,5'), /rep must be/);
+  const auto = E.importTasks(w0(), E.TASK_COLS.join(',') + '\n,Green Leaf,New lead,2026-11-10,5\n,Fresh Mart,New lead,2026-11-10,5');
+  assert.deepEqual(auto.w.tasks.slice(-2).map(x => x.rep), ['Neha', 'Imran']);
   assert.equal(E.importTasks(w0(), E.TASK_COLS.join(',') + '\nNeha,A,New lead,2026-11-10,5').count, 1);
 });
 
@@ -217,4 +219,11 @@ test('buckets: a move outside the bucket needs a reason and a second manager', (
   const ok = E.decideTransfer(w, id, 'Arjun', true); assert.equal(t(ok, 'T-104').rep, 'Neha');
   const no = E.decideTransfer(w, id, 'Arjun', false, 'Keep with territory owner'); assert.equal(t(no, 'T-104').rep, 'Rahul');
   assert.ok(E.verifyChain(ok).ok); assert.match(ok.chain.at(-1).text, /Approved TRF-001/);
+});
+
+test('auto-routing: overload is balanced within the bucket only', () => {
+  const s = E.suggestMoves(w0()); assert.ok(s.length > 0);
+  assert.ok(s.every(m => m.from === 'Rahul' && m.to === 'Imran' && m.bucket === 'FMCG'));
+  let w = w0(); for (const m of s) w = E.rebalance(w, m.taskId, 'Kavita', m.to);
+  assert.equal(E.workload(w).find(r => r.rep === 'Rahul').overCap, 0); assert.equal(E.suggestMoves(w).length, 0);
 });

@@ -584,7 +584,7 @@ export function importTasks(w0, text) {
   const w = clone(w0); const errs = []; const add = [];
   for (const r of rowsOf(text, TASK_COLS)) {
     const rep = r.get('rep'), stage = r.get('stage'), due = r.get('due'), value = Number(r.get('value')), customer = r.get('customer');
-    if (!person(rep)?.rep) errs.push(`Line ${r.line}: rep must be one of ${PEOPLE.filter(p => p.rep).map(p => p.name).join(', ')}`);
+    if (rep && !person(rep)?.rep) errs.push(`Line ${r.line}: rep must be blank (auto-assign) or one of ${PEOPLE.filter(p => p.rep).map(p => p.name).join(', ')}`);
     if (!customer) errs.push(`Line ${r.line}: customer missing`);
     if (!NEXT_STEP[stage]) errs.push(`Line ${r.line}: stage must be one of ${Object.keys(NEXT_STEP).join(', ')}`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) errs.push(`Line ${r.line}: due must be yyyy-mm-dd`);
@@ -592,7 +592,7 @@ export function importTasks(w0, text) {
     add.push({ rep, customer, stage, due, value });
   }
   if (errs.length) fail(`Nothing imported. Fix these first: ${errs.slice(0, 5).join('; ')}${errs.length > 5 ? ` (+${errs.length - 5} more)` : ''}.`);
-  for (const t of add) w.tasks.push({ id: `T-${++w.seq.task}`, rep: t.rep, customer: t.customer, stage: t.stage, title: NEXT_STEP[t.stage], due: t.due, target: t.due, value: t.value, status: 'open', reschedules: [], hold: null, approvalId: null, log: [{ at: stamp(), who: 'Import', text: 'Imported from CSV' }] });
+  for (const t of add) w.tasks.push({ id: `T-${++w.seq.task}`, rep: t.rep || autoOwner(w, t.customer), customer: t.customer, stage: t.stage, title: NEXT_STEP[t.stage], due: t.due, target: t.due, value: t.value, status: 'open', reschedules: [], hold: null, approvalId: null, log: [{ at: stamp(), who: 'Import', text: t.rep ? 'Imported from CSV' : `Imported; auto-assigned to the ${bucketOf(w, t.customer)} bucket owner with the lightest load` }] });
   w.audit.push({ at: stamp(), who: 'Import', text: `${add.length} task(s) imported` });
   return { w, count: add.length };
 }
@@ -648,3 +648,25 @@ export function decideTransfer(w0, trId, actor, approveIt, why) {
   return w;
 }
 export const transfersFor = (w, actor) => (w.transfers ?? []).filter(t => t.status === 'pending' && t.by !== actor && person(actor)?.manager);
+
+/* ---------- automatic routing: rules place the work, people approve exceptions ---------- */
+/* The bucket owner with the lightest load gets new work. */
+export function autoOwner(w, customer) {
+  const bucket = bucketOf(w, customer);
+  const load = r => w.tasks.filter(t => t.rep === r && t.status === 'open' && t.target <= w.today).length;
+  const owners = PEOPLE.filter(p => p.rep && p.buckets.includes(bucket)).map(p => p.name).sort((a, b) => load(a) - load(b) || a.localeCompare(b));
+  return owners[0] ?? fail(`No rep handles the ${bucket} bucket.`);
+}
+/* Same-bucket moves the system proposes when a rep is over 10; a manager accepts each in one click. */
+export function suggestMoves(w) {
+  const out = []; const load = {}; for (const r of workload(w)) load[r.rep] = r.actionable;
+  for (const r of workload(w).filter(x => x.overCap)) {
+    const q = today(w, r.rep); const all = w.tasks.filter(t => t.rep === r.rep && t.status === 'open' && t.target <= w.today && !t.transferPending && !t.approvalId && t.kind !== 'recovery' && !q.list.includes(t));
+    for (const t of all) {
+      const bucket = bucketOf(w, t.customer);
+      const to = PEOPLE.filter(p => p.rep && p.name !== r.rep && p.buckets.includes(bucket) && load[p.name] < CAP).sort((a, b) => load[a.name] - load[b.name])[0];
+      if (to && load[r.rep] > CAP) { out.push({ taskId: t.id, customer: t.customer, from: r.rep, to: to.name, bucket }); load[r.rep]--; load[to.name]++; }
+    }
+  }
+  return out;
+}
