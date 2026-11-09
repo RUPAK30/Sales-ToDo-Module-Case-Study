@@ -242,3 +242,44 @@ load(); w = E.escalate(E.wakeHolds(w));
   try { history.replaceState(null, '', location.pathname); } catch { }
 })();
 render();
+
+/* ---------- 60-second guided tour: runs the real engine on a fresh sample ---------- */
+const TOUR = [
+  { who: 'Rahul', k: 'The rep', h: '100 open leads. 10 actions today.', p: 'Rahul has 17 open tasks. Today shows only 10, ranked by rules he can read: days past target, money-blocking stage, then deal value as a tie-break.', run: () => { w = E.sample(realToday); }, at: () => $('#desk .card') },
+  { who: 'Rahul', k: 'Scheme, no ask', h: 'A live scheme applies by itself', p: 'Aarav’s ₹4.8L order qualifies for the 3% volume slab. Pre-approved, so it applies at once: ₹14,400 off before GST, logged.', run: () => { w = E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01'); }, open: 'T-101', at: () => $('#panel') },
+  { who: 'Rahul', k: 'Discount ask', h: 'He asks for 6% more. The task freezes.', p: 'The ask goes to Kavita, who is allowed to decide up to 10% within the margin floor. Rahul’s task leaves Today; the clock is now on her.', run: () => { w = E.askDiscount(w, 'T-101', 'Rahul', 6, 'Rival quoted 7% lower'); }, at: () => document.querySelectorAll('#desk .side .card')[0] },
+  { who: 'Kavita', k: 'The approver', h: 'Three numbers to decide', p: 'Kavita sees the ask in rupees before GST, the margin floor and the dealer’s credit. She can approve, counter or send back. She can’t decide her own asks.', at: () => [...document.querySelectorAll('.ask')].find(x => x.textContent.includes('Aarav')) },
+  { who: 'Kavita', k: 'Decision', h: 'Approved with a cap and an expiry', p: 'Rahul’s task comes back as “send the revised quote”. “Send to finance” passes this approval to Every Rupee, which checks the customer’s short payment against this exact cap.', run: () => { const a = w.approvals.find(x => x.taskId === 'T-101' && x.status === 'pending'); w = E.approve(w, a.id, 'Kavita', 6, E.addDays(w.today, 14)); }, at: () => document.querySelector('a[href*="every-rupee"]')?.closest('.card') },
+  { who: 'Arjun', k: 'Controls', h: 'Nothing sits, nothing slips', p: 'An ask Kavita left for 2 days escalated to Arjun. A dealer past his credit days can only be approved with a written override, like a post-dated cheque.', at: () => $('#asks') },
+];
+let tStep = -1, tTimer = null, tPaused = false; const STEP_MS = 10000;
+const tourEl = Object.assign(document.createElement('div'), { id: 'tour' }); tourEl.setAttribute('role', 'dialog'); tourEl.setAttribute('aria-label', 'Guided tour'); document.body.append(tourEl);
+function tourShow(i) {
+  clearTimeout(tTimer); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
+  if (i >= TOUR.length) return tourEnd(true);
+  tStep = i; const s = TOUR[i];
+  try { $('#panel').open && $('#panel').close(); } catch { } panel = null; result = null;
+  s.run?.(); actor = s.who; save(); render();
+  if (s.open) { openTask(s.open); const d = $('#panel'); d.close(); d.show(); }
+  const t = s.at?.(); if (t) { t.classList.add('tour-hi'); if (!s.open) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  tourEl.innerHTML = `<p class="k">${i + 1} / ${TOUR.length} · ${s.k} · acting as ${esc(E.label(s.who))}</p><h3>${esc(s.h)}</h3><p>${esc(s.p)}</p><div class="bar2"><i></i></div><div class="ctl"><button type="button" data-t="exit">Exit</button><button type="button" data-t="pause">${tPaused ? 'Play' : 'Pause'}</button><button type="button" class="go" data-t="next">${i === TOUR.length - 1 ? 'Finish' : 'Next →'}</button></div>`;
+  tourEl.classList.add('on');
+  const bar = tourEl.querySelector('.bar2 i');
+  if (!tPaused) { requestAnimationFrame(() => { bar.style.transition = `width ${STEP_MS}ms linear`; bar.style.width = '100%'; }); tTimer = setTimeout(() => tourShow(i + 1), STEP_MS); }
+}
+function tourEnd(finished) {
+  clearTimeout(tTimer); tStep = -1; tourEl.classList.remove('on'); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
+  try { $('#panel').open && $('#panel').close(); } catch { } panel = null;
+  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; save();
+  result = finished ? { text: 'That’s the loop. Your turn: the sample is fresh.', sub: 'Act as any of the four people. Every rule you saw is enforced here.' } : null;
+  render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+tourEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-t]'); if (!b) return;
+  if (b.dataset.t === 'exit') return tourEnd(false);
+  if (b.dataset.t === 'next') { tPaused = false; return tourShow(tStep + 1); }
+  if (b.dataset.t === 'pause') { tPaused = !tPaused; if (tPaused) { clearTimeout(tTimer); const bar = tourEl.querySelector('.bar2 i'); bar.style.transition = 'none'; bar.style.width = getComputedStyle(bar).width; b.textContent = 'Play'; } else tourShow(tStep); }
+});
+$('#tour-go').addEventListener('click', () => { tPaused = false; tourShow(0); });
+document.addEventListener('keydown', e => { if (tStep >= 0 && e.key === 'Escape') tourEnd(false); });
+if (new URLSearchParams(location.search).get('tour') === '1') { try { history.replaceState(null, '', location.pathname); } catch { } setTimeout(() => tourShow(0), 400); }

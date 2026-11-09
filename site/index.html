@@ -26,7 +26,7 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
 </style>
 </head>
 <body>
-<header class="appbar"><div class="in"><a class="logo" href="./"><span class="tt-wm" aria-label="Ten Today">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav><a href="./" class="hide-s on">Overview</a><a href="https://github.com/RUPAK30/Sales-ToDo-Module-Case-Study" class="hide-s">GitHub</a><a href="mailto:rupakr2g@gmail.com?subject=Regarding%20Ten%20Today" class="hide-s">Get in touch</a><a href="https://everyrupee-o2c.vercel.app/route.html" class="q2c" title="Follow an approved discount into finance">Quote to cash ↗</a><a href="cockpit.html" class="hide-s">Executable spec</a><a href="app.html" class="pri">Try the product</a></nav></div></header>
+<header class="appbar tt-head"><div class="in"><nav class="l" aria-label="Pages"><a href="./" class="on">Case study</a><a href="cockpit.html" class="hide-s">Spec</a></nav><a class="logo" href="./" aria-label="Ten Today home"><span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav class="r" aria-label="Product"><a href="app.html?tour=1" class="hide-s tour">▶ 60-sec tour</a><a href="app.html" class="pri">Try the product</a></nav></div></header>
 
 <header class="wrap hero">
   <div class="hero-grid"><div>
@@ -65,6 +65,12 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
     <li><a href="#metric"><b>Metrics &amp; guardrails</b><span>On time against the original target</span></a></li>
   </ol>
 </header>
+<section class="wrap" aria-labelledby="live"><h2 id="live">Live demo</h2>
+<p style="max-width:720px">This is the product itself, running below. Play the 60-second tour, or click around as a rep, the sales manager or the sales head.</p>
+<p style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px"><button type="button" class="cta" id="play-tour" style="cursor:pointer;border:0">▶ Play the 60-second tour here</button><a href="app.html" style="align-self:center;font-weight:600">Open full screen ↗</a></p>
+<iframe id="live-demo" src="app.html" title="Ten Today live demo" loading="lazy" style="width:100%;height:min(780px,85vh);border:1px solid #ECE7E1;border-radius:16px;background:#fff"></iframe>
+<script>document.getElementById('play-tour').addEventListener('click',function(){var f=document.getElementById('live-demo');f.src='app.html?tour=1&t='+Date.now();f.scrollIntoView({behavior:'smooth',block:'start'});});</script>
+</section>
 <section class="wrap" aria-labelledby="pains"><h2 id="pains">Three problems the product handles</h2>
 <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
 <div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Cherry-picking</b><p style="margin:6px 0 0;font-size:.92rem">Reps call the easy dealers first. Today ranks by days past target and money-blocking stage. Deal size only breaks ties, and a reschedule keeps ageing from the original date.</p></div>
