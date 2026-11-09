@@ -9,7 +9,7 @@ const inr = n => '₹' + Number(n).toLocaleString('en-IN');
 const fmt = d => new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const time = t => new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
+let sealEdit = 0; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
 
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; return; } } catch { /* storage unavailable */ }
@@ -36,7 +36,7 @@ function renderActors() {
     return `<button type="button" class="who ${p.name === actor ? 'on' : ''}" data-actor="${p.name}">${p.name} <small>${p.role}</small>${n ? `<span class="badge" title="${p.rep ? 'in Today' : 'waiting for a decision'}">${n}</span>` : ''}</button>`;
   }).join('');
 }
-function switchTo(n) { actor = n; result = null; panel = null; sealRes = null; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function switchTo(n) { actor = n; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 /* ---------- sealed record: visible on every screen ---------- */
 function renderSeal() {
@@ -49,8 +49,13 @@ function renderSeal() {
     : `<div class="res no">✗ Block #${r.brokenAt} was edited after it was recorded: recomputing its fingerprint gives a different value from the one sealed.${n - r.brokenAt ? ` Blocks #${r.brokenAt + 1}–#${n} were built on the original, so they can't be trusted either.` : ''}</div>`;
   el.className = 'seal' + (r && !r.ok ? ' bad' : '');
   el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record</b> <span class="hint">· one record for the whole team · ${n} block${n === 1 ? '' : 's'}</span></div>
-    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the edit' : 'Simulate an insider edit'}</button></div></div>
+    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the edit' : 'Try tampering yourself'}</button></div></div>
     <div class="cv" id="cv">${blocks || '<p class="hint">Nothing recorded yet.</p>'}</div>
+    ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">The app has no edit button for this record. An insider with database access could change a stored row directly, like this. No new fingerprint is made, because that only happens when a decision goes through the app.</p>
+      <div class="row"><label>Block<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)}</option>`).join('')}</select></label></div>
+      <label style="margin-top:6px">text<textarea id="db-text" rows="2">${esc(e.text)}</textarea></label>
+      <p class="mono" style="margin:4px 0 0;font-size:.72rem;color:#A8A29E">who: ${esc(e.who)} · at: ${esc(e.at)} · stored fingerprint: ${esc(e.hash.slice(0, 16))}…</p>
+      <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save to database</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
     ${status}
     <details class="how"><summary>How it works, in 3 steps</summary><ol class="steps"><li><b>Fingerprint.</b> Each decision (ask, approval, counter, hand-over, order) gets a SHA-256 fingerprint of its exact words, time and person.</li><li><b>Chain.</b> Each fingerprint is built from the previous one too, so blocks are linked like the arrows above.</li><li><b>Verify.</b> Recomputing every fingerprint shows instantly if any block was edited, deleted, reordered or backdated, and which one.</li></ol><p class="hint" style="margin:6px 0 0">It proves the record wasn't altered after the fact. It doesn't prove a decision was right. Not a blockchain: one company keeps it. Approvals sent to Every Rupee carry their fingerprint, so finance can tell if the link was edited.</p></details>`;
   const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
@@ -274,7 +279,9 @@ document.addEventListener('click', e => {
   if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; $('#mv-confirm').innerHTML = `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') return render();
-  if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { w = E.simulateTamper(w); save(); sealRes = null; toast('An old entry was edited quietly. Now verify.'); } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealRes = E.verifyChain(w); } return renderSeal(); }
+  if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { const ap = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0]; sealEdit = ap?.n ?? 0; sealRes = null; }
+    if (b.dataset.seal === 'dbcancel') sealEdit = 0;
+    if (b.dataset.seal === 'dbsave') { try { w = E.tamperEntry(w, Number($('#db-n').value), $('#db-text').value); save(); sealEdit = 0; sealRes = null; toast('Row changed in the database. Now press Verify record.'); } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; } } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyChain(w); } return renderSeal(); }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
@@ -282,6 +289,7 @@ document.addEventListener('click', e => {
   if (b.id === 'mv-yes') { try { w = E.rebalance(w, b.dataset.t, actor, b.dataset.to); save(); const t = w.tasks.find(x => x.id === b.dataset.t); toast('Task moved.'); result = { text: `Moved ${t.customer} to ${E.label(t.rep)}.`, sub: 'The original target is kept, so it keeps its place in their ranking.', switchTo: t.rep }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#mv-confirm').innerHTML = `<div class="err" role="alert">${esc(err.message)}</div><button type="button" class="btn" id="mv-no" style="margin-top:6px">OK</button>`; } }
 });
 document.addEventListener('input', e => { if (e.target.id === 'f-pct') routePreview(); });
+document.addEventListener('change', e => { if (e.target.id === 'db-n') { sealEdit = Number(e.target.value); renderSeal(); } });
 document.addEventListener('change', async e => {
   if (!['imp-dealers', 'imp-tasks'].includes(e.target.id) || !e.target.files[0]) return;
   const text = await e.target.files[0].text(); const out = $('#imp-res');
@@ -307,7 +315,7 @@ const TOUR = [
   { who: 'Kavita', k: 'The approver', h: 'Three numbers to decide', p: 'Kavita sees the ask in rupees before GST, the margin floor and the dealer’s credit. She can approve, counter or send back. She can’t decide her own asks.', at: () => [...document.querySelectorAll('.ask')].find(x => x.textContent.includes('Aarav')) },
   { who: 'Kavita', k: 'Decision', h: 'Approved with a cap and an expiry', p: 'Rahul’s task comes back as “send the revised quote”. The decision is sealed in the record above. “Send to finance” passes it, fingerprint included, to Every Rupee, which checks the short payment against this exact cap.', run: () => { const a = w.approvals.find(x => x.taskId === 'T-101' && x.status === 'pending'); w = E.approve(w, a.id, 'Kavita', 6, E.addDays(w.today, 14)); }, at: () => document.querySelector('a[href*="every-rupee"]')?.closest('.card') },
   { who: 'Arjun', k: 'Controls', h: 'Nothing sits, nothing slips', p: 'An ask Kavita left for 2 days escalated to Arjun. A dealer past his credit days can only be approved with a written override, like a post-dated cheque.', at: () => $('#asks') },
-  { who: 'Arjun', k: 'Sealed record', h: 'Someone quietly edits an old approval', p: 'We changed an old entry the way an insider might, then verified. Its fingerprint no longer matches, so the record shows exactly which entry was altered. Rahul can’t claim 10% was approved when 6% was.', run: () => { w = E.simulateTamper(w); sealOpen = true; sealRes = null; }, after: () => { sealRes = E.verifyChain(w); renderSeal(); }, at: () => $('#seal') },
+  { who: 'Arjun', k: 'Sealed record', h: 'Someone quietly edits an old approval', p: 'We changed an old approval straight in the database, bypassing the app, the way an insider might. Then we verified. Its fingerprint no longer matches, so the record shows exactly which entry was altered. Rahul can’t claim 10% was approved when 6% was.', run: () => { w = E.simulateTamper(w); sealOpen = true; sealRes = null; }, after: () => { sealRes = E.verifyChain(w); renderSeal(); }, at: () => $('#seal') },
 ];
 let tStep = -1, tTimer = null, tPaused = false; const STEP_MS = 9000;
 const tourEl = Object.assign(document.createElement('div'), { id: 'tour' }); tourEl.setAttribute('role', 'dialog'); tourEl.setAttribute('aria-label', 'Guided tour'); document.body.append(tourEl);

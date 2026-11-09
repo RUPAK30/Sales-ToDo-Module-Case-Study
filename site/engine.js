@@ -457,6 +457,13 @@ export function simulateTamper(w0) {
   w.tampered = { n: e.n, original: e.text }; e.text = e.text.replace(/(\d+(\.\d+)?)%/, (m, n) => `${Number(n) + 4}%`);
   return w;
 }
+/* Demo: edit one stored block directly, as a database admin could, bypassing the app (no new fingerprint). */
+export function tamperEntry(w0, n, text) {
+  const w = clone(w0); const e = w.chain[n - 1] ?? fail('No such block.');
+  if (!text || !text.trim() || text.trim() === e.text) fail('Change the text first.');
+  if (w.tampered && w.tampered.n !== n) w.chain[w.tampered.n - 1].text = w.tampered.original;
+  w.tampered = { n, original: w.tampered?.n === n ? w.tampered.original : e.text }; e.text = text.trim(); return w;
+}
 export function undoTamper(w0) { const w = clone(w0); if (w.tampered) { w.chain[w.tampered.n - 1].text = w.tampered.original; delete w.tampered; } return w; }
 /* The fingerprint carried to Every Rupee: the receiver recomputes it from the fields it received. */
 export const contractSeal = o => sha256(JSON.stringify([o.v, o.id, o.customer, o.rep, o.approver, o.capPct, o.validTo]));

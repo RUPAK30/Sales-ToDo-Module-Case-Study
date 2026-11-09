@@ -100,3 +100,6 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 .res.idle{background:#F5F5F4;color:var(--muted);font-weight:500}
 .how summary{cursor:pointer;font-weight:600;font-size:.86rem;color:var(--tt-d)}.steps{margin:6px 0 0;padding-left:18px;font-size:.84rem;display:grid;gap:3px}
 @media(max-width:600px){.card.fold h2{cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin:0}.card.fold h2::after{content:'−';font-weight:700;color:var(--tt)}.card.fold.cl h2::after{content:'+'}.card.fold:not(.cl) h2{margin-bottom:10px}.card.fold.cl>*:not(h2){display:none!important}.blk{flex-basis:160px}.seal .acts .btn{flex:1}}
+
+.dbx{background:#1C1917;color:#fff;border-radius:12px;padding:12px;display:grid;gap:4px}.dbx .k{margin:0;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#FDBA74}
+.dbx label{color:#D6D3D1}.dbx textarea,.dbx select{background:#292524;color:#fff;border-color:#57534E;font-family:ui-monospace,Menlo,monospace;font-size:.82rem}
