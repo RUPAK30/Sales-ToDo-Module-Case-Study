@@ -88,3 +88,15 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 .chain{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-height:240px;overflow:auto}.chain li{font-size:.78rem;border-left:3px solid #86EFAC;padding:2px 8px;word-break:break-word}.chain li.x{border-color:#F87171;background:#FEF2F2}
 .chain code{font-size:.7rem}
 .sealchip{display:inline-block;font:600 .66rem ui-monospace,Menlo,monospace;background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;border-radius:6px;padding:1px 5px;vertical-align:1px}
+
+.cv{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:4px 2px 8px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.blk{flex:0 0 190px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;display:grid;gap:3px;align-content:start;font-size:.76rem}
+.blk small{color:var(--muted);font-weight:600}.blk .tx{line-height:1.35;color:var(--ink)}.blk code{justify-self:start}.blk em{font-style:normal;color:var(--muted);font-size:.7rem}.blk em code{font-size:.66rem;padding:0 4px}
+.blk b{font-size:.72rem}
+.blk.ok{border-color:#86EFAC;background:#F0FDF4}.blk.ok b{color:#15803D}
+.blk.bad{border-color:#EF4444;background:#FEF2F2;box-shadow:0 0 0 3px rgba(239,68,68,.15)}.blk.bad b{color:#B91C1C}
+.blk.after{border-color:#FCD34D;border-style:dashed;background:#FFFBEB}.blk.after b{color:#92400E}
+.link{flex:0 0 26px;display:flex;align-items:center;justify-content:center;color:#16A34A;font-weight:700}.link.cut{color:#DC2626;text-decoration:line-through}
+.res.idle{background:#F5F5F4;color:var(--muted);font-weight:500}
+.how summary{cursor:pointer;font-weight:600;font-size:.86rem;color:var(--tt-d)}.steps{margin:6px 0 0;padding-left:18px;font-size:.84rem;display:grid;gap:3px}
+@media(max-width:600px){.card.fold h2{cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin:0}.card.fold h2::after{content:'−';font-weight:700;color:var(--tt)}.card.fold.cl h2::after{content:'+'}.card.fold:not(.cl) h2{margin-bottom:10px}.card.fold.cl>*:not(h2){display:none!important}.blk{flex-basis:160px}.seal .acts .btn{flex:1}}

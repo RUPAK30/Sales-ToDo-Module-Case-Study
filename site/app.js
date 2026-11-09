@@ -20,7 +20,7 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.ad
 
 /* Run an engine action. On success: save, toast, re-render. On failure: show the engine's own words. */
 function act(fn, msg, after) {
-  try { const out = fn(); w = out.w ?? out; save(); toast(msg); after?.(out); render(); return true; }
+  try { const out = fn(); w = out.w ?? out; sealRes = null; save(); toast(msg); after?.(out); render(); return true; }
   catch (e) { if (panel) { panel.err = e.message; renderPanel(); } else { result = { err: e.message }; render(); } return false; }
 }
 
@@ -36,17 +36,37 @@ function renderActors() {
     return `<button type="button" class="who ${p.name === actor ? 'on' : ''}" data-actor="${p.name}">${p.name} <small>${p.role}</small>${n ? `<span class="badge" title="${p.rep ? 'in Today' : 'waiting for a decision'}">${n}</span>` : ''}</button>`;
   }).join('');
 }
-function switchTo(n) { actor = n; result = null; panel = null; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function switchTo(n) { actor = n; result = null; panel = null; sealRes = null; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 /* ---------- sealed record: visible on every screen ---------- */
 function renderSeal() {
-  const el = $('#seal'); const v = E.verifyChain(w); const n = w.chain.length;
-  const res = sealRes ? (sealRes.ok ? `<div class="res ok">✓ All ${sealRes.count} entries intact. Every fingerprint was recomputed just now and matches.</div>` : `<div class="res no">✗ Entry ${sealRes.brokenAt} was changed after it was recorded: “${esc(sealRes.entry.text)}”. Its fingerprint no longer matches, so it and everything after it can't be trusted.</div>`) : '';
-  el.className = 'seal' + (sealRes && !sealRes.ok ? ' bad' : '');
-  el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record</b> · ${n} entr${n === 1 ? 'y' : 'ies'} · latest fingerprint <code>${n ? esc(w.chain.at(-1).hash.slice(0, 12)) : '—'}</code></div>
-    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the edit' : 'Simulate an insider edit'}</button><button class="btn" type="button" data-seal="view">${sealOpen ? 'Hide' : 'Show'} entries</button></div></div>
-    <p class="hint" style="margin:0">Every ask, approval, counter, hand-over and order is fingerprinted (SHA-256) together with the entry before it. Change or backdate any entry and verification fails. This proves the record wasn't altered; it doesn't prove a decision was right. Not a blockchain: one company keeps it.</p>
-    ${res}${sealOpen ? `<ol class="chain">${w.chain.slice().reverse().map(e => `<li class="${!v.ok && e.n >= v.brokenAt ? 'x' : ''}"><b>#${e.n}</b> ${esc(E.label(e.who))}: ${esc(e.text)} <code>${esc(e.hash.slice(0, 10))}</code> ← <code>${esc(e.prev.slice(0, 10))}</code></li>`).join('')}</ol>` : ''}`;
+  const el = $('#seal'); const n = w.chain.length; const r = sealRes;
+  const st = e => !r ? '' : r.ok ? 'ok' : e.n < r.brokenAt ? 'ok' : e.n === r.brokenAt ? 'bad' : 'after';
+  const tag = e => ({ ok: '✓ matches', bad: '✗ edited', after: '⚠ link broken' }[st(e)] ?? '');
+  const blocks = w.chain.map((e, k) => `${k ? `<span class="link ${r && !r.ok && e.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(e)}"><small>#${e.n} · ${esc(e.who)}</small><span class="tx">${esc(e.text.length > 64 ? e.text.slice(0, 62) + '…' : e.text)}</span><code title="${esc(e.hash)}">${esc(e.hash.slice(0, 8))}</code><em>${e.n === 1 ? 'first block' : `built from #${e.n - 1}'s <code>${esc(e.prev.slice(0, 6))}</code>`}</em>${st(e) === 'bad' && w.tampered?.n === e.n ? `<em>sealed as: <s>${esc((w.tampered.original.match(/\d+(\.\d+)?%/) || [''])[0])}</s> → now ${esc((e.text.match(/\d+(\.\d+)?%/) || [''])[0])}</em>` : ''}${tag(e) ? `<b>${tag(e)}</b>` : ''}</div>`).join('');
+  const status = !r ? `<div class="res idle">Not checked in this view yet. Press <b>Verify record</b> to recompute every fingerprint.</div>`
+    : r.ok ? `<div class="res ok">✓ Checked just now as ${esc(E.label(actor))}: all ${r.count} fingerprints recomputed and match. Nothing was changed.</div>`
+    : `<div class="res no">✗ Block #${r.brokenAt} was edited after it was recorded: recomputing its fingerprint gives a different value from the one sealed.${n - r.brokenAt ? ` Blocks #${r.brokenAt + 1}–#${n} were built on the original, so they can't be trusted either.` : ''}</div>`;
+  el.className = 'seal' + (r && !r.ok ? ' bad' : '');
+  el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record</b> <span class="hint">· one record for the whole team · ${n} block${n === 1 ? '' : 's'}</span></div>
+    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the edit' : 'Simulate an insider edit'}</button></div></div>
+    <div class="cv" id="cv">${blocks || '<p class="hint">Nothing recorded yet.</p>'}</div>
+    ${status}
+    <details class="how"><summary>How it works, in 3 steps</summary><ol class="steps"><li><b>Fingerprint.</b> Each decision (ask, approval, counter, hand-over, order) gets a SHA-256 fingerprint of its exact words, time and person.</li><li><b>Chain.</b> Each fingerprint is built from the previous one too, so blocks are linked like the arrows above.</li><li><b>Verify.</b> Recomputing every fingerprint shows instantly if any block was edited, deleted, reordered or backdated, and which one.</li></ol><p class="hint" style="margin:6px 0 0">It proves the record wasn't altered after the fact. It doesn't prove a decision was right. Not a blockchain: one company keeps it. Approvals sent to Every Rupee carry their fingerprint, so finance can tell if the link was edited.</p></details>`;
+  const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
+}
+
+/* Mobile: secondary cards collapse to their heading; tap to open. */
+const openCards = new Set();
+function collapseForMobile() {
+  if (!matchMedia('(max-width:600px)').matches) return;
+  document.querySelectorAll('#desk .card').forEach((c, k) => {
+    const h = c.querySelector('h2'); if (!h) return; const key = h.textContent.replace(/[\d·]+/g, '').trim();
+    if (k === 0 || c.id === 'asks') return; // the main list always stays open
+    c.classList.add('fold'); if (!openCards.has(key)) c.classList.add('cl');
+    h.setAttribute('role', 'button'); h.tabIndex = 0;
+    h.onclick = () => { c.classList.toggle('cl'); c.classList.contains('cl') ? openCards.delete(key) : openCards.add(key); };
+  });
 }
 
 /* ---------- do this next ---------- */
@@ -238,6 +258,7 @@ function renderInner() {
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
+  collapseForMobile();
 }
 
 /* ---------- events ---------- */
@@ -253,7 +274,7 @@ document.addEventListener('click', e => {
   if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; $('#mv-confirm').innerHTML = `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') return render();
-  if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { w = E.simulateTamper(w); save(); sealRes = null; toast('An old entry was edited quietly. Now verify.'); } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealRes = E.verifyChain(w); } if (b.dataset.seal === 'view') sealOpen = !sealOpen; return renderSeal(); }
+  if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { w = E.simulateTamper(w); save(); sealRes = null; toast('An old entry was edited quietly. Now verify.'); } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealRes = E.verifyChain(w); } return renderSeal(); }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
