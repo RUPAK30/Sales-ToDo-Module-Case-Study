@@ -600,3 +600,17 @@ export function impact(w) {
     intact: verifyChain(w).ok, blocks: w.chain.length,
   };
 }
+/* The rep's own snapshot: only their work, no team comparison. */
+export function repSnapshot(w, rep) {
+  const mine = w.approvals.filter(a => a.rep === rep);
+  const orders = w.orders.filter(o => o.rep === rep);
+  const done = w.tasks.filter(t => t.rep === rep && t.status === 'done');
+  return {
+    waiting: mine.filter(a => a.status === 'pending').length, toAnswer: mine.filter(a => a.status === 'countered').length,
+    approvedOpen: mine.filter(a => a.status === 'approved' && !a.used && a.validTo >= w.today).length,
+    expiring: mine.filter(a => a.status === 'approved' && !a.used && a.validTo >= w.today && daysBetween(w.today, a.validTo) <= 3).length,
+    orders: orders.length, booked: orders.reduce((s, o) => s + o.value, 0),
+    onTime: done.length ? Math.round(100 * done.filter(t => t.doneAt <= t.due).length / done.length) : null, done: done.length,
+    intact: verifyChain(w).ok, blocks: w.chain.filter(e => e.who === rep).length,
+  };
+}

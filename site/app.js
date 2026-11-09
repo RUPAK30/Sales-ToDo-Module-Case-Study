@@ -104,10 +104,18 @@ function renderNext() {
 /* ---------- rep desk ---------- */
 function repDesk() {
   const q = E.today(w, actor), ib = E.inbox(w, actor), m = E.metrics(w);
+  const r = E.repSnapshot(w, actor);
+  const snap = `<section class="snap" aria-label="My snapshot"><p class="k">My snapshot · only your work, not compared with anyone</p><div class="tiles">
+    <div class="${r.toAnswer ? 'warn' : ''}"><span>Asks with approvers</span><b>${r.waiting}</b><small>${r.toAnswer ? `${r.toAnswer} counter-offer waiting for your answer` : 'the clock is on them, not you'}</small></div>
+    <div class="${r.expiring ? 'warn' : ''}"><span>Approved, not yet booked</span><b>${r.approvedOpen}</b><small>${r.expiring ? `${r.expiring} expiring within 3 days: book or re-ask` : 'book the order before the approval expires'}</small></div>
+    <div><span>Orders booked</span><b>${r.orders}</b><small>${inr(r.booked)} · every one within its approval</small></div>
+    <div><span>Done by the original date</span><b>${r.onTime === null ? '–' : r.onTime + '%'}</b><small>${r.done} task${r.done === 1 ? '' : 's'} done · moving a date doesn't reset it</small></div>
+    <div class="${r.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${r.intact ? '✓ Intact' : '✗ Altered'}</b><small>${r.blocks} of your decisions sealed · <a href="#seal">verify</a></small></div>
+  </div></section>`;
   const row = (t, i) => `<li><button type="button" class="task ${i === 0 ? 'top' : ''} ${flashId === t.id ? 'flash' : ''}" data-open="${t.id}"><span class="rank">${i + 1}</span><span><span class="c">${esc(t.customer)}</span> ${tierChip(t)}<span class="chip p3">${esc(t.stage)}</span><div class="t">${esc(t.title)}</div><div class="why">${esc(E.explain(w, t))}</div></span><span class="val">${inr(t.value)}</span></button></li>`;
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
-  return `<div class="grid">
+  return `${snap}<div class="grid">
     <div class="card"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). Click a task to act.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
