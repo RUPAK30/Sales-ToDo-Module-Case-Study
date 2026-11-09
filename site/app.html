@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ten Today · Product</title>
+<meta name="description" content="Ten Today, the product: a sales rep's Today queue capped at 10, discount asks that freeze the task and route to the right approver, and a manager desk with limits, counter-offers and workload. Every rule is enforced and tested.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tt.css">
+</head>
+<body>
+<header class="bar"><div class="in">
+  <a class="logo" href="app.html" aria-label="Ten Today">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  <nav><a href="app.html" class="on">Product</a><a href="./">Case study</a></nav>
+</div></header>
+<div class="strip">Sample workspace · changes stay in this browser · no CRM connected</div>
+
+<main class="wrap">
+  <div class="head">
+    <div>
+      <p class="eyebrow">Sales execution</p>
+      <h1>Today desk</h1>
+      <p class="lede">Each rep sees at most 10 things to do, ranked by rules they can read. Discount asks freeze the task and go to the person allowed to decide them.</p>
+    </div>
+    <button class="btn ghost" id="reset" type="button">↺ Reset sample</button>
+  </div>
+
+  <div class="actor" role="group" aria-label="Acting as"><span>Acting as</span><div id="actors"></div></div>
+  <section id="next" class="next" aria-live="polite"></section>
+  <section id="desk"></section>
+</main>
+
+<dialog id="panel" aria-labelledby="p-title"><div id="panel-body"></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 16 tests on the rules</span><a href="./">How it was designed →</a></footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
