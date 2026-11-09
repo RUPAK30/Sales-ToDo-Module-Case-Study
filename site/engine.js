@@ -7,8 +7,9 @@ export const SLA_DAYS = 1;             // an ask not decided in 1 day escalates 
 export const GST = 0.18;
 
 export const PEOPLE = [
-  { name: 'Rahul', role: 'Sales rep', rep: true },
-  { name: 'Neha', role: 'Sales rep', rep: true },
+  { name: 'Rahul', role: 'Sales rep', rep: true, buckets: ['FMCG'] },
+  { name: 'Imran', role: 'Sales rep', rep: true, buckets: ['FMCG'] },
+  { name: 'Neha', role: 'Sales rep', rep: true, buckets: ['Pharma'] },
   { name: 'Kavita', role: 'Sales manager', approver: true, manager: true },
   { name: 'Sanjay', role: 'Area sales manager', approver: true, manager: true },
   { name: 'Arjun', role: 'Sales head', approver: true, manager: true, senior: true },
@@ -58,6 +59,8 @@ export function sample(today) {
     t(201, 'Neha', 'Delta Pharma', 'Negotiation', 2, 300000),
     t(202, 'Neha', 'Sunrise Medicals', 'Quote sent', 0, 120000),
     t(203, 'Neha', 'Green Leaf', 'New lead', 1, 30000),
+    t(301, 'Imran', 'Balaji Provisions', 'Qualified', 1, 55000),
+    t(302, 'Imran', 'Sri Durga Stores', 'New lead', 0, 18000),
   ];
   tasks.find(x => x.id === 'T-111').callbackAt = '16:30';
   const w = {
@@ -73,7 +76,7 @@ export function sample(today) {
       'Royal Foods': { marginFloorPct: 10, creditLimit: 400000, outstanding: 50000, creditDays: 30, oldestBillDays: 5 },
       'Sunrise Medicals': { marginFloorPct: 9, creditLimit: 300000, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
     },
-    approvals: [], orders: [], chain: [], delegations: [], lost: [],
+    approvals: [], orders: [], chain: [], delegations: [], lost: [], transfers: [],
     // Last quarter's closed deals, so discount effectiveness has a baseline.
     past: [
       { rep: 'Rahul', pct: 8, won: true }, { rep: 'Rahul', pct: 10, won: false }, { rep: 'Rahul', pct: 9, won: false }, { rep: 'Rahul', pct: 7, won: true },
@@ -81,7 +84,7 @@ export function sample(today) {
       { rep: 'Neha', pct: 4, won: true }, { rep: 'Neha', pct: 0, won: true }, { rep: 'Neha', pct: 0, won: true }, { rep: 'Neha', pct: 5, won: true }, { rep: 'Neha', pct: 0, won: false },
     ],
     schemes: [{ id: 'SCH-01', name: 'Volume slab: 3% on orders of ₹2,00,000+', minValue: 200000, pct: 3, status: 'active', maker: 'Kavita', checker: 'Arjun', log: [] }],
-    seq: { task: 300, apv: 31, sch: 1, ord: 500 },
+    seq: { task: 400, apv: 31, sch: 1, ord: 500 },
     audit: [],
   };
   // One ask is already waiting for Kavita, so her desk has work from the start.
@@ -311,7 +314,12 @@ export function workload(w) {
   });
 }
 /* Confirm-first in the UI; here: managers only, never a frozen (approval) task, never to a non-rep. */
-export function rebalance(w0, id, actor, toRep) {
+/* Buckets, like the ownership buckets in a bank MIS: each dealer sits in one bucket, each rep owns buckets. */
+export const PHARMA = ['Delta Pharma', 'Sunrise Medicals', 'Green Leaf'];
+export const bucketOf = (w, customer) => w.customers[customer]?.bucket ?? (PHARMA.includes(customer) ? 'Pharma' : 'FMCG');
+export const owns = (rep, bucket) => !!person(rep)?.buckets?.includes(bucket);
+/* Same bucket: the manager moves it. Wrong bucket: a request with a reason that a different manager must approve. */
+export function rebalance(w0, id, actor, toRep, reason) {
   const w = clone(w0); const task = findTask(w, id);
   if (!person(actor)?.manager) fail('Only a sales manager can move work between reps.');
   if (task.kind === 'recovery') fail('Recovery tasks stay with the rep finance named.');
@@ -320,9 +328,20 @@ export function rebalance(w0, id, actor, toRep) {
   if (task.status !== 'open') fail('Only open tasks can be moved.');
   if (task.approvalId && w.approvals.some(a => a.id === task.approvalId && a.status === 'approved')) fail(`This deal has an approved discount (${task.approvalId}) negotiated by ${task.rep}. It stays with ${task.rep}.`);
   if (task.rep === toRep) fail(`It is already ${toRep}'s.`);
+  if ((w.transfers ?? []).some(x => x.taskId === id && x.status === 'pending')) fail('A transfer request for this task is already waiting.');
+  const bucket = bucketOf(w, task.customer);
+  if (!owns(toRep, bucket)) {
+    if (!reason || !reason.trim()) fail(`${toRep} doesn't handle ${bucket} dealers. Give a reason; a second manager must approve this.`);
+    const tr = { id: `TRF-${String((w.transfers ??= []).length + 1).padStart(3, '0')}`, taskId: id, customer: task.customer, from: task.rep, to: toRep, bucket, reason: reason.trim(), by: actor, on: w.today, status: 'pending' };
+    w.transfers.push(tr); task.transferPending = tr.id;
+    note(w, task, actor, `Transfer to ${label(toRep)} requested (${tr.id}): outside their ${person(toRep).buckets.join('/')} bucket. Waiting for a second manager.`);
+    record(w, actor, `Requested ${task.id} (${task.customer}, ${bucket}) move to ${toRep}, outside their bucket: ${reason.trim()}`, tr.id);
+    w.lastTransfer = tr.id; return w;
+  }
   const from = task.rep; task.rep = toRep;
-  note(w, task, actor, `Moved from ${label(from)} to ${label(toRep)}. Original target ${task.due} kept.`);
-  return w;
+  note(w, task, actor, `Moved from ${label(from)} to ${label(toRep)} within the ${bucket} bucket. Original target ${task.due} kept.`);
+  record(w, actor, `Moved ${task.id} (${task.customer}) from ${from} to ${toRep}, same ${bucket} bucket`, task.id);
+  delete w.lastTransfer; return w;
 }
 
 /* ---------- the metric ---------- */
@@ -614,3 +633,18 @@ export function repSnapshot(w, rep) {
     intact: verifyChain(w).ok, blocks: w.chain.filter(e => e.who === rep).length,
   };
 }
+
+export function decideTransfer(w0, trId, actor, approveIt, why) {
+  const w = clone(w0); const tr = (w.transfers ?? []).find(x => x.id === trId) ?? fail('Transfer not found.');
+  if (tr.status !== 'pending') fail('This transfer is already decided.');
+  if (!person(actor)?.manager) fail('Only a manager can decide transfers.');
+  if (actor === tr.by) fail(`${actor} requested this transfer, so a different manager must decide it.`);
+  if (!approveIt && !(why && why.trim())) fail('Say why it stays where it is.');
+  const task = findTask(w, tr.taskId); delete task.transferPending;
+  tr.status = approveIt ? 'approved' : 'rejected'; tr.decidedBy = actor; tr.note = (why ?? '').trim();
+  if (approveIt) { task.rep = tr.to; note(w, task, actor, `${tr.id} approved: moved to ${label(tr.to)} outside the ${tr.bucket} bucket. Original target kept.`); }
+  else note(w, task, actor, `${tr.id} rejected: stays with ${label(tr.from)}. ${tr.note}`);
+  record(w, actor, `${approveIt ? 'Approved' : 'Rejected'} ${tr.id}: ${tr.customer} ${approveIt ? `now with ${tr.to}` : `stays with ${tr.from}`}${tr.note ? ` (${tr.note})` : ''}`, tr.id);
+  return w;
+}
+export const transfersFor = (w, actor) => (w.transfers ?? []).filter(t => t.status === 'pending' && t.by !== actor && person(actor)?.manager);

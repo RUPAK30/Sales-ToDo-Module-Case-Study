@@ -15,9 +15,11 @@ Deals stall between the rep and the approver. Industry surveys suggest slow appr
 - **Discount ask:** freezes the task and routes it. Kavita takes up to 10% within the margin floor. The sales head takes anything above that, or any customer 30+ days overdue.
 - **Approver:** sees the ask, the margin floor and the overdue balance, then approves with a cap and an expiry, counters (the rep accepts or declines) or sends it back with a reason. Nobody decides their own ask, and nothing stays stuck.
 - **Manager:** sees the workload, and a move needs confirming first. Frozen tasks and tasks with an approved discount stay with their rep.
-- Every rule lives in `site/engine.js` and is tested in `tests/engine.test.mjs` (25 tests, `node --test tests/engine.test.mjs`), including approval escalation, dealer credit (limit and credit days), schemes with maker-checker and the Every Rupee handoff contract v1. Every action shows its result and the next step.
+- Every rule lives in `site/engine.js` and is tested in `tests/engine.test.mjs` (26 tests, `node --test tests/engine.test.mjs`), including approval escalation, dealer credit (limit and credit days), schemes with maker-checker and the Every Rupee handoff contract v1. Every action shows its result and the next step.
 
 **Also enforced:** a placed order can't carry more discount than was approved (cap plus scheme), an expired approval blocks the order, and one approval covers one order. Sundays and holidays don't count toward the approval deadline. A manager on leave hands approvals to a stand-in for set dates, logged as "acting for". Discount effectiveness shows win rate with and without discounts. CSV import of dealers and tasks is all-or-nothing, and approvals and orders export to CSV.
+
+**Buckets, MIS-style:** each dealer sits in one bucket (FMCG or Pharma) and each rep owns buckets. A manager can move a task within its bucket. A wrong-bucket move becomes a transfer request with a reason that a different manager must approve, and the task stays put until then.
 
 **Sealed approval record:** every ask, decision, hand-over and order is fingerprinted with SHA-256 together with the entry before it (a hash chain, not a blockchain). The bar at the top of the product verifies it live and can simulate an insider edit. Approvals sent to Every Rupee carry a fingerprint, so finance can see whether the link was edited on the way.
 

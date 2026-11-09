@@ -101,10 +101,10 @@ test('rebalance: managers only, never a frozen task, never to a non-rep', () => 
   assert.throws(() => E.rebalance(w, 'T-104', 'Rahul', 'Neha'), /Only a sales manager/);
   assert.throws(() => E.rebalance(w, 'T-201', 'Kavita', 'Rahul'), /discount decision/);
   assert.throws(() => E.rebalance(w, 'T-104', 'Kavita', 'Arjun'), /sales rep/);
-  const m = E.rebalance(w, 'T-104', 'Kavita', 'Neha');
-  assert.equal(t(m, 'T-104').rep, 'Neha'); assert.equal(t(m, 'T-104').due, t(w, 'T-104').due);
+  const m = E.rebalance(w, 'T-104', 'Kavita', 'Imran');
+  assert.equal(t(m, 'T-104').rep, 'Imran'); assert.equal(t(m, 'T-104').due, t(w, 'T-104').due);
   let a = E.askDiscount(w, 'T-101', 'Rahul', 8, 'x'); a = E.approve(a, a.approvals.at(-1).id, 'Kavita', 8, E.addDays(D, 5));
-  assert.throws(() => E.rebalance(a, 'T-101', 'Kavita', 'Neha'), /stays with Rahul/);
+  assert.throws(() => E.rebalance(a, 'T-101', 'Kavita', 'Imran'), /stays with Rahul/);
 });
 test('metric counts on time against the ORIGINAL target, so rescheduling cannot fake it', () => {
   let w = E.reschedule(w0(), 'T-107', 'Rahul', E.addDays(D, 1));
@@ -203,4 +203,18 @@ test('discount effectiveness, lost deals and CSV import are all-or-nothing', () 
   assert.equal(E.importDealers(w0(), E.DEALER_COLS.join(',') + '\nNew Co,100,0,30,0,10').w.customers['New Co'].creditLimit, 100);
   assert.throws(() => E.importTasks(w0(), E.TASK_COLS.join(',') + '\nKavita,A,New lead,2026-11-10,5'), /rep must be/);
   assert.equal(E.importTasks(w0(), E.TASK_COLS.join(',') + '\nNeha,A,New lead,2026-11-10,5').count, 1);
+});
+
+test('buckets: a move outside the bucket needs a reason and a second manager', () => {
+  assert.equal(E.bucketOf(w0(), 'Delta Pharma'), 'Pharma'); assert.equal(E.bucketOf(w0(), 'Aarav Distributors'), 'FMCG');
+  assert.throws(() => E.rebalance(w0(), 'T-104', 'Kavita', 'Neha'), /doesn't handle FMCG/);
+  let w = E.rebalance(w0(), 'T-104', 'Kavita', 'Neha', 'Neha covers Sai Enterprises area this month');
+  assert.equal(t(w, 'T-104').rep, 'Rahul'); const id = w.transfers.at(-1).id;
+  assert.throws(() => E.rebalance(w, 'T-104', 'Kavita', 'Neha', 'again'), /already waiting/);
+  assert.throws(() => E.decideTransfer(w, id, 'Kavita', true), /different manager/);
+  assert.throws(() => E.decideTransfer(w, id, 'Rahul', true), /Only a manager/);
+  assert.throws(() => E.decideTransfer(w, id, 'Arjun', false, ''), /why/);
+  const ok = E.decideTransfer(w, id, 'Arjun', true); assert.equal(t(ok, 'T-104').rep, 'Neha');
+  const no = E.decideTransfer(w, id, 'Arjun', false, 'Keep with territory owner'); assert.equal(t(no, 'T-104').rep, 'Rahul');
+  assert.ok(E.verifyChain(ok).ok); assert.match(ok.chain.at(-1).text, /Approved TRF-001/);
 });
