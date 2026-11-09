@@ -113,3 +113,9 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 .snap{background:linear-gradient(180deg,#FFF7ED,#fff);color:var(--ink);border:1px solid var(--tt-line)}.snap .k{color:var(--tt)}
 .tiles>div{background:#fff;border-color:var(--line)}.tiles span{color:var(--muted)}.tiles small{color:var(--muted)}.tiles a{color:var(--tt-d)}
 .tiles .warn{border-color:#FCD34D;background:#FFFBEB}.tiles .warn b{color:#B45309}.tiles .good b{color:#15803D}.tiles .bad{border-color:#FCA5A5;background:#FEF2F2}.tiles .bad b{color:#B91C1C}
+
+.tools{max-width:860px;margin:0 auto 30px;padding:14px}
+.ttabs{display:flex;gap:4px;overflow-x:auto;background:#F5F2EE;border-radius:11px;padding:4px;scrollbar-width:none}.ttabs::-webkit-scrollbar{display:none}
+.ttabs button{flex:0 0 auto;border:0;background:none;border-radius:8px;padding:7px 12px;font-weight:600;font-size:.84rem;color:var(--muted);cursor:pointer;white-space:nowrap}.ttabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tbody{margin-top:12px}.tbody .tool{border:0;padding:4px 2px;margin:0;box-shadow:none;background:none}.tbody .tool[hidden]{display:none!important}
+.tbody #movebox{margin-top:0!important}.tbody .tool>h2{font-size:.95rem}

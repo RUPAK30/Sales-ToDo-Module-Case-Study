@@ -61,11 +61,26 @@ function renderSeal() {
   const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
 }
 
+/* Manager tools: secondary sections live in one centred tabbed panel, one at a time. */
+let toolTab = 'movebox', toolChosen = false;
+const TOOLS = [['movebox', 'Move a task'], ['leave', 'Leave'], ['eff', 'Discount wins'], ['schemes', 'Schemes'], ['turn', 'Turnaround'], ['data', 'Your data'], ['act', 'Activity']];
+function buildTools() {
+  const desk = $('#desk'); const have = TOOLS.filter(([id]) => desk.querySelector('#' + id)); if (!have.length) return;
+  if (!have.some(([id]) => id === toolTab)) toolTab = have[0][0];
+  const closed = !toolChosen && matchMedia('(max-width:600px)').matches;
+  const wrap = document.createElement('section'); wrap.className = 'tools card'; wrap.setAttribute('aria-label', 'Manager tools');
+  wrap.innerHTML = `<div class="ttabs" role="tablist">${have.map(([id, l]) => `<button type="button" role="tab" aria-selected="${!closed && id === toolTab}" class="${!closed && id === toolTab ? 'on' : ''}" data-tool="${id}">${l}</button>`).join('')}</div><div class="tbody"></div>`;
+  const body = wrap.querySelector('.tbody');
+  for (const [id] of have) { const el = desk.querySelector('#' + id); el.classList.add('tool'); el.hidden = closed || id !== toolTab; body.append(el); }
+  desk.querySelectorAll('.side').forEach(sd => { if (!sd.children.length) sd.remove(); });
+  desk.append(wrap);
+}
+
 /* Mobile: secondary cards collapse to their heading; tap to open. */
 const openCards = new Set();
 function collapseForMobile() {
   if (!matchMedia('(max-width:600px)').matches) return;
-  document.querySelectorAll('#desk .card').forEach((c, k) => {
+  document.querySelectorAll('#desk .card:not(.tool):not(.tools)').forEach((c, k) => {
     const h = c.querySelector('h2'); if (!h) return; const key = h.textContent.replace(/[\d·]+/g, '').trim();
     if (k === 0 || c.id === 'asks') return; // the main list always stays open
     c.classList.add('fold'); if (!openCards.has(key)) c.classList.add('cl');
@@ -95,7 +110,7 @@ function renderNext() {
   } else {
     const d = E.decisionsFor(w, actor);
     if (d.length) { text = `Decide ${d.length} discount ask${d.length > 1 ? 's' : ''}. The rep's task is frozen until you do.`; sub = `Oldest: ${d[0].customer}, ${d[0].askPct}% asked by ${d[0].rep}, waiting ${E.waitingDays(w, d[0])} day(s).`; btn = `<button class="btn pri" data-go="#asks" type="button">Review the ask</button>`; }
-    else { const over = E.workload(w).filter(r => r.overCap); calm = !over.length; k = over.length ? 'Do this next' : 'All clear'; text = over.length ? `${over.map(r => r.rep).join(', ')} ha${over.length > 1 ? 've' : 's'} more than ${E.CAP} tasks due.` : 'No asks waiting for you.'; sub = over.length ? 'Move a task to someone with room. Approval tasks stay with the rep who asked.' : 'Team workload is below.'; if (over.length) btn = `<button class="btn pri" data-go="#team" type="button">Rebalance</button>`; }
+    else { const over = E.workload(w).filter(r => r.overCap); calm = !over.length; k = over.length ? 'Do this next' : 'All clear'; text = over.length ? `${over.map(r => r.rep).join(', ')} ha${over.length > 1 ? 've' : 's'} more than ${E.CAP} tasks due.` : 'No asks waiting for you.'; sub = over.length ? 'Move a task to someone with room. Approval tasks stay with the rep who asked.' : 'Team workload is below.'; if (over.length) btn = `<button class="btn pri" data-tool="movebox" type="button">Rebalance</button>`; }
   }
   el.className = 'next' + (calm ? ' calm' : '');
   el.innerHTML = `<div><p class="k">${k}</p><p><b>${esc(text)}</b></p>${sub ? `<p class="s">${esc(sub)}</p>` : ''}</div>${btn}`;
@@ -178,7 +193,7 @@ function managerDesk() {
     <div class="side">
       <div class="card" id="team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
         <table><thead><tr><th>Rep</th><th>Due now</th><th>P1</th><th>Waiting on approval</th></tr></thead><tbody>${wl.map(r => `<tr><td>${esc(E.label(r.rep))}</td><td class="${r.overCap ? 'over' : ''}">${r.actionable}${r.overCap ? ` (${r.overCap} over)` : ''}</td><td>${r.p1}</td><td>${r.frozen}</td></tr>`).join('')}</tbody></table>
-        <div class="box" style="margin-top:12px"><b>Move a task</b>
+        <div class="box" id="movebox" style="margin-top:12px"><b>Move a task</b>
           <div class="row"><label style="flex:1">Task<select id="mv-task">${opts.map(t => `<option value="${t.id}">${esc(t.rep)} · ${esc(t.customer)} · P${E.tier(w, t)}</option>`).join('')}</select></label>
           <label>To<select id="mv-to">${wl.slice().sort((x, y) => x.actionable - y.actionable).map(r => `<option>${r.rep}</option>`).join('')}</select></label></div>
           <div id="mv-confirm"><button type="button" class="btn" id="mv-ask">Move…</button></div>
@@ -195,8 +210,8 @@ function managerDesk() {
         <ul class="mini">${(w.schemes ?? []).map(sc => `<li><b>${sc.id}</b> · ${esc(sc.name)} <span class="chip ${sc.status === 'active' ? 'st-ok' : 'st-frozen'}">${sc.status === 'active' ? 'Live' : 'Waiting for approval'}</span><br><small class="hint">by ${esc(sc.maker)}${sc.checker ? `, approved by ${esc(sc.checker)}` : ''}</small>${sc.status === 'pending' ? (sc.maker === actor ? '<br><span class="hint">You proposed it, so someone else must approve it.</span>' : `<br><button class="btn" style="margin-top:4px" data-sch="${sc.id}" type="button">Approve ${sc.id}</button>`) : ''}</li>`).join('')}</ul>
         <div class="box" style="margin-top:10px"><b>Propose a scheme</b><div class="row"><label style="flex:1">Name<input id="s-name" maxlength="60" placeholder="e.g. Festive slab 2%"></label><label>Min order (₹)<input id="s-min" type="number" value="100000" style="width:120px"></label><label>%<input id="s-pct" type="number" step="0.5" value="2" style="width:70px"></label></div><button class="btn" id="s-go" type="button">Propose</button><div id="s-err"></div></div>
       </div>
-      <div class="card"><h2>Approval turnaround</h2><table><thead><tr><th>Approver</th><th>Decided</th><th>Avg days</th><th>Escalated away</th></tr></thead><tbody>${E.turnaround(w).map(r => `<tr><td>${esc(E.label(r.name))}</td><td>${r.decided}</td><td>${r.avgDays ?? '–'}</td><td class="${r.escalatedAway ? 'over' : ''}">${r.escalatedAway}</td></tr>`).join('')}</tbody></table><p class="hint" style="margin-top:6px">An ask not decided within ${E.SLA_DAYS} day moves to the sales head.</p></div>
-      <div class="card"><h2>Activity</h2>${w.audit.length ? `<ul class="hist">${w.audit.slice(-8).reverse().map(l => `<li><small>${time(l.at)} · ${esc(E.label(l.who))}</small>${esc(l.text)}</li>`).join('')}</ul>` : '<p class="empty">No activity yet.</p>'}</div>
+      <div class="card" id="turn"><h2>Approval turnaround</h2><table><thead><tr><th>Approver</th><th>Decided</th><th>Avg days</th><th>Escalated away</th></tr></thead><tbody>${E.turnaround(w).map(r => `<tr><td>${esc(E.label(r.name))}</td><td>${r.decided}</td><td>${r.avgDays ?? '–'}</td><td class="${r.escalatedAway ? 'over' : ''}">${r.escalatedAway}</td></tr>`).join('')}</tbody></table><p class="hint" style="margin-top:6px">An ask not decided within ${E.SLA_DAYS} day moves to the sales head.</p></div>
+      <div class="card" id="act"><h2>Activity</h2>${w.audit.length ? `<ul class="hist">${w.audit.slice(-8).reverse().map(l => `<li><small>${time(l.at)} · ${esc(E.label(l.who))}</small>${esc(l.text)}</li>`).join('')}</ul>` : '<p class="empty">No activity yet.</p>'}</div>
     </div></div>`;
 }
 
@@ -279,6 +294,7 @@ function renderInner() {
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
+  if (!isRep(actor)) buildTools();
   collapseForMobile();
 }
 
@@ -295,6 +311,7 @@ document.addEventListener('click', e => {
   if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; $('#mv-confirm').innerHTML = `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') return render();
+  if (b.dataset.tool) { toolTab = b.dataset.tool; toolChosen = true; document.querySelectorAll('.ttabs button').forEach(x => { const on = x.dataset.tool === toolTab; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); document.querySelectorAll('.tbody .tool').forEach(x => { x.hidden = x.id !== toolTab; }); if (!b.closest('.ttabs')) $('.tools')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { const ap = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0]; sealEdit = ap?.n ?? 0; sealRes = null; }
     if (b.dataset.seal === 'dbcancel') sealEdit = 0;
     if (b.dataset.seal === 'dbsave') { try { w = E.tamperEntry(w, Number($('#db-n').value), $('#db-text').value); save(); sealEdit = 0; sealRes = null; toast('Row changed in the database. Now press Verify record.'); } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; } } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyChain(w); } return renderSeal(); }
