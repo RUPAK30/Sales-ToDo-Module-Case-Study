@@ -584,3 +584,19 @@ export function exportCsv(w, kind) {
     : [['approval', 'customer', 'rep', 'asked_pct', 'status', 'approved_pct_before_gst', 'approved_rs', 'valid_to', 'decided_by', 'acting_for', 'used_on_order', 'seal'], ...w.approvals.map(a => [a.id, a.customer, a.rep, a.askPct, a.status, a.capPct, a.status === 'approved' ? a.amount : '', a.validTo, a.decidedBy, a.actingFor, a.orderId, a.seal])];
   return rows.map(r => r.map(csvCell).join(',')).join('\n');
 }
+
+/* ---------- leadership snapshot: what a sales head, finance and product would ask first ---------- */
+export function impact(w) {
+  const decided = w.approvals.filter(a => a.status !== 'pending');
+  const notGiven = decided.reduce((s, a) => s + (['approved', 'countered'].includes(a.status) ? rupeesOff(a.value, Math.max(0, a.askPct - (a.capPct ?? 0))) : ['sent_back', 'declined'].includes(a.status) ? rupeesOff(a.value, a.askPct) : 0), 0);
+  const given = w.orders.reduce((s, o) => s + o.discountAmt, 0);
+  const pend = w.approvals.filter(a => a.status === 'pending');
+  const t = decided.filter(a => a.decidedOn);
+  return {
+    notGiven, given, orders: w.orders.length, orderValue: w.orders.reduce((s, o) => s + o.value, 0),
+    pending: pend.length, oldest: pend.length ? Math.max(...pend.map(a => workingDaysBetween(a.askedOn, w.today))) : 0,
+    escalated: w.approvals.filter(a => a.escalated).length, creditHolds: w.approvals.filter(a => a.routedBecause.some(r => r.startsWith('credit hold'))).length,
+    avgDecision: t.length ? +(t.reduce((s, a) => s + workingDaysBetween(a.askedOn, a.decidedOn), 0) / t.length).toFixed(1) : null,
+    intact: verifyChain(w).ok, blocks: w.chain.length,
+  };
+}

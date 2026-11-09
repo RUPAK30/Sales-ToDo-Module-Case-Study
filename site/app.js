@@ -151,7 +151,15 @@ function managerDesk() {
   const wl = E.workload(w);
   const opts = w.tasks.filter(t => t.status === 'open' && t.target <= w.today && !w.approvals.some(a => a.id === t.approvalId && a.status === 'approved'));
   const statusChip = a => ({ approved: `<span class="chip st-ok">Approved ${a.capPct}% to ${fmt(a.validTo)}</span>`, countered: `<span class="chip st-frozen">Countered ${a.capPct}%</span>`, sent_back: '<span class="chip st-bad">Sent back</span>', declined: '<span class="chip st-hold">Counter declined</span>' }[a.status] ?? '');
-  return `<div class="grid">
+  const im = E.impact(w);
+  const snap = `<section class="snap" aria-label="Leadership snapshot"><p class="k">Leadership snapshot · live from this desk</p><div class="tiles">
+    <div><span>Discount held back</span><b>${inr(im.notGiven)}</b><small>asked but not approved, before GST</small></div>
+    <div><span>Discount given on orders</span><b>${inr(im.given)}</b><small>${im.orders} order${im.orders === 1 ? '' : 's'} · ${inr(im.orderValue)} booked · none above approval</small></div>
+    <div class="${im.oldest >= E.SLA_DAYS ? 'warn' : ''}"><span>Asks waiting</span><b>${im.pending}</b><small>${im.pending ? `oldest ${im.oldest} working day(s) · ` : ''}${im.escalated} escalated · avg decision ${im.avgDecision ?? '–'} d</small></div>
+    <div class="${im.creditHolds ? 'warn' : ''}"><span>Credit holds caught</span><b>${im.creditHolds}</b><small>dealer over limit or past credit days</small></div>
+    <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
+  </div></section>`;
+  return `${snap}<div class="grid">
     <div class="side">
       <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
