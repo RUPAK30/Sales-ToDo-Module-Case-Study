@@ -56,7 +56,7 @@ test('a discount ask freezes the task and routes to the right approver', () => {
   const big = E.askDiscount(w0(), 'T-101', 'Rahul', 13, 'Volume');
   assert.equal(big.approvals.at(-1).approver, 'Arjun');
   const overdue = E.askDiscount(w0(), 'T-108', 'Rahul', 5, 'Volume');
-  assert.match(overdue.approvals.at(-1).routedBecause.join(), /overdue/);
+  assert.match(overdue.approvals.at(-1).routedBecause.join(), /credit hold/);
   assert.throws(() => E.askDiscount(w0(), 'T-103', 'Rahul', 5, 'x'), /Quote sent or Negotiation/);
   assert.throws(() => E.askDiscount(w, 'T-101', 'Rahul', 5, 'x'), /Only open/);
 });
@@ -111,4 +111,51 @@ test('metric counts on time against the ORIGINAL target, so rescheduling cannot 
   w = { ...w, today: E.addDays(D, 1) };
   w = E.complete(w, 'T-107', 'Rahul', 'Called', false).w;
   assert.equal(E.metrics(w).onTime, 0); assert.equal(E.metrics(w).done, 1);
+});
+
+test('approval clock: an ask Kavita leaves for a day escalates to the sales head', () => {
+  const w = w0();
+  assert.equal(E.decisionsFor(w, 'Arjun').length, 1);
+  const a = E.decisionsFor(w, 'Arjun')[0]; assert.ok(a.escalated); assert.match(a.routedBecause.join(), /did not decide/);
+  const later = E.escalate({ ...w, today: E.addDays(D, 1) });
+  assert.equal(E.decisionsFor(later, 'Kavita').length, 0);
+});
+test('dealer credit: over the limit or past credit days routes to the head, who must write an override', () => {
+  assert.deepEqual(E.creditCheck(w0(), 'Meera Trading').ok, true);
+  assert.match(E.creditCheck(w0(), 'Ganesh Wholesale').why.join(), /42 days old/);
+  let w = E.askDiscount(w0(), 'T-108', 'Rahul', 5, 'Volume'); const id = w.approvals.at(-1).id;
+  assert.equal(w.approvals.at(-1).approver, 'Arjun');
+  assert.throws(() => E.approve(w, id, 'Arjun', 5, E.addDays(D, 5)), /overriding/);
+  assert.throws(() => E.counter(w, id, 'Arjun', 3, E.addDays(D, 5), 'x'), /credit hold/);
+  w = E.approve(w, id, 'Arjun', 5, E.addDays(D, 5), 'Post-dated cheque for ₹1,86,000 received');
+  assert.equal(w.approvals.at(-1).amount, 26000);
+});
+test('schemes: a live slab applies without an ask; a new one needs a second person', () => {
+  let w = E.applyScheme(w0(), 'T-101', 'Rahul', 'SCH-01');
+  assert.equal(w.tasks.find(x => x.id === 'T-101').scheme.amount, 14400);
+  assert.throws(() => E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01'), /already/);
+  assert.throws(() => E.applyScheme(w0(), 'T-105', 'Rahul', 'SCH-01'), /starts at/);
+  w = E.proposeScheme(w0(), 'Kavita', 'Festive 2%', 100000, 2); const sid = w.schemes.at(-1).id;
+  assert.throws(() => E.applyScheme(w, 'T-102', 'Rahul', sid), /not approved/);
+  assert.throws(() => E.approveScheme(w, sid, 'Kavita'), /second person/);
+  assert.throws(() => E.proposeScheme(w0(), 'Rahul', 'x', 1, 2), /manager/);
+  w = E.approveScheme(w, sid, 'Arjun');
+  assert.doesNotThrow(() => E.applyScheme(w, 'T-102', 'Rahul', sid));
+});
+test('handoff v1: approved discounts go to finance; unapproved short payments come back as one task', () => {
+  let w = E.askDiscount(w0(), 'T-101', 'Rahul', 6, 'x'); const id = w.approvals.at(-1).id;
+  assert.throws(() => E.financeLink(w, id), /Only approved/);
+  w = E.approve(w, id, 'Kavita', 6, E.addDays(D, 30));
+  const tok = new URL(E.financeLink(w, id)).searchParams.get('apv');
+  const o = JSON.parse(Buffer.from(tok.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+  assert.deepEqual([o.v, o.capPct, o.approver, o.rep], [1, 6, 'Kavita', 'Rahul']);
+  const t = Buffer.from(JSON.stringify({ v: 1, kind: 'recovery', invoiceId: 'INV-102', customer: 'Meera Trading', short: 12400, rep: 'Rahul' })).toString('base64url');
+  const r = E.importRecovery(w0(), t); assert.ok(r.fresh); assert.equal(r.task.rep, 'Rahul');
+  assert.ok(E.today(r.w, 'Rahul').list.some(x => x.id === r.task.id) || E.today(r.w, 'Rahul').waiting > 0);
+  assert.equal(E.importRecovery(r.w, t).fresh, false);
+  assert.throws(() => E.importRecovery(w0(), 'xx'), /damaged|not a recovery/);
+  const bad = Buffer.from(JSON.stringify({ v: 1, kind: 'recovery', invoiceId: 'INV-1', customer: 'X', short: 5, rep: 'Kavita' })).toString('base64url');
+  assert.throws(() => E.importRecovery(w0(), bad), /sales rep/);
+  const done = E.complete(r.w, r.task.id, 'Rahul', 'Customer agreed to pay', true);
+  assert.equal(done.next, null);
 });

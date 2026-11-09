@@ -89,9 +89,10 @@ function askCard(a) {
   const lim = E.person(actor).senior ? a.askPct : Math.min(a.askPct, E.MANAGER_LIMIT, a.marginFloorPct);
   const exp = E.addDays(w.today, 14);
   return `<div class="ask ${flashId === a.id ? 'flash' : ''}" id="ask-${a.id}">
-    <div class="top"><h3>${esc(a.customer)} · ${a.askPct}% asked</h3><span class="chip ${E.waitingDays(w, a) >= 1 ? 'st-bad' : 'p3'}">waiting ${E.waitingDays(w, a)} day(s)</span></div>
+    <div class="top"><h3>${esc(a.customer)} · ${a.askPct}% asked ${a.escalated ? '<span class="chip st-bad">Escalated</span>' : ''}</h3><span class="chip ${E.waitingDays(w, a) >= 1 ? 'st-bad' : 'p3'}">waiting ${E.waitingDays(w, a)} day(s)</span></div>
     <p class="hint">${a.id} · asked by ${esc(E.label(a.rep))}: “${esc(a.reason)}”</p>
-    <div class="facts"><div><span>Deal value</span><b>${inr(a.value)}</b></div><div><span>Margin floor</span><b>max ${a.marginFloorPct}%</b></div><div class="${a.overdueDays >= E.OVERDUE_BLOCK_DAYS ? 'bad' : ''}"><span>Customer overdue</span><b>${a.overdueAmt ? `${inr(a.overdueAmt)} · ${a.overdueDays}d` : 'None'}</b></div></div>
+    <div class="facts"><div><span>Deal value</span><b>${inr(a.value)}</b></div><div><span>Margin floor</span><b>max ${a.marginFloorPct}%</b></div><div class="${a.routedBecause.some(r => r.startsWith('credit hold')) ? 'bad' : ''}"><span>Dealer credit</span><b>${inr(a.outstanding)} of ${inr(a.creditLimit)}</b><span>oldest bill ${a.oldestBillDays}d · allowed ${a.creditDays}d</span></div></div>
+    <p class="hint">Ask: ${a.askPct}% before GST = <b>${inr(a.amount)}</b> off ${inr(a.value)}.</p>
     ${a.routedBecause.length ? `<p class="route">Sent to the sales head because: ${esc(a.routedBecause.join(', '))}.</p>` : ''}
     <div class="row">
       <label>Approve up to (%)<input type="number" step="0.5" min="0.5" max="${a.askPct}" value="${lim}" data-f="cap" style="width:90px"></label>
@@ -99,7 +100,7 @@ function askCard(a) {
       <button type="button" class="btn ok" data-dec="approve" data-id="${a.id}">Approve</button>
     </div>
     <div class="row">
-      <label style="flex:1">Note (needed to counter or send back)<input data-f="why" maxlength="160" placeholder="e.g. Margin too thin; attach the competitor quote"></label>
+      <label style="flex:1">${a.routedBecause.some(r => r.startsWith('credit hold')) ? 'Override reason (required to approve a dealer on credit hold)' : 'Note (needed to counter or send back)'}<input data-f="why" maxlength="160" placeholder="e.g. Margin too thin; attach the competitor quote"></label>
       <button type="button" class="btn" data-dec="counter" data-id="${a.id}">Counter at the % above</button>
       <button type="button" class="btn" data-dec="back" data-id="${a.id}">Send back</button>
     </div>
@@ -115,11 +116,11 @@ function managerDesk() {
   const statusChip = a => ({ approved: `<span class="chip st-ok">Approved ${a.capPct}% to ${fmt(a.validTo)}</span>`, countered: `<span class="chip st-frozen">Countered ${a.capPct}%</span>`, sent_back: '<span class="chip st-bad">Sent back</span>', declined: '<span class="chip st-hold">Counter declined</span>' }[a.status] ?? '');
   return `<div class="grid">
     <div class="side">
-      <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and what the customer already owes.</p>
+      <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
         ${others.length ? `<p class="more">${others.length} other ask(s) waiting for ${others.map(a => esc(E.label(a.approver))).join(', ')}.</p>` : ''}
       </div>
-      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.status === 'approved' ? `<br><a class="hint" href="https://every-rupee-gets-owner.lovable.app/demo" target="_blank" rel="noopener">${a.id}: finance checks short payments against this cap in Every Rupee ↗</a>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
+      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
     </div>
     <div class="side">
       <div class="card" id="team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
@@ -131,6 +132,11 @@ function managerDesk() {
           <p class="hint">Original target is kept, so a moved task doesn't look newer. Tasks waiting on a discount can't be moved.</p>
         </div>
       </div>
+      <div class="card" id="schemes"><h2>Schemes</h2><p class="sub">A live slab applies without an ask. A new scheme needs a second person to approve it.</p>
+        <ul class="mini">${(w.schemes ?? []).map(sc => `<li><b>${sc.id}</b> · ${esc(sc.name)} <span class="chip ${sc.status === 'active' ? 'st-ok' : 'st-frozen'}">${sc.status === 'active' ? 'Live' : 'Waiting for approval'}</span><br><small class="hint">by ${esc(sc.maker)}${sc.checker ? `, approved by ${esc(sc.checker)}` : ''}</small>${sc.status === 'pending' ? (sc.maker === actor ? '<br><span class="hint">You proposed it, so someone else must approve it.</span>' : `<br><button class="btn" style="margin-top:4px" data-sch="${sc.id}" type="button">Approve ${sc.id}</button>`) : ''}</li>`).join('')}</ul>
+        <div class="box" style="margin-top:10px"><b>Propose a scheme</b><div class="row"><label style="flex:1">Name<input id="s-name" maxlength="60" placeholder="e.g. Festive slab 2%"></label><label>Min order (₹)<input id="s-min" type="number" value="100000" style="width:120px"></label><label>%<input id="s-pct" type="number" step="0.5" value="2" style="width:70px"></label></div><button class="btn" id="s-go" type="button">Propose</button><div id="s-err"></div></div>
+      </div>
+      <div class="card"><h2>Approval turnaround</h2><table><thead><tr><th>Approver</th><th>Decided</th><th>Avg days</th><th>Escalated away</th></tr></thead><tbody>${E.turnaround(w).map(r => `<tr><td>${esc(E.label(r.name))}</td><td>${r.decided}</td><td>${r.avgDays ?? '–'}</td><td class="${r.escalatedAway ? 'over' : ''}">${r.escalatedAway}</td></tr>`).join('')}</tbody></table><p class="hint" style="margin-top:6px">An ask not decided within ${E.SLA_DAYS} day moves to the sales head.</p></div>
       <div class="card"><h2>Activity</h2>${w.audit.length ? `<ul class="hist">${w.audit.slice(-8).reverse().map(l => `<li><small>${time(l.at)} · ${esc(E.label(l.who))}</small>${esc(l.text)}</li>`).join('')}</ul>` : '<p class="empty">No activity yet.</p>'}</div>
     </div></div>`;
 }
@@ -143,7 +149,8 @@ function renderPanel() {
   const mine = t.rep === actor;
   const tabs = [];
   if (mine && t.status === 'open') tabs.push(['done', '✓ Done'], ['move', 'Reschedule'], ['hold', 'On hold']);
-  if (mine && t.status === 'open' && ['Quote sent', 'Negotiation'].includes(t.stage)) tabs.push(['ask', 'Ask discount']);
+  const scheme = (w.schemes ?? []).find(x => x.status === 'active' && t.value >= x.minValue);
+  if (mine && t.status === 'open' && ['Quote sent', 'Negotiation'].includes(t.stage)) { if (scheme && !t.scheme) tabs.push(['scheme', 'Apply scheme']); tabs.push(['ask', 'Ask discount']); }
   if (mine && a?.status === 'countered') tabs.unshift(['counter', 'Answer counter']);
   if (!panel.tab || !tabs.some(x => x[0] === panel.tab)) panel.tab = tabs[0]?.[0] ?? null;
   const tomorrow = E.addDays(w.today, 1);
@@ -152,6 +159,7 @@ function renderPanel() {
     move: `<div class="row"><label>New date<input type="date" id="f-date" min="${tomorrow}" value="${tomorrow}"></label><label style="flex:1">${t.reschedules.length ? 'What is blocking it? (required)' : 'Blocker (optional the first time)'}<input id="f-block" maxlength="120"></label></div><p class="hint">It keeps ageing from the original target (${fmt(t.due)}) wherever you move it.</p><button class="btn pri" data-do="move" type="button">Reschedule</button>`,
     hold: `<div class="row"><label style="flex:1">Why on hold?<input id="f-why" maxlength="120" placeholder="e.g. Customer budget frozen till month end"></label><label>Revisit on<input type="date" id="f-rev" min="${tomorrow}" value="${E.addDays(w.today, 7)}"></label></div><p class="hint">It comes back into Today by itself on the revisit date.</p><button class="btn pri" data-do="hold" type="button">Put on hold</button>`,
     ask: `<div class="row"><label>Discount (%)<input type="number" id="f-pct" min="0.5" max="30" step="0.5" value="8" style="width:100px"></label><label style="flex:1">Why does the customer need it?<input id="f-reason" maxlength="160" placeholder="e.g. Competitor quoted 9% lower"></label></div><p class="route" id="f-route"></p><p class="hint">Asking freezes this task until the approver decides. The clock moves to them.</p><button class="btn pri" data-do="ask" type="button">Send the ask</button>`,
+    scheme: scheme ? `<p><b>${scheme.id}</b> · ${esc(scheme.name)}</p><p class="hint">This order is ${inr(t.value)}, so it qualifies: ${scheme.pct}% before GST = <b>${inr(E.rupeesOff(t.value, scheme.pct))}</b>. The scheme is pre-approved, so no ask is needed.</p><button class="btn pri" data-do="scheme" data-s="${scheme.id}" type="button">Apply ${scheme.pct}%</button>` : '',
     counter: a?.status === 'countered' ? `<p>${esc(E.label(a.decidedBy))} offered <b>${a.capPct}%</b> instead of ${a.askPct}%, valid to ${fmt(a.validTo)}. “${esc(a.counterWhy)}”</p><div class="row"><button class="btn pri" data-do="accept" type="button">Accept ${a.capPct}%</button><button class="btn" data-do="decline" type="button">Decline</button></div>` : '',
   };
   let state = '';
@@ -162,6 +170,8 @@ function renderPanel() {
   $('#panel-body').innerHTML = `
     <div class="ph"><div><h2 id="p-title" style="margin:0">${esc(t.customer)}</h2><p class="hint">${t.id} · ${esc(t.stage)} · ${inr(t.value)} · ${esc(E.label(t.rep))}</p></div><button class="x" data-close aria-label="Close" type="button">×</button></div>
     <p style="margin:0"><b>${esc(t.title)}</b></p>
+    ${t.scheme ? `<p class="hint">Scheme ${t.scheme.id} applied: ${t.scheme.pct}% before GST = ${inr(t.scheme.amount)}.</p>` : ''}
+    ${(() => { const c = E.creditCheck(w, t.customer); return c.creditLimit ? `<p class="hint">Dealer credit: ${inr(c.outstanding)} of ${inr(c.creditLimit)} used · oldest bill ${c.oldestBillDays}d of ${c.creditDays}d allowed${c.ok ? '' : ` · <b style="color:var(--bad)">credit hold</b>`}</p>` : ''; })()}
     ${t.status === 'open' ? `<p class="hint">Why it's here: ${esc(E.explain(w, t))}</p>` : ''}
     ${panel.done ? `<div class="done">${panel.done}</div>` : ''}
     ${state}
@@ -173,7 +183,7 @@ function renderPanel() {
 function routePreview() {
   const t = w.tasks.find(x => x.id === panel.id); const pct = Number($('#f-pct')?.value || 0); const el = $('#f-route'); if (!el) return;
   const r = E.approverFor(w, t.customer, pct);
-  el.textContent = `Goes to ${E.label(r.approver)}${r.why.length ? ` because: ${r.why.join(', ')}` : ` (within ${E.MANAGER_LIMIT}% and the margin floor)`}.`;
+  el.textContent = `${pct}% before GST = ${inr(E.rupeesOff(t.value, pct))} off. Goes to ${E.label(r.approver)}${r.why.length ? ` because: ${r.why.join(', ')}` : ` (within ${E.MANAGER_LIMIT}% and the margin floor)`}.`;
 }
 function panelAction(kind) {
   const t = w.tasks.find(x => x.id === panel.id); const v = s => $(s)?.value ?? '';
@@ -182,6 +192,7 @@ function panelAction(kind) {
   if (kind === 'done') act(() => E.complete(w, t.id, actor, v('#f-out'), $('#f-moved')?.checked), 'Marked done.', out => ok(out.next ? `✓ Done. The deal moved to <b>${esc(out.next.stage)}</b>, so the next task was created: ${esc(out.next.title)} (due ${fmt(out.next.due)}).<div class="row"><button class="btn" data-open="${out.next.id}" type="button">Open the new task</button><button class="btn pri" data-close type="button">Back to Today</button></div>` : `✓ Done and logged.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'move') act(() => E.reschedule(w, t.id, actor, v('#f-date'), v('#f-block')), 'Rescheduled.', () => ok(`✓ Moved to ${fmt(v('#f-date'))}. It's in “Coming up” and still ages from ${fmt(t.due)}.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'hold') act(() => E.putOnHold(w, t.id, actor, v('#f-why'), v('#f-rev')), 'On hold.', () => ok(`✓ On hold until ${fmt(v('#f-rev'))}. It returns to Today by itself then.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
+  if (kind === 'scheme') { const sc = w.schemes.find(x => x.id === $('[data-do="scheme"]').dataset.s); act(() => E.applyScheme(w, t.id, actor, sc.id), 'Scheme applied.', () => ok(`✓ ${sc.id} applied: ${sc.pct}% before GST = ${inr(E.rupeesOff(t.value, sc.pct))} off. Pre-approved, so no ask was needed.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`)); }
   if (kind === 'resume') act(() => E.resume(w, t.id, actor), 'Back in Today.', () => ok('✓ Back in Today.'));
   if (kind === 'ask') act(() => E.askDiscount(w, t.id, actor, Number(v('#f-pct')), v('#f-reason')), 'Ask sent.', out => { const a = out.approvals.at(-1); ok(`✓ Sent ${a.id} to <b>${esc(E.label(a.approver))}</b>. This task is frozen until they decide, so it has left your Today.<div class="row"><button class="btn pri" data-actor="${a.approver}" type="button">See it as ${esc(a.approver)} →</button><button class="btn" data-close type="button">Back to Today</button></div>`); });
   if (kind === 'accept' || kind === 'decline') { const a = apvOf(t); act(() => E.respondCounter(w, a.id, actor, kind === 'accept'), kind === 'accept' ? 'Counter accepted.' : 'Counter declined.', () => ok(kind === 'accept' ? `✓ Accepted ${a.capPct}%. The task is back in Today: send the revised quote.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>` : '✓ Declined. The task is back in Today to negotiate without a discount.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>')); }
@@ -189,9 +200,9 @@ function panelAction(kind) {
 function decide(kind, id) {
   const card = $(`#ask-${CSS.escape(id)}`); const f = n => card.querySelector(`[data-f="${n}"]`).value;
   const a = w.approvals.find(x => x.id === id);
-  const run = { approve: () => E.approve(w, id, actor, Number(f('cap')), f('exp')), counter: () => E.counter(w, id, actor, Number(f('cap')), f('exp'), f('why')), back: () => E.sendBack(w, id, actor, f('why')) }[kind];
+  const run = { approve: () => E.approve(w, id, actor, Number(f('cap')), f('exp'), f('why')), counter: () => E.counter(w, id, actor, Number(f('cap')), f('exp'), f('why')), back: () => E.sendBack(w, id, actor, f('why')) }[kind];
   const text = { approve: `Approved ${f('cap')}% for ${a.customer}, valid to ${fmt(f('exp'))}.`, counter: `Offered ${f('cap')}% to ${a.rep} for ${a.customer}.`, back: `Sent ${a.customer}'s ask back to ${a.rep}.` }[kind];
-  const sub = { approve: `${a.rep}'s task is unfrozen and back in Today as “send the revised quote”.`, counter: `${a.rep} must accept or decline. Their task stays frozen until then.`, back: `${a.rep}'s task is back in Today with your note, so they can fix it and ask again.` }[kind];
+  const sub = { approve: `${a.rep}'s task is unfrozen and back in Today as “send the revised quote”. Use “Send to finance” under Decided so Every Rupee checks payments against this cap.`, counter: `${a.rep} must accept or decline. Their task stays frozen until then.`, back: `${a.rep}'s task is back in Today with your note, so they can fix it and ask again.` }[kind];
   try { w = run(); save(); toast(text); result = { text, sub, switchTo: a.rep }; flashId = a.taskId; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   catch (e) { let el = card.querySelector('.err'); if (!el) { el = document.createElement('div'); el.className = 'err'; el.setAttribute('role', 'alert'); card.prepend(el); } el.textContent = e.message; }
 }
@@ -216,9 +227,18 @@ document.addEventListener('click', e => {
   if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; $('#mv-confirm').innerHTML = `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') return render();
+  if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (b.id === 's-go') { try { w = E.proposeScheme(w, actor, $('#s-name').value, Number($('#s-min').value), Number($('#s-pct').value)); save(); const sc = w.schemes.at(-1); toast('Scheme proposed.'); result = { text: `${sc.id} proposed: ${sc.name}.`, sub: 'It is not usable until a second person approves it.', switchTo: actor === 'Kavita' ? 'Arjun' : 'Kavita' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#s-err').innerHTML = `<div class="err" role="alert" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.id === 'mv-yes') { try { w = E.rebalance(w, b.dataset.t, actor, b.dataset.to); save(); const t = w.tasks.find(x => x.id === b.dataset.t); toast('Task moved.'); result = { text: `Moved ${t.customer} to ${E.label(t.rep)}.`, sub: 'The original target is kept, so it keeps its place in their ranking.', switchTo: t.rep }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#mv-confirm').innerHTML = `<div class="err" role="alert">${esc(err.message)}</div><button type="button" class="btn" id="mv-no" style="margin-top:6px">OK</button>`; } }
 });
 document.addEventListener('input', e => { if (e.target.id === 'f-pct') routePreview(); });
 $('#panel').addEventListener('close', () => { panel = null; });
 
-load(); w = E.wakeHolds(w); render();
+load(); w = E.escalate(E.wakeHolds(w));
+(() => {
+  const tok = new URLSearchParams(location.search).get('task'); if (!tok) return;
+  try { const r = E.importRecovery(w, tok); w = r.w; actor = r.task.rep; save(); result = { text: r.fresh ? `New task from Every Rupee: ${r.task.title}.` : `Already in ${r.task.rep}'s list: ${r.task.title}.`, sub: `Finance handed this short payment to ${r.task.rep}. Recover it from ${r.task.customer}, or get it approved. Open it in Today.` }; setTimeout(() => openTask(r.task.id), 300); }
+  catch (e) { result = { err: e.message }; }
+  try { history.replaceState(null, '', location.pathname); } catch { }
+})();
+render();
