@@ -64,6 +64,12 @@ function renderSeal() {
 /* Manager tools: secondary sections live in one centred tabbed panel, one at a time. */
 let toolTab = 'movebox', toolChosen = false;
 const TOOLS = [['movebox', 'Move a task'], ['leave', 'Leave'], ['eff', 'Discount wins'], ['schemes', 'Schemes'], ['turn', 'Turnaround'], ['data', 'Your data'], ['act', 'Activity']];
+function moveFit() {
+  const el = $('#mv-fit'); const t = w.tasks.find(x => x.id === $('#mv-task')?.value); const to = $('#mv-to')?.value; if (!el || !t || !to) return;
+  const bk = E.bucketOf(w, t.customer); const ok = E.owns(to, bk);
+  el.innerHTML = to === t.rep ? `It's already ${esc(to)}'s.` : ok ? `<b style="color:var(--ok)">✓ Same bucket:</b> ${esc(t.customer)} is ${bk === 'FMCG' ? 'an' : 'a'} ${bk} dealer and ${esc(to)} handles ${bk}. It moves directly.` : `<b style="color:var(--bad)">✗ Wrong bucket:</b> ${esc(t.customer)} is ${bk === 'FMCG' ? 'an' : 'a'} ${bk} dealer, but ${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}. Needs a reason and a second manager's approval.`;
+  const btn = $('#mv-ask'); if (btn) btn.textContent = ok ? 'Move…' : 'Request transfer…';
+}
 function buildTools() {
   const desk = $('#desk'); const have = TOOLS.filter(([id]) => desk.querySelector('#' + id)); if (!have.length) return;
   if (!have.some(([id]) => id === toolTab)) toolTab = have[0][0];
@@ -297,7 +303,7 @@ function renderInner() {
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
-  if (!isRep(actor)) buildTools();
+  if (!isRep(actor)) { buildTools(); moveFit(); }
   collapseForMobile();
 }
 
@@ -315,7 +321,7 @@ document.addEventListener('click', e => {
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; const bk = E.bucketOf(w, t.customer); const fits = E.owns(to, bk);
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
-  if (b.id === 'mv-no') return render();
+  if (b.id === 'mv-no') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); return; }
   if (b.dataset.tool) { toolTab = b.dataset.tool; toolChosen = true; document.querySelectorAll('.ttabs button').forEach(x => { const on = x.dataset.tool === toolTab; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); document.querySelectorAll('.tbody .tool').forEach(x => { x.hidden = x.id !== toolTab; }); if (!b.closest('.ttabs')) $('.tools')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { const ap = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0]; sealEdit = ap?.n ?? 0; sealRes = null; }
     if (b.dataset.seal === 'dbcancel') sealEdit = 0;
@@ -331,7 +337,7 @@ document.addEventListener('click', e => {
   if (b.dataset.tr) { try { const ok = b.dataset.ok === '1'; w = E.decideTransfer(w, b.dataset.tr, actor, ok, $(`#tr-why-${CSS.escape(b.dataset.tr)}`)?.value); save(); sealRes = null; const tr = w.transfers.find(x => x.id === b.dataset.tr); toast(ok ? 'Transfer approved.' : 'Transfer rejected.'); result = { text: ok ? `${tr.id} approved: ${tr.customer} is now with ${E.label(tr.to)}.` : `${tr.id} rejected: ${tr.customer} stays with ${E.label(tr.from)}.`, sub: `Decided by ${actor}, not ${tr.by} who asked. Sealed in the record.`, switchTo: ok ? tr.to : tr.from }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { b.closest('div').insertAdjacentHTML('beforebegin', `<div class="err" role="alert">${esc(err.message)}</div>`); } return; }
 });
 document.addEventListener('input', e => { if (e.target.id === 'f-pct') routePreview(); });
-document.addEventListener('change', e => { if (e.target.id === 'db-n') { sealEdit = Number(e.target.value); renderSeal(); } });
+document.addEventListener('change', e => { if (e.target.id === 'mv-task' || e.target.id === 'mv-to') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); } if (e.target.id === 'db-n') { sealEdit = Number(e.target.value); renderSeal(); } });
 document.addEventListener('change', async e => {
   if (!['imp-dealers', 'imp-tasks'].includes(e.target.id) || !e.target.files[0]) return;
   const text = await e.target.files[0].text(); const out = $('#imp-res');
