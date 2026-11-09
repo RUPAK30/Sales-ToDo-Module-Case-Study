@@ -1,6 +1,7 @@
 import * as E from './engine.js';
 
-const KEY = 'tentoday-product-v1';
+const KEY = 'tentoday-product-v3';
+const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -11,7 +12,7 @@ const time = t => new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', min
 let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
 
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.w && s.w.today === realToday) { w = s.w; actor = s.actor || actor; return; } } catch { /* storage unavailable */ }
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; return; } } catch { /* storage unavailable */ }
   w = E.sample(realToday);
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ w, actor })); } catch { /* fine without */ } }
@@ -230,6 +231,9 @@ function decide(kind, id) {
 }
 
 function render() {
+  try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.sample(realToday)); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
+}
+function renderInner() {
   renderActors(); renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
