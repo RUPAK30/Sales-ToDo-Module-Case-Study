@@ -1,4 +1,4 @@
-import * as E from './engine.js';
+import * as E from './engine.js?v=1794244847';
 
 const KEY = 'tentoday-product-v3';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
