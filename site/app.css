@@ -90,3 +90,11 @@ blockquote,.hero .ins,.hero [class*=quote]{border-left-color:var(--tt-line)!impo
 .tt-head .in{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}
 .tt-head nav{margin:0!important}.tt-head .in{height:auto!important;min-height:56px;padding-top:6px!important;padding-bottom:6px!important}.tt-head .logo{margin:0!important}
 .tt-head nav.l{grid-column:1!important;grid-row:1}.tt-head .logo{grid-column:2!important;grid-row:1}.tt-head nav.r{grid-column:3!important;grid-row:1}
+
+/* ---- mobile: header stacks into two rows, nothing gets clipped ---- */
+@media(max-width:720px){.tt-head .in{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px!important}.tt-head .logo{order:1;justify-self:auto}.tt-head .hr,.tt-head nav.r{order:2;margin-left:auto;justify-self:auto}.tt-head nav.l{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}.tt-head nav.l::-webkit-scrollbar{display:none}}
+@media(max-width:959px){.stage{grid-template-columns:minmax(0,1fr)}.stage>*{min-width:0}.phone{width:100%;max-width:370px}}
+
+
+@media(max-width:720px){.tbl{-webkit-overflow-scrolling:touch}.tbl table{min-width:600px}}
+

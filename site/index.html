@@ -116,7 +116,7 @@
       </div>
     </div>
     <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:.84rem" id="mb-tbl">
+      <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.84rem" id="mb-tbl">
         <thead>
           <tr style="border-bottom:2px solid #ECE7E1;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280">
             <th style="padding:8px 6px">Rule / UAT</th>
@@ -126,7 +126,7 @@
           </tr>
         </thead>
         <tbody id="mb-body"></tbody>
-      </table>
+      </table></div>
     </div>
     <div id="mb-out" style="margin-top:12px;padding:11px 14px;border-radius:10px;background:#1C1917;color:#F9FAFB;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;line-height:1.5;display:none"></div>
   </div>
@@ -165,7 +165,7 @@
     </div>
 
     <div id="sp-raci" style="display:none;overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.82rem">
         <thead>
           <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
             <th style="padding:6px">Workflow Decision</th>
@@ -181,11 +181,11 @@
           <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask &gt;10%, below floor, or dealer on credit hold</td><td>Submits (Task freezes)</td><td>C (Blocked from deciding)</td><td><b>R / A (Written override)</b></td><td>Verifies SHA-256 seal</td></tr>
           <tr><td style="padding:6px">Cross-bucket task transfer (e.g. FMCG → Pharma)</td><td>I</td><td>Requests with reason</td><td><b>2nd Manager Approves</b></td><td>—</td></tr>
         </tbody>
-      </table>
+      </table></div>
     </div>
 
     <div id="sp-trc" style="display:none;overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.82rem">
         <thead>
           <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
             <th style="padding:6px">Field Sales / Ops Failure Mode</th>
@@ -199,7 +199,7 @@
           <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Quotes stall in manager inbox; or manager approves above authority</td><td>Task freezes on ask; 1-working-day escalation to Head; role &amp; floor caps</td><td><code>engine.test.mjs #9–#18 · UAT-14</code></td></tr>
           <tr><td style="padding:6px">Silent DB rate edits or unapproved verbal discounts deducted at payment</td><td>Linked SHA-256 block chain + Every Rupee Contract v1 &amp; 15-day R7 hold</td><td><code>engine.test.mjs #19–#22 · UAT-16–18</code></td></tr>
         </tbody>
-      </table>
+      </table></div>
     </div>
   </div>
 </section>
@@ -207,7 +207,7 @@
 <section class="wrap" id="sources" style="padding-top:12px">
   <h2>Public Data Sources, Benchmarks &amp; Guardrails</h2>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px;overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:.83rem">
+    <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.83rem">
       <thead>
         <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
           <th style="padding:7px 6px">Benchmark / Control Fact</th>
@@ -237,7 +237,7 @@
           <td style="padding:7px 6px">Caps Today at 10, requires a blocker on the 2nd reschedule, and measures on-time against the original target date.</td>
         </tr>
       </tbody>
-    </table>
+    </table></div>
     <p style="margin:10px 0 0;font-size:.78rem;color:#6B7280"><b>What this does not claim:</b> Ten Today is an independent product &amp; BA specification with synthetic dealer data, not a deployed enterprise CRM. Public benchmarks above justify the control design; they are not measurements from a live customer deployment.</p>
   </div>
 </section>

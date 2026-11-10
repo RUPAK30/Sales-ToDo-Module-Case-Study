@@ -169,3 +169,7 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 .story-step b{font-size:.92rem;color:var(--ink)}
 .story-step p{margin:0;font-size:.8rem;color:var(--muted);line-height:1.42}
 @media(max-width:860px){.story-strip{grid-template-columns:1fr}}
+
+/* ---- mobile header: two rows, nav scrolls, nothing overlaps the wordmark ---- */
+@media(max-width:720px){.bar .in{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px}.bar .logo{order:1;justify-self:auto}.bar .hr{order:2;margin-left:auto;justify-self:auto}.bar nav{order:3;flex-basis:100%;justify-self:auto;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}.bar nav::-webkit-scrollbar{display:none}}
+
