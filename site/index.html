@@ -3,10 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ten Today · Sales To-Do Module Case Study</title>
+<title>Ten Today — 100 open leads. 10 actions today.</title>
 <meta name="description" content="Product and business analysis case study by Rupak Ghanpathi: a mobile To-Do module that turns 100+ open leads into 10 ranked, explainable actions, with an executable specification.">
-<meta property="og:title" content="Ten Today: a sales To-Do module case study">
-<meta property="og:description" content="100 open leads. 10 actions today. Explainable ranking, workflow-driven tasks, a manager workload view and 18 executable UAT cases.">
+<meta property="og:title" content="Ten Today — 100 open leads. 10 actions today.">
+<meta property="og:description" content="One discount ask: who decides it, what the clock does, and why the approval record can't be edited quietly. Try it as a rep, a manager and the sales head.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tentoday.vercel.app/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
@@ -26,7 +28,7 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
 </style>
 </head>
 <body>
-<header class="appbar tt-head"><div class="in"><nav class="l" aria-label="Pages"><a href="./" class="on">Case study</a><a href="cockpit.html" class="hide-s">Spec</a></nav><a class="logo" href="./" aria-label="Ten Today home"><span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav class="r" aria-label="Product"><a href="app.html?tour=1" class="hide-s tour">▶ 60-sec tour</a><a href="app.html" class="pri">Try the product</a></nav></div></header>
+<header class="appbar tt-head"><div class="in"><nav class="l" aria-label="Pages"><a href="./" class="on">Case study</a><a href="app.html">Product</a><a href="cockpit.html" class="hide-s">Spec</a></nav><a class="logo" href="./" aria-label="Ten Today home"><span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav class="r" aria-label="Product"><a href="app.html?tour=1" class="hide-s tour">▶ 60-sec tour</a><a href="app.html" class="pri">Try the product</a></nav></div></header>
 
 <header class="wrap hero">
   <div class="hero-grid"><div>
@@ -35,6 +37,7 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
     <p class="lede">A mobile To-Do module that tells a salesperson what to act on now, why, and what comes next, without becoming another CRM or a tool for watching people.</p>
     <p class="ground"><b>Built for dealer and distributor sales in Indian B2B</b> (FMCG, building materials, pharma), where every deal runs through schemes, discounts and dealer credit.</p>
     <p class="ground">Informed by the ownership buckets, approval queues and ageing MIS I worked with at HDFC Bank.</p>
+    <p class="ground"><b>What this proves:</b> the loop a PM actually runs — vague complaint → written rule → test → screen. Here it's a discount that sits undecided: who owns it, when it escalates, and why the record can't be quietly edited. 27 engine tests, 18 UAT cases, one running product.</p>
   </div>
   <a class="mini-ph" href="#live" aria-label="Open the product">
     <p class="ph-hi" style="margin:0 0 8px">The case study's worked example</p>
@@ -49,7 +52,7 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
 
   <div class="flow" aria-label="From 100 records to 10 actions">
     <div class="f-a"><b>100+</b><span>open leads, quotes and approvals on one phone</span></div><i>→</i>
-    <div class="f-b"><b>4 rules</b><span>tier · approvals first · days late · value as tie-break</span></div><i>→</i>
+    <div class="f-b"><b>4 ranking rules</b><span>tier · approvals first · days late · value as tie-break</span></div><i>→</i>
     <div class="f-c"><b>10</b><span>ranked actions today, each with a one-line reason</span></div>
   </div>
   <p class="kicker" style="margin:26px 0 8px;color:#6B7280">Six skills, each with its proof · tap one</p>
@@ -71,6 +74,7 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
 </section>
 <section class="wrap" aria-labelledby="ships" style="padding-top:8px"><h2 id="ships">How it ships</h2>
 <p style="max-width:760px">The demo simulates sign-in so you can try every seat in two minutes; its rules run in your browser. In production the same rules move to the server:</p>
+<p style="max-width:760px"><b>How it's proven:</b> the rules are one module, and it ships with a test suite — <b>27 engine tests</b> (<code>node --test tests/engine.test.mjs</code>) covering ranking, escalation, credit overrides, the sealed record and the finance handoff, plus <b>18 UAT cases</b> you can run in the browser. A rule that isn't tested isn't claimed.</p>
 <ul style="max-width:760px;line-height:1.6"><li><b>Sign-in:</b> company accounts (Google or Microsoft) with each person's role and buckets stored on the server. No view switching.</li><li><b>Who sees what:</b> the database itself returns only a rep's own tasks (row-level security), even if the page is tampered with.</li><li><b>Decisions:</b> approvals, transfers and orders run as server functions, so "a different manager must approve" can't be skipped from the browser.</li><li><b>The sealed record:</b> written only by the server and copied to storage the app can't edit.</li></ul>
 <p class="hint" style="max-width:760px">The companion product, Every Rupee, already runs on real sign-in for its private workspace.</p></section>
 <section class="wrap" aria-labelledby="pains"><h2 id="pains">Three problems the product handles</h2>
@@ -110,6 +114,6 @@ details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
 <details class="fold"><summary><b>The original case study</b> · PDF and one-pager</summary><div class="in2"><p><a href="Sales_ToDo_Module_Case_Study.pdf">Case study (PDF, 4 pages)</a> · <a href="Sales_ToDo_Module_One_Pager.pdf">One-pager (PDF)</a></p></div></details>
 </section>
 <p class="wrap sm" style="padding:16px 16px 40px">Independent product design case study by Rupak Ghanpathi: a concept, not a shipped product. Targets are configurable defaults; names and figures are illustrative.</p>
-<p style="max-width:1080px;margin:0 auto;padding:18px 16px 36px;font-size:.8rem;color:#6B7280">Systems of record (the ERP, the CRM, the calendar) record what happened. They don't help at the moment a person has to decide something messy. Three layers for those moments, without replacing the system underneath: <a href="https://lull-hr.vercel.app/">Viraam</a> ends the meeting · <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> owns the short-paid difference · <a href="https://tentoday.vercel.app/">Ten Today</a> unblocks the approval. By Rupak Ghanpathi.</p>
+<p style="max-width:1080px;margin:0 auto;padding:18px 16px 36px;font-size:.8rem;color:#6B7280">Systems of record (the ERP, the CRM, the calendar) record what happened. They don't help at the moment a person has to decide something messy. Three layers for those moments, without replacing the system underneath: <a href="https://lull-hr.vercel.app/">Viraam</a> ends the meeting · <a href="https://every-rupee-gets-owner.lovable.app/">Every Rupee</a> owns the short-paid difference · <a href="https://tentoday.vercel.app/">Ten Today</a> unblocks the approval. By Rupak Ghanpathi.</p>
 </body>
 </html>

@@ -39,8 +39,8 @@ function renderActors() {
 function renderSignIn() {
   const badge = n => { const p = E.person(n); return p.rep ? E.today(w, n).list.length + counters(n).length : E.decisionsFor(w, n).length + E.transfersFor(w, n).length; };
   $('#desk').innerHTML = `<section class="signin card"><h2>Sign in</h2><p class="sub">Demo accounts: no passwords, and your data stays in this browser. In the real product each person signs in with their company account and sees only their own desk. Nobody can switch to someone else's view.</p>
-    <div class="accts">${E.PEOPLE.map(p => `<button type="button" class="acct" data-signin="${p.name}"><b>${p.name}</b><span>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</span>${badge(p.name) ? `<i>${badge(p.name)} waiting</i>` : ''}</button>`).join('')}</div>
-    <p class="hint" style="margin-top:10px">New here? Press <b>▶ 60-second tour</b> at the top: it signs in as each person for you.</p></section>`;
+    <div class="accts">${E.PEOPLE.map(p => `<button type="button" class="acct" data-signin="${p.name}"><b>${p.name}</b><span>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</span>${badge(p.name) ? `<i>${badge(p.name)} ${p.rep ? 'today' : 'to decide'}</i>` : ''}</button>`).join('')}</div>
+    <p class="hint" style="margin-top:10px">New here? Press <b>▶ 60-second tour</b>: it starts with the rep's queue, then the manager's decision, then the sealed record.</p></section>`;
   $('#seal').hidden = true; $('#next').hidden = true;
 }
 function switchTo(n) { actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -145,7 +145,7 @@ function repDesk() {
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
   return `${snap}<div class="grid">
-    <div class="card"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). Click a task to act.</p>
+    <div class="card"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
     </div>
@@ -368,7 +368,7 @@ render();
 
 /* ---------- 60-second guided tour: runs the real engine on a fresh sample ---------- */
 const TOUR = [
-  { who: 'Rahul', k: 'The rep', h: '100 open leads. 10 actions today.', p: 'Rahul has 17 open tasks. Today shows only 10, ranked by rules he can read: days past target, money-blocking stage, then deal value as a tie-break.', run: () => { w = E.sample(realToday); }, at: () => $('#desk .card') },
+  { who: 'Rahul', k: 'The rep', h: '100 open leads. 10 actions today.', p: 'Rahul has 17 open tasks: 12 are due now, and Today shows at most 10 of them, so the two over the cap are counted, not hidden. Ranked by rules he can read: days past target, money-blocking stage, then deal value as a tie-break.', run: () => { w = E.sample(realToday); }, at: () => $('#desk .card') },
   { who: 'Rahul', k: 'Scheme, no ask', h: 'A live scheme applies by itself', p: 'Aarav’s ₹4.8L order qualifies for the 3% volume slab. Pre-approved, so it applies at once: ₹14,400 off before GST, logged.', run: () => { w = E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01'); }, open: 'T-101', at: () => $('#panel') },
   { who: 'Rahul', k: 'Discount ask', h: 'He asks for 6% more. The task freezes.', p: 'The ask goes to Kavita, who is allowed to decide up to 10% within the margin floor. Rahul’s task leaves Today; the clock is now on her.', run: () => { w = E.askDiscount(w, 'T-101', 'Rahul', 6, 'Rival quoted 7% lower'); }, at: () => document.querySelectorAll('#desk .side .card')[0] },
   { who: 'Kavita', k: 'The approver', h: 'Three numbers to decide', p: 'Kavita sees the ask in rupees before GST, the margin floor and the dealer’s credit. She can approve, counter or send back. She can’t decide her own asks.', at: () => [...document.querySelectorAll('.ask')].find(x => x.textContent.includes('Aarav')) },
