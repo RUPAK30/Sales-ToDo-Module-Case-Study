@@ -6,6 +6,16 @@
 var WIDTHS = [320,360,390,414,480,600,720,768,820,900,1024,1280,1440,1600];
 var PAGES = ['index.html','app.html','cockpit.html'];
 
+function scrollableAncestor(el, root) {
+  var n = el;
+  while (n && n !== root) {
+    var s = n.ownerDocument.defaultView.getComputedStyle(n);
+    if (/(auto|scroll)/.test(s.overflowX) && n.scrollWidth > n.clientWidth + 2) return true;
+    n = n.parentElement;
+  }
+  return false;
+}
+
 function measure(url, w) {
   return new Promise(function (resolve) {
     var f = document.createElement('iframe');
@@ -15,26 +25,30 @@ function measure(url, w) {
       setTimeout(function () {
         try {
           var d = f.contentDocument, win = f.contentWindow, vw = win.innerWidth;
-          var scroll = Math.max(d.documentElement.scrollWidth, d.body.scrollWidth);
           var off = [];
           var all = d.querySelectorAll('body *');
-          for (var i = 0; i < all.length && off.length < 6; i++) {
-            var b = all[i].getBoundingClientRect();
-            if (b.width > 0 && b.right > vw + 1) {
-              off.push({ tag: all[i].tagName.toLowerCase(), cls: String(all[i].className || '').slice(0, 34), right: Math.round(b.right), w: Math.round(b.width) });
+          for (var i = 0; i < all.length; i++) {
+            var el = all[i], b = el.getBoundingClientRect();
+            if (b.width > 0 && b.right > vw + 2) {
+              if (scrollableAncestor(el, d.body)) continue;
+              if (/^(path|svg|circle|text|span|i|b|em|code|small|br|thead|tbody|tr|th|td)$/.test(el.tagName.toLowerCase())) continue;
+              off.push((el.tagName.toLowerCase()) + '.' + String(el.className || '').slice(0, 26) + '@' + Math.round(b.right));
+              if (off.length >= 5) break;
             }
           }
           var hdr = d.querySelector('header');
-          var navL = hdr && hdr.querySelector('nav');
+          var nav = hdr && hdr.querySelector('nav');
           var logo = hdr && hdr.querySelector('.logo');
-          var hr = hdr && hdr.querySelector('.hr, nav.r');
+          var cta = hdr && hdr.querySelector('.hr, nav.r');
           var hdrInfo = null;
-          if (navL && logo) {
-            var nb = navL.getBoundingClientRect(), lb = logo.getBoundingClientRect();
-            hdrInfo = { gapNavLogo: Math.round(lb.left - nb.right), logoLeft: Math.round(lb.left), logoRight: Math.round(lb.right), navRight: Math.round(nb.right) };
-            if (hr) hdrInfo.ctaRight = Math.round(hr.getBoundingClientRect().right);
+          if (nav && logo) {
+            var nb = nav.getBoundingClientRect(), lb = logo.getBoundingClientRect();
+            var sameRow = Math.abs(nb.top - lb.top) < 24;
+            hdrInfo = { row: sameRow ? 'one' : 'stacked', gap: sameRow ? Math.round(lb.left - nb.right) : null,
+              ctaInside: cta ? Math.round(cta.getBoundingClientRect().right) <= vw + 1 : null,
+              ctaRight: cta ? Math.round(cta.getBoundingClientRect().right) : null };
           }
-          resolve({ url: url, w: w, vw: vw, scroll: scroll, overflow: scroll > vw + 1, off: off, hdr: hdrInfo });
+          resolve({ url: url, w: w, off: off, hdr: hdrInfo });
         } catch (e) { resolve({ url: url, w: w, err: String(e).slice(0, 120) }); }
         f.parentNode && f.parentNode.removeChild(f);
       }, 900);
@@ -45,9 +59,7 @@ function measure(url, w) {
 
 (async function () {
   var out = [];
-  for (var p = 0; p < PAGES.length; p++) {
-    for (var i = 0; i < WIDTHS.length; i++) out.push(await measure(PAGES[p], WIDTHS[i]));
-  }
+  for (var p = 0; p < PAGES.length; p++) for (var i = 0; i < WIDTHS.length; i++) out.push(await measure(PAGES[p], WIDTHS[i]));
   document.getElementById('out').textContent = JSON.stringify(out);
   window.__DONE__ = out;
 })();

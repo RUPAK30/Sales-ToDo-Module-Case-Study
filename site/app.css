@@ -87,7 +87,6 @@ blockquote,.hero .ins,.hero [class*=quote]{border-left-color:var(--tt-line)!impo
 .tt-head nav a.tour{font-weight:600}
 @media(max-width:1100px){.tt-head .hide-s{display:none!important}}
 @media(max-width:600px){.tt-head nav a{font-size:.82rem!important;padding:7px 10px!important}}
-.tt-head .in{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}
 .tt-head nav{margin:0!important}.tt-head .in{height:auto!important;min-height:56px;padding-top:6px!important;padding-bottom:6px!important}.tt-head .logo{margin:0!important}
 .tt-head nav.l{grid-column:1!important;grid-row:1}.tt-head .logo{grid-column:2!important;grid-row:1}.tt-head nav.r{grid-column:3!important;grid-row:1}
 
