@@ -158,6 +158,8 @@ test('handoff v1: approved discounts go to finance; unapproved short payments co
   assert.throws(() => E.importRecovery(w0(), bad), /sales rep/);
   const done = E.complete(r.w, r.task.id, 'Rahul', 'Customer agreed to pay', true);
   assert.equal(done.next, null);
+  assert.throws(() => E.askDiscount(r.w, 'T-101', 'Rahul', 6, 'Volume'), /Blocked by Every Rupee/);
+  assert.doesNotThrow(() => E.askDiscount(done.w, 'T-101', 'Rahul', 6, 'Volume'));
 });
 import { createHash } from 'node:crypto';
 test('sealed record: SHA-256 is correct, and any edit, deletion or reorder is caught', () => {
@@ -170,6 +172,10 @@ test('sealed record: SHA-256 is correct, and any edit, deletion or reorder is ca
   const back = structuredClone(w); back.chain[2].at = '2026-01-01T00:00:00Z'; assert.equal(E.verifyChain(back).brokenAt, 3);
   const o = JSON.parse(Buffer.from(new URL(E.financeLink(w, w.approvals.at(-1).id)).searchParams.get('apv'), 'base64url').toString());
   assert.equal(o.seal, E.contractSeal(o)); assert.notEqual(o.seal, E.contractSeal({ ...o, capPct: 10 }));
+  const auditOk = E.auditChain(w); assert.equal(auditOk.ok, true);
+  const auditBad = E.auditChain(t); assert.equal(auditBad.ok, false); assert.equal(auditBad.blocks[auditBad.brokenAt - 1].hashMismatch, true);
+  assert.equal(E.verifyFinanceContract(w, w.approvals.at(-1).id).ok, true);
+  assert.equal(E.verifyFinanceContract(t, w.approvals.at(-1).id).ok, false);
 });
 test('order must match the approval: cap, expiry and one order per approval', () => {
   let w = E.askDiscount(w0(), 'T-101', 'Rahul', 6, 'x'); w = E.approve(w, w.approvals.at(-1).id, 'Kavita', 6, E.addDays(D, 10));

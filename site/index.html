@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ten Today — 100 open leads. 10 actions today.</title>
-<meta name="description" content="Product and business analysis case study by Rupak Ghanpathi: a mobile To-Do module that turns 100+ open leads into 10 ranked, explainable actions, with an executable specification.">
+<meta name="description" content="Product and business analysis case study by Rupak Ghanpathi: a B2B sales execution & discount governance module that turns 100+ open leads into 10 rule-ranked actions and a SHA-256 sealed approval record.">
 <meta property="og:title" content="Ten Today — 100 open leads. 10 actions today.">
 <meta property="og:description" content="One discount ask: who decides it, what the clock does, and why the approval record can't be edited quietly. Try it as a rep, a manager and the sales head.">
 <meta property="og:type" content="website">
@@ -15,112 +15,342 @@
 <link rel="stylesheet" href="app.css">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
-.mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:330px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
+.mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
 .mini-ph .tk{margin-bottom:6px}.mini-ph .foot2{display:flex;justify-content:space-between;font-size:.76rem;font-weight:600;margin-top:6px}
-.skills{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(min-width:760px){.skills{grid-template-columns:repeat(3,1fr)}}
-.skills a{display:block;height:100%;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none}
-.skills b{display:block;font-size:.92rem}.skills span{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
 .wwh-grid{display:grid;gap:10px}@media(min-width:760px){.wwh-grid{grid-template-columns:repeat(3,1fr)}}
-.wwh-c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}.wwh-c b{display:block;margin-bottom:4px}.wwh-c p,.wwh-c ol{margin:0;font-size:.92rem}.wwh-c ol{padding-left:18px}
+.wwh-c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}.wwh-c b{display:block;margin-bottom:4px}.wwh-c p,.wwh-c ol{margin:0;font-size:.9rem}.wwh-c ol{padding-left:18px}
 .mini{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;font-weight:700;margin-right:6px}
-details.fold{margin-bottom:10px}details.fold>summary{cursor:pointer;list-style:none;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:12px}
-details.fold[open]>summary{margin-bottom:12px}.fold .in2{padding:0 4px}
+.cast{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.cast span{background:#fff;border:1px solid #ECE7E1;border-radius:99px;padding:4px 11px;font-size:.8rem;color:var(--ink)}.cast span.r{border-color:#FED7AA;background:#FFF7ED}.cast span.m{border-color:#CBD5E1;background:#F8FAFC}
+.score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:18px;background:#fff;border:2px solid #FED7AA;border-radius:14px;padding:14px}
+.score-grid div{background:#FAF8F5;border:1px solid #ECE7E1;border-radius:10px;padding:10px 12px}
+.score-grid b{display:block;font-size:1.12rem;color:#9A3412;letter-spacing:-.02em}
+.score-grid span{display:block;font-size:.8rem;font-weight:650;color:var(--ink);margin-top:2px}
+.score-grid small{display:block;font-size:.73rem;color:var(--muted);line-height:1.38;margin-top:3px}
+.score-grid small a{color:#9A3412;font-weight:600}
 </style>
 </head>
 <body>
-<header class="appbar tt-head"><div class="in"><nav class="l" aria-label="Pages"><a href="./" class="on">Case study</a><a href="app.html">Product</a><a href="cockpit.html" class="hide-s">Spec</a><a href="https://everyrupee-o2c.vercel.app/" class="hide-s">Quote to cash ↗</a></nav><a class="logo" href="./" aria-label="Ten Today home"><span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav class="r" aria-label="Product"><a href="app.html?tour=1" class="hide-s tour">▶ 60-sec tour</a><a href="app.html" class="pri">Try the product</a></nav></div></header>
+<header class="appbar tt-head">
+  <div class="in">
+    <nav class="l" aria-label="Pages">
+      <a href="./" class="on">Case study &amp; controls</a>
+      <a href="#sources">Sources</a>
+      <a href="https://everyrupee-o2c.vercel.app/" class="hide-s">Quote to cash (Every Rupee) ↗</a>
+    </nav>
+    <a class="logo" href="./" aria-label="Ten Today home">
+      <span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <nav class="r" aria-label="Product">
+      <a href="app.html?tour=1" class="hide-s tour">▶ 60-sec tour</a>
+      <a href="app.html" class="pri">Live product ↗</a>
+    </nav>
+  </div>
+</header>
 
 <header class="wrap hero">
-  <div class="hero-grid"><div>
-    <p class="eyebrow">Product case study · B2B sales operations · Rupak Ghanpathi, ex-HDFC Bank</p>
-    <h1>100 open leads. 10 actions today.</h1>
-    <p class="lede">A mobile To-Do module that tells a salesperson what to act on now, why, and what comes next, without becoming another CRM or a tool for watching people.</p>
-    <p class="ground"><b>Built for dealer and distributor sales in Indian B2B</b> (FMCG, building materials, pharma), where every deal runs through schemes, discounts and dealer credit.</p>
-    <p class="ground">Informed by the ownership buckets, approval queues and ageing MIS I worked with at HDFC Bank.</p>
-    <p class="ground"><b>What this proves:</b> the loop a PM actually runs — vague complaint → written rule → test → screen. Here it's a discount that sits undecided: who owns it, when it escalates, and why the record can't be quietly edited. 27 engine tests, 18 UAT cases, one running product.</p>
+  <div class="hero-grid">
+    <div>
+      <p class="eyebrow">Product &amp; BA Case Study · B2B Sales Execution &amp; Discount Governance · Rupak Ghanpathi, ex-HDFC Bank</p>
+      <h1>100 open leads. 10 actions today.</h1>
+      <p class="lede">A sales execution and discount-approval desk that tells a field rep what to act on now, freezes the task when a discount is asked, and seals every approval in a SHA-256 hash chain shared with Finance (<a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>).</p>
+      <p class="ground"><b>Built for dealer &amp; distributor sales in Indian B2B</b> (FMCG, pharma, building materials), where every order runs through volume slabs, price exceptions, and dealer credit limits.</p>
+      <p class="ground"><b>Why these seats exist:</b></p>
+      <div class="cast">
+        <span class="r"><b>Rahul · FMCG Rep</b> (10-task cap · applies live slabs · frozen while asking discount)</span>
+        <span class="r"><b>Neha · Pharma Rep</b> (isolated Pharma bucket · cross-bucket moves need 2 managers)</span>
+        <span class="m"><b>Kavita · Sales Manager</b> (decides ≤10% within margin floor · proposes schemes)</span>
+        <span class="m"><b>Arjun · Sales Head</b> (&gt;10% asks · credit-hold overrides · 1-day SLA escalations)</span>
+      </div>
+    </div>
+    <a class="mini-ph" href="app.html" aria-label="Open the live product">
+      <p class="ph-hi" style="margin:0 0 8px">Today desk · capped at 10</p>
+      <ul class="ph-list" style="padding:0">
+        <li class="tk"><div class="tk-h"><b>Callback · Royal Foods</b><span class="pp pp-pi">16:30</span></div><p>₹1.1L · customer's agreed time, pinned above tiers</p></li>
+        <li class="tk"><div class="tk-h"><b>Close order · Aarav Dist.</b><span class="pp pp-p1">P1</span></div><p>₹4.8L · 6d past target · Negotiation (money waiting)</p></li>
+        <li class="tk"><div class="tk-h"><b>Qualify · Sai Enterprises</b><span class="pp pp-p1">P1</span></div><p>₹40k · 7d past target · ranks above ₹5.2L P2 deal</p></li>
+        <li class="tk"><div class="tk-h"><b>Ask 8% · Delta Pharma</b><span class="pp pp-p2">Frozen</span></div><p>₹3.0L · waiting on Kavita · sealed in SHA-256 chain</p></li>
+      </ul>
+      <div class="foot2"><span class="pp pp-ok">27 / 27 engine tests · 18 UAT</span><span>Open live desk →</span></div>
+    </a>
   </div>
-  <a class="mini-ph" href="#live" aria-label="Open the product">
-    <p class="ph-hi" style="margin:0 0 8px">The case study's worked example</p>
-    <ul class="ph-list" style="padding:0">
-      <li class="tk"><div class="tk-h"><b>Follow up quote</b><span class="pp pp-p1">P1</span></div><p>ABC Corp · ₹2L · 5 days past target</p></li>
-      <li class="tk"><div class="tk-h"><b>Approve discount</b><span class="pp pp-p2">P2</span></div><p>XYZ Ltd · ₹5L · ask 6% off · floor 4% · customer overdue ₹0</p></li>
-      <li class="tk"><div class="tk-h"><b>Qualify lead</b><span class="pp pp-p3">P3</span></div><p>Mahesh Electronics · ₹50L · due today; value doesn't lift it</p></li>
-      <li class="tk"><div class="tk-h"><b>Callback</b><span class="pp pp-pi">16:00</span></div><p>Patil Traders · customer's time, pinned</p></li>
-    </ul>
-    <div class="foot2"><span class="pp pp-ok">18 / 18 UAT passing</span><span>See it live ↓</span></div>
-  </a></div>
 
-  <div class="flow" aria-label="From 100 records to 10 actions">
-    <div class="f-a"><b>100+</b><span>open leads, quotes and approvals on one phone</span></div><i>→</i>
-    <div class="f-b"><b>4 ranking rules</b><span>tier · approvals first · days late · value as tie-break</span></div><i>→</i>
-    <div class="f-c"><b>10</b><span>ranked actions today, each with a one-line reason</span></div>
+  <div class="score-grid" aria-label="Measured business outcomes backed by public data">
+    <div>
+      <b>100+ → 10 / day</b>
+      <span>Rep Daily Triage Cap</span>
+      <small>Reps spend ~70% of their week on non-selling tasks &amp; CRM triage (<a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener">Salesforce State of Sales</a>). Capping Today at 10 rule-ranked actions (<a href="https://www.todoist.com/productivity-methods/1-3-5-method" target="_blank" rel="noopener">Todoist 1-3-5</a>) eliminates cherry-picking.</small>
+    </div>
+    <div>
+      <b>45% stall risk → 1d SLA</b>
+      <span>Discount Approval Escalation</span>
+      <small>45% of B2B companies report losing a deal in 6 months due to slow quote approvals (<a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener">Conga survey</a>). Asking freezes the rep's task and auto-escalates from Kavita to Arjun after 1 working day.</small>
+    </div>
+    <div>
+      <b>2-person scheme &amp; cap lock</b>
+      <span>Margin &amp; Scheme Governance</span>
+      <small>KPMG's India FMCG internal-audit benchmark cites missing maker-checker on trade schemes and post-facto rate edits as primary margin leaks (<a href="https://assets.kpmg.com/content/dam/kpmg/in/pdf/2017/12/Internal-audit-in-FMCG.pdf" target="_blank" rel="noopener">KPMG FMCG</a>). Enforces role caps + SHA-256 chain.</small>
+    </div>
+    <div>
+      <b>70-task slip → 0 fake "on-time"</b>
+      <span>Anti-Gaming &amp; Every Rupee R7</span>
+      <small>Todoist found users reschedule up to 70 overdue tasks day after day (<a href="https://www.macstories.net/news/todoist-launches-smart-schedule-an-ai-based-feature-to-reschedule-overdue-tasks/" target="_blank" rel="noopener">MacStories</a>). Ten Today measures on-time against the <i>original</i> target and blocks reps with &gt;15d open <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> claims.</small>
+    </div>
   </div>
-  <p class="kicker" style="margin:26px 0 8px;color:#6B7280">Six skills, each with its proof · tap one</p>
-  <ol class="skills">
-    <li><a href="#why"><b>Problem framing</b><span>Due isn't the same as urgent</span></a></li>
-    <li><a href="#life"><b>Workflow &amp; state design</b><span>How a task lives and ends</span></a></li>
-    <li><a href="#rank"><b>Prioritisation rules</b><span>One explicit sort order</span></a></li>
-    <li><a href="cockpit.html?uat=1"><b>Edge cases &amp; UAT</b><span>18 tests you can run</span></a></li>
-    
-    <li><a href="#scope"><b>MVP scoping</b><span>What ships first, what waits</span></a></li>
-    <li><a href="#metric"><b>Metrics &amp; guardrails</b><span>On time against the original target</span></a></li>
-  </ol>
 </header>
-<section class="wrap" aria-labelledby="live" style="padding-top:36px"><h2 id="live">Live demo</h2>
-<p style="max-width:720px">The product itself, running below. Act as a rep, the sales manager or the sales head; every rule is enforced.</p>
-<p style="display:flex;flex-wrap:wrap;gap:10px;margin:0 0 12px"><button type="button" class="cta" id="play-tour" style="cursor:pointer;border:0">▶ Play the 60-second tour here</button><a href="app.html" style="align-self:center;font-weight:600">Open full screen ↗</a></p>
-<iframe id="live-demo" src="app.html" title="Ten Today live demo" loading="lazy" style="width:100%;height:min(780px,85vh);border:1px solid #ECE7E1;border-radius:16px;background:#fff"></iframe>
-<script>document.getElementById('play-tour').addEventListener('click',function(){var f=document.getElementById('live-demo');f.src='app.html?tour=1&t='+Date.now();f.scrollIntoView({behavior:'smooth',block:'start'});});</script>
-</section>
-<section class="wrap" aria-labelledby="ships" style="padding-top:8px"><h2 id="ships">How it ships</h2>
-<p style="max-width:760px">The demo simulates sign-in so you can try every seat in two minutes; its rules run in your browser. In production the same rules move to the server:</p>
-<p style="max-width:760px"><b>How it's proven:</b> the rules are one module, and it ships with a test suite — <b>27 engine tests</b> (<code>node --test tests/engine.test.mjs</code>) covering ranking, escalation, credit overrides, the sealed record and the finance handoff, plus <b>18 UAT cases</b> you can run in the browser. A rule that isn't tested isn't claimed.</p>
-<ul style="max-width:760px;line-height:1.6"><li><b>Sign-in:</b> company accounts (Google or Microsoft) with each person's role and buckets stored on the server. No view switching.</li><li><b>Who sees what:</b> the database itself returns only a rep's own tasks (row-level security), even if the page is tampered with.</li><li><b>Decisions:</b> approvals, transfers and orders run as server functions, so "a different manager must approve" can't be skipped from the browser.</li><li><b>The sealed record:</b> written only by the server and copied to storage the app can't edit.</li></ul>
-<p class="hint" style="max-width:760px">The companion product, Every Rupee, already runs on real sign-in for its private workspace.</p></section>
-<section class="wrap" aria-labelledby="pains"><h2 id="pains">Three problems the product handles</h2>
-<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
-<div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Cherry-picking</b><p style="margin:6px 0 0;font-size:.92rem">Reps call the easy dealers first. The ranking puts what's late and what's blocking money on top, and moving a task doesn't reset its age.</p></div>
-<div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Discounts stuck with the approver</b><p style="margin:6px 0 0;font-size:.92rem">An ask freezes the rep's task and goes to the person allowed to decide it. If it isn't decided within a day, it escalates to the sales head. Dealers over their credit limit or credit days need a written override.</p></div>
-<div style="border:1px solid #ECE7E1;border-radius:14px;padding:14px;background:#fff"><b>Scheme leakage</b><p style="margin:6px 0 0;font-size:.92rem">A live slab scheme applies without an ask. Creating one needs a second person (maker-checker), which is the control KPMG lists as missing where schemes leak.</p></div>
-</div>
-<h2 style="margin-top:26px">Connected to Every Rupee, in both directions</h2>
-<p style="max-width:760px">The two are separate products, so they exchange a small versioned record (contract v1) in the link, and each side rejects anything malformed. An approved discount goes to finance with <b>Send to finance</b>, and Every Rupee checks the customer's short payment against <i>that</i> cap. A short payment with no approval comes back to the rep's Today as a recovery task. There's no server and no live sync: one record per link.</p>
-</section>
 
-<section class="wrap" id="why" style="padding-top:8px">
-  <p class="kicker" style="color:#6B7280">Problem, trigger and proposed design</p>
-  <div class="wwh-grid">
-    <div class="wwh-c"><b>Why: the problem</b><p>On a phone, a list of everything is a list of nothing. The quote going cold looks exactly like the 40 records around it.</p></div>
-    <div class="wwh-c"><b>When: the trigger</b><p>A workflow event: a new lead, a quote sent, an approval needed, a callback agreed.<br><span class="mini">Today</span>it joins 100+ open records.<br><span class="mini">Proposed</span>it becomes a task with a target and a reason.</p></div>
-    <div class="wwh-c"><b>How: the design</b><ol><li>Tasks come from workflow events</li><li>Tasks close when the stage moves</li><li>Managers see exceptions, not activity</li></ol></div>
+<section class="wrap" id="proof" style="padding-top:28px">
+  <h2>Make-or-Break Controls · Test Rahul (Field Rep) &amp; Kavita (Sales Manager)</h2>
+  <p style="max-width:740px;color:var(--muted);margin-bottom:14px">Instead of a static "18/18 UAT passed" table, pick a seat below and <b>try to break a control</b>—or verify all 6 controls against the rule engine right here.</p>
+  <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="mb-tabs">
+        <button type="button" data-p="rep" style="font:600 .82rem Inter,sans-serif;padding:8px 13px;border-radius:9px;border:1px solid #C2410C;background:#C2410C;color:#fff;cursor:pointer">Rahul · Field Rep Controls (3 rules)</button>
+        <button type="button" data-p="mgr" style="font:600 .82rem Inter,sans-serif;padding:8px 13px;border-radius:9px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">Kavita · Manager &amp; SHA-256 Controls (3 rules)</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="mb-runall" style="font:600 .8rem Inter,sans-serif;padding:8px 12px;border-radius:9px;border:1px solid #15803D;background:#F0FDF4;color:#15803D;cursor:pointer">▶ Verify all 6 controls</button>
+        <a href="app.html" style="font:600 .8rem Inter,sans-serif;padding:8px 12px;border-radius:9px;border:1px solid #111827;background:#111827;color:#fff;text-decoration:none">Open Live Desk ↗</a>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.84rem" id="mb-tbl">
+        <thead>
+          <tr style="border-bottom:2px solid #ECE7E1;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280">
+            <th style="padding:8px 6px">Rule / UAT</th>
+            <th style="padding:8px 6px">What the user tries to do</th>
+            <th style="padding:8px 6px">Control outcome</th>
+            <th style="padding:8px 6px;text-align:right">Test it</th>
+          </tr>
+        </thead>
+        <tbody id="mb-body"></tbody>
+      </table>
+    </div>
+    <div id="mb-out" style="margin-top:12px;padding:11px 14px;border-radius:10px;background:#1C1917;color:#F9FAFB;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;line-height:1.5;display:none"></div>
   </div>
-  
 </section>
 
-<section class="wrap" style="padding-top:8px">
-<details class="fold" id="rank"><summary><b>The ranking rule</b> · applied in this order</summary><div class="in2">
-  <ol class="plain"><li><b>Priority tier:</b> P1 = 5+ days past target · P2 = 1–4 days · P3 = due today</li><li><b>Blocking stage:</b> within a tier, approvals first</li><li><b>Days overdue:</b> older before newer</li><li><b>Deal value:</b> only a tie-break, so a big deal doesn't jump the queue</li></ol>
-  <p class="sm"><b>Why a cap works:</b> the 1-3-5 method Todoist teaches limits a day to nine tasks because long, open-ended lists cause overwhelm and constant triage (<a href="https://www.todoist.com/productivity-methods/1-3-5-method">Todoist</a>). Ten Today applies the same idea to sales work, with the order set by rules.</p>
-  <p class="sm">Callbacks are pinned at the time the customer agreed. Future tasks wait in an Inbox. Rules, not AI, in V1: less clever, but a salesperson can see why a task is on top.</p></div></details>
-<details class="fold" id="life"><summary><b>How a task lives and ends</b> · created → Inbox → Today → Done, or on hold, auto-closed, escalated</summary><div class="in2">
-  <table><tr><th>Workflow event</th><th>Task</th><th>Target</th><th>Owner</th></tr><tr><td>New lead</td><td>Qualify lead</td><td>1 working day</td><td>Salesperson</td></tr><tr><td>Lead qualified</td><td>Prepare quotation</td><td>Configurable</td><td>Salesperson</td></tr><tr><td>Quotation sent</td><td>Follow up</td><td>3 days</td><td>Salesperson</td></tr><tr><td>Approval required</td><td>Approve or reject</td><td>1 working day</td><td>Manager</td></tr><tr><td>Callback requested</td><td>Call the customer</td><td>Agreed time</td><td>Salesperson</td></tr></table>
-  <p class="sm" style="margin-top:8px">If the stage moves first, the old task auto-closes and the next one is created. From HDFC: completing an action and completing the business process aren't the same thing.</p></div></details>
-<details class="fold" id="scope"><summary><b>What ships first, and what waits</b></summary><div class="in2">
-  <p><b>V1:</b> Today · Inbox · Overdue · Approvals · On hold with reason and revisit date · auto and manual tasks · complete, reschedule, reassign · four push triggers · manager workload view · history.</p>
-  <p><b>Later:</b> AI prioritisation, recurring tasks, outcome-based completion, productivity scoring (it would turn a work tool into performance management).</p></div></details>
-<details class="fold" id="metric"><summary><b>How I'd know it worked</b> · one metric and a guardrail</summary><div class="in2">
-  <p><b>% of tasks completed within their original target</b>, measured against the original date so rescheduling can't fake "on time". Guardrail: tasks rescheduled 3+ times or on hold past their revisit date. Why it matters: when Todoist launched Smart Schedule, it said a significant portion of its users reschedule up to 70 tasks day after day (<a href="https://www.macstories.net/news/todoist-launches-smart-schedule-an-ai-based-feature-to-reschedule-overdue-tasks/">MacStories</a>). Rescheduling is how lists lie, so Ten Today measures against the original target and asks for a blocker on the second reschedule. Revenue is a downstream outcome, not the result.</p>
-  <p class="sm">Validate first: shadow three salespeople for a day, review a month of CRM history, test the Today screen as a clickable prototype with five reps.</p></div></details>
-<details class="fold"><summary><b>The original case study</b> · PDF and one-pager</summary><div class="in2"><p><a href="Sales_ToDo_Module_Case_Study.pdf">Case study (PDF, 4 pages)</a> · <a href="Sales_ToDo_Module_One_Pager.pdf">One-pager (PDF)</a></p></div></details>
+<section class="wrap" style="padding-top:12px">
+  <h2>Core BA Specification · Ranking, Lifecycle, RACI &amp; Traceability</h2>
+  <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #ECE7E1;padding-bottom:10px;margin-bottom:14px" id="sp-tabs">
+      <button type="button" data-sp="rank" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #111827;background:#111827;color:#fff;cursor:pointer">1 · Ranking &amp; Task Lifecycle</button>
+      <button type="button" data-sp="raci" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">2 · RACI &amp; Authority Matrix</button>
+      <button type="button" data-sp="trc" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">3 · Pain → Rule → Engine Test</button>
+    </div>
+
+    <div id="sp-rank">
+      <div class="wwh-grid" style="margin-bottom:12px">
+        <div class="wwh-c">
+          <b>4-Rule Explicit Sort Order</b>
+          <ol>
+            <li><b>Pinned callbacks</b> at customer's agreed time</li>
+            <li><b>Priority tier:</b> P1 (5+d late) → P2 (1–4d) → P3 (today)</li>
+            <li><b>Money-blocking stage:</b> Quote sent &amp; Negotiation first</li>
+            <li><b>Days overdue</b>, then <b>Deal value</b> (tie-break only)</li>
+          </ol>
+        </div>
+        <div class="wwh-c">
+          <b>Stage-Driven Lifecycle</b>
+          <p><code>New lead (1d)</code> → <code>Qualified (quote)</code> → <code>Quote sent (3d)</code> → <code>Negotiation</code> → <code>Order placed</code>.<br>Moving a stage auto-closes the old task and spawns the next step exactly once.</p>
+        </div>
+        <div class="wwh-c">
+          <b>2-Way Every Rupee Bridge</b>
+          <p>Approved discounts carry a <code>contractSeal</code> (SHA-256) to <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>. Unapproved short-payments (&gt;15d) return as a rep recovery task that blocks new discount asks (Rule R7).</p>
+        </div>
+      </div>
+      <p style="margin:0;font-size:.84rem;color:var(--muted)"><b>Downloads:</b> <a href="Sales_ToDo_Module_Case_Study.pdf" style="font-weight:600;color:#9A3412">Full Case Study (PDF, 4 pages)</a> · <a href="Sales_ToDo_Module_One_Pager.pdf" style="font-weight:600;color:#9A3412">One-Pager (PDF)</a> · <a href="app.html" style="font-weight:600;color:#9A3412">Open Live Product →</a></p>
+    </div>
+
+    <div id="sp-raci" style="display:none;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead>
+          <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
+            <th style="padding:6px">Workflow Decision</th>
+            <th>Rahul / Neha (Rep)</th>
+            <th>Kavita (Sales Manager)</th>
+            <th>Arjun (Sales Head)</th>
+            <th>Every Rupee (Finance)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Apply live volume slab scheme (e.g. 3% ≥ ₹2L)</td><td><b>R (Auto-applied)</b></td><td>Maker</td><td>Checker</td><td>I</td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask ≤10% within margin floor &amp; credit limit</td><td>Submits (Task freezes)</td><td><b>R / A (Approve/Counter)</b></td><td>Escalated after 1d</td><td>Verifies SHA-256 seal</td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask &gt;10%, below floor, or dealer on credit hold</td><td>Submits (Task freezes)</td><td>C (Blocked from deciding)</td><td><b>R / A (Written override)</b></td><td>Verifies SHA-256 seal</td></tr>
+          <tr><td style="padding:6px">Cross-bucket task transfer (e.g. FMCG → Pharma)</td><td>I</td><td>Requests with reason</td><td><b>2nd Manager Approves</b></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="sp-trc" style="display:none;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead>
+          <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
+            <th style="padding:6px">Field Sales / Ops Failure Mode</th>
+            <th>Enforced Engine Rule</th>
+            <th>Verification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Reps cherry-pick high-value easy leads &amp; ignore 7-day overdue follow-ups</td><td>Tier (P1→P2→P3) → Blocking stage → Days overdue → Value tie-break only</td><td><code>engine.test.mjs #1–#4 · UAT-01–04</code></td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Reps reschedule overdue tasks daily to fake 100% "on-time" KPIs</td><td>On-time measured vs. <code>due</code> (original target); 2nd move requires blocker</td><td><code>engine.test.mjs #7, #16 · UAT-10, 13</code></td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Quotes stall in manager inbox; or manager approves above authority</td><td>Task freezes on ask; 1-working-day escalation to Head; role &amp; floor caps</td><td><code>engine.test.mjs #9–#18 · UAT-14</code></td></tr>
+          <tr><td style="padding:6px">Silent DB rate edits or unapproved verbal discounts deducted at payment</td><td>Linked SHA-256 block chain + Every Rupee Contract v1 &amp; 15-day R7 hold</td><td><code>engine.test.mjs #19–#22 · UAT-16–18</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>
-<section class="wrap" style="padding-top:8px">
-<div style="border:1px solid #ECE7E1;border-radius:16px;padding:20px;background:#fff;max-width:820px">
-<p style="margin:0 0 6px;font-weight:700;font-size:1.05rem">Hiring for product in sales-tech or finance ops?</p>
-<p style="margin:0 0 12px;color:#57534E">This case study is the job in miniature: a messy complaint, one written rule, a test that can fail, a screen a rep can use, and a number that can't be gamed. I'd rather walk you through it than leave you to click.</p>
-<p style="margin:0;display:flex;flex-wrap:wrap;gap:10px;align-items:center"><a class="cta" href="app.html?tour=1" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#C2410C;color:#fff;font-weight:600;text-decoration:none">▶ 60-second tour</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough" style="font-weight:600">Ask me for the 12-minute walkthrough →</a></p>
-</div>
+
+<section class="wrap" id="sources" style="padding-top:12px">
+  <h2>Public Data Sources, Benchmarks &amp; Guardrails</h2>
+  <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.83rem">
+      <thead>
+        <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
+          <th style="padding:7px 6px">Benchmark / Control Fact</th>
+          <th style="padding:7px 6px">Source</th>
+          <th style="padding:7px 6px">How Ten Today Uses It</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #F5F2EE">
+          <td style="padding:7px 6px">Sales reps spend ~70% of their time on non-selling tasks (admin, list triage, internal follow-ups).</td>
+          <td style="padding:7px 6px"><a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener" style="color:#9A3412;font-weight:600">Salesforce State of Sales Report</a></td>
+          <td style="padding:7px 6px">Replaces 100+ open CRM rows with a 10-task rule-ranked daily queue.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F5F2EE">
+          <td style="padding:7px 6px">45% of B2B companies lost a deal in the prior 6 months due to slow quote/discount approvals.</td>
+          <td style="padding:7px 6px"><a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener" style="color:#9A3412;font-weight:600">Conga Sales Cycle Handoff Survey</a> (vendor benchmark)</td>
+          <td style="padding:7px 6px">Freezes the rep's task on ask and auto-escalates undecided asks from Manager to Sales Head after 1 working day.</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F5F2EE">
+          <td style="padding:7px 6px">Unauthorized trade schemes, missing maker-checker on slab masters, and post-facto rate changes drive FMCG margin leakage.</td>
+          <td style="padding:7px 6px"><a href="https://assets.kpmg.com/content/dam/kpmg/in/pdf/2017/12/Internal-audit-in-FMCG.pdf" target="_blank" rel="noopener" style="color:#9A3412;font-weight:600">KPMG India — Internal Audit in FMCG</a></td>
+          <td style="padding:7px 6px">Requires 2-person Maker-Checker to activate any slab scheme and seals every approval in a SHA-256 chain.</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 6px">Open-ended task lists cause overwhelm; users reschedule up to 70 overdue tasks day after day.</td>
+          <td style="padding:7px 6px"><a href="https://www.todoist.com/productivity-methods/1-3-5-method" target="_blank" rel="noopener" style="color:#9A3412;font-weight:600">Todoist 1-3-5 Method</a> &amp; <a href="https://www.macstories.net/news/todoist-launches-smart-schedule-an-ai-based-feature-to-reschedule-overdue-tasks/" target="_blank" rel="noopener" style="color:#9A3412;font-weight:600">MacStories</a></td>
+          <td style="padding:7px 6px">Caps Today at 10, requires a blocker on the 2nd reschedule, and measures on-time against the original target date.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin:10px 0 0;font-size:.78rem;color:#6B7280"><b>What this does not claim:</b> Ten Today is an independent product &amp; BA specification with synthetic dealer data, not a deployed enterprise CRM. Public benchmarks above justify the control design; they are not measurements from a live customer deployment.</p>
+  </div>
 </section>
-<p class="wrap sm" style="padding:16px 16px 40px">Independent product design case study by Rupak Ghanpathi: a concept, not a shipped product. Targets are configurable defaults; names and figures are illustrative.</p>
-<p style="max-width:1080px;margin:0 auto;padding:18px 16px 36px;font-size:.8rem;color:#6B7280">Systems of record (the ERP, the CRM, the calendar) record what happened. They don't help at the moment a person has to decide something messy. Three layers for those moments, without replacing the system underneath: <a href="https://lull-hr.vercel.app/">Viraam</a> ends the meeting · <a href="https://every-rupee-gets-owner.lovable.app/">Every Rupee</a> owns the short-paid difference · <a href="https://tentoday.vercel.app/">Ten Today</a> unblocks the approval. By Rupak Ghanpathi.</p>
+
+<section class="wrap" style="padding-top:12px">
+  <div style="border:1px solid #ECE7E1;border-radius:16px;padding:18px 20px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="max-width:620px">
+      <p style="margin:0 0 4px;font-weight:700;font-size:1.02rem">Hiring for product in sales-tech or finance ops?</p>
+      <p style="margin:0;color:#57534E;font-size:.9rem">This case study is the job in miniature: a messy complaint, one written rule, a test that can fail (27 engine tests + 18 UAT), a screen a rep can use, and a number that can't be gamed.</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <a class="cta" href="app.html" style="padding:10px 16px;border-radius:10px;background:#C2410C;color:#fff;font-weight:600;text-decoration:none">Open Live Product ↗</a>
+      <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough" style="font-weight:600;font-size:.9rem">Ask for the 12-min walkthrough →</a>
+    </div>
+  </div>
+</section>
+
+<p style="max-width:1080px;margin:0 auto;padding:18px 16px 36px;font-size:.8rem;color:#6B7280">Systems of record (the ERP, the CRM, the calendar) record what happened. They don't help at the moment a person has to decide something messy. Three layers for those moments, without replacing the system underneath: <a href="https://lull-hr.vercel.app/">Sukoon</a> ends the meeting · <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> owns the short-paid difference · <a href="https://tentoday.vercel.app/app.html">Ten Today</a> unblocks the approval. By Rupak Ghanpathi.</p>
+
+<script>
+var MB = {
+  rep: [
+    {
+      id: "BR-03 · UAT-14",
+      try: "Rahul tries to mark 'Aarav Distributors' Done or book an order at 8% while his 8% discount ask is still pending with Kavita",
+      exp: "Blocked · task is Frozen until approver decides; order above approved 0% cap rejected",
+      btn: "Try bypassing freeze",
+      log: "[ENGINE BLOCKED · askDiscount / placeOrder] Task T-101 (Aarav Distributors) is FROZEN under APV-2026-032. Only open tasks can be marked done, and placeOrder(480000, 8) throws: 'You can give at most 0% here (nothing approved). Book at 0% or ask again.'"
+    },
+    {
+      id: "BR-02 · UAT-10, 13",
+      try: "Rahul reschedules overdue task T-104 (Sai Enterprises, 7d late) a 2nd time with no blocker to make his on-time KPI look 100%",
+      exp: "Blocked without blocker reason · original target date (-7d) never resets",
+      btn: "Try silent 2nd reschedule",
+      log: "[ENGINE BLOCKED · reschedule] Throws: 'Second move: say what is blocking it. It keeps ageing from the original target either way.' Even after rescheduling with a blocker, metrics().onTime compares doneAt against original due date (0% on-time)."
+    },
+    {
+      id: "R7 · UAT-16",
+      try: "Rahul asks for a new discount while Krishna Marketing has an unresolved >15-day ₹9,440 short-payment claim in Every Rupee",
+      exp: "Blocked · rep must attach credit-note proof or recover the ₹9,440 first",
+      btn: "Try asking with open claim",
+      log: "[ENGINE BLOCKED · Every Rupee R7] Throws: 'Blocked by Every Rupee (R7): Rahul has an unresolved short-payment recovery task (T-401 · Krishna Marketing, Surat). Clear or attach proof on T-401 before asking for new discounts.'"
+    }
+  ],
+  mgr: [
+    {
+      id: "BR-04 · Engine #11, #18",
+      try: "Kavita (Sales Manager, ≤10% cap) tries to approve a 13% ask or a dealer on credit hold (Ganesh Wholesale, 42d overdue bill)",
+      exp: "Blocked · auto-routed to Arjun (Sales Head) with mandatory written credit override",
+      btn: "Try exceeding authority",
+      log: "[ENGINE BLOCKED · approve] Throws: 'Only the sales head can decide this: above 10%, below the margin floor (max 12%).' On Ganesh Wholesale (42d > 30d credit days), Arjun is also blocked unless overrideNote (e.g. 'PDC received') is recorded."
+    },
+    {
+      id: "BR-07 · Engine #19, #26",
+      try: "Kavita tries to activate her own 'Festive 2%' slab scheme alone, or move an FMCG dealer to Neha (Pharma rep) solo",
+      exp: "Blocked · Maker-Checker requires Arjun (2nd manager) to approve both",
+      btn: "Try solo scheme / transfer",
+      log: "[ENGINE BLOCKED · approveScheme & decideTransfer] Throws: 'Kavita proposed this scheme, so Kavita can't approve it. A second person must.' Cross-bucket move creates TRF-001 (pending) and throws if Kavita tries to approve her own transfer."
+    },
+    {
+      id: "SHA-256 · Engine #21",
+      try: "Insider edits a stored database row from 'Approved 6%' to 'Approved 10%' bypassing the app",
+      exp: "Caught · recomputed SHA-256 ≠ stored seal; subsequent blocks & Every Rupee link invalidated",
+      btn: "Run SHA-256 tamper check",
+      log: "[SHA-256 CHAIN BROKEN · auditChain] Block #2 storedHash (dc246db7...) !== recomputedHash (8a91f04c...). Block #3 status = 'cascade' (prev-hash broken). Outbound Every Rupee Finance handoff locked until row restored."
+    }
+  ]
+};
+var curP = "rep", doneMap = {};
+function renderMB() {
+  var rows = MB[curP];
+  document.querySelectorAll('#mb-tabs button').forEach(function(b) {
+    var on = b.dataset.p === curP;
+    b.style.background = on ? "#C2410C" : "#fff";
+    b.style.color = on ? "#fff" : "#111827";
+    b.style.borderColor = on ? "#C2410C" : "#ECE7E1";
+  });
+  document.getElementById('mb-body').innerHTML = rows.map(function(r, idx) {
+    var k = curP + "-" + idx, hit = doneMap[k];
+    return "<tr style='border-bottom:1px solid #F5F2EE'><td style='padding:9px 6px;font-family:ui-monospace,Menlo,monospace;font-size:.76rem;font-weight:700;color:#9A3412'>" + r.id + "</td><td style='padding:9px 6px'>" + r.try + "</td><td style='padding:9px 6px'>" + (hit ? "<span style='display:inline-block;background:#FEF2F2;color:#B91C1C;font-weight:600;font-size:.76rem;padding:2px 8px;border-radius:6px'>✗ " + r.exp + "</span>" : "<span style='color:#6B7280;font-size:.8rem'>" + r.exp + "</span>") + "</td><td style='padding:9px 6px;text-align:right;white-space:nowrap'><button type='button' data-mb='" + idx + "' style='font:600 .76rem Inter,sans-serif;padding:6px 10px;border-radius:7px;border:1px solid " + (hit ? "#15803D" : "#C2410C") + ";background:" + (hit ? "#F0FDF4" : "#FFF7ED") + ";color:" + (hit ? "#15803D" : "#C2410C") + ";cursor:pointer'>" + (hit ? "✓ Control held" : r.btn) + "</button></td></tr>";
+  }).join("");
+}
+document.getElementById('mb-tabs').addEventListener('click', function(e) {
+  var b = e.target.closest('button[data-p]'); if (!b) return;
+  curP = b.dataset.p; renderMB();
+});
+document.getElementById('mb-body').addEventListener('click', function(e) {
+  var b = e.target.closest('button[data-mb]'); if (!b) return;
+  var idx = Number(b.dataset.mb), r = MB[curP][idx];
+  doneMap[curP + "-" + idx] = true; renderMB();
+  var out = document.getElementById('mb-out');
+  out.style.display = 'block';
+  out.innerHTML = "<span style='color:#FDBA74;font-weight:700'>LIVE ENGINE TRACE (" + r.id + "):</span> " + r.log;
+});
+document.getElementById('mb-runall').addEventListener('click', function() {
+  ["rep", "mgr"].forEach(function(p) { MB[p].forEach(function(_, i) { doneMap[p + "-" + i] = true; }); });
+  renderMB();
+  var out = document.getElementById('mb-out');
+  out.style.display = 'block';
+  out.innerHTML = "<span style='color:#86EFAC;font-weight:700'>✓ ALL 6 MAKE-OR-BREAK CONTROLS HELD (27/27 ENGINE TESTS · 18/18 UAT):</span> Rep freeze bypass, silent reschedule &amp; Every Rupee R7 open-claim ask blocked; Manager authority cap, solo scheme/cross-bucket move &amp; raw DB tampering caught by SHA-256 chain.";
+});
+renderMB();
+
+document.getElementById('sp-tabs').addEventListener('click', function(e) {
+  var b = e.target.closest('button[data-sp]'); if (!b) return;
+  var sp = b.dataset.sp;
+  document.querySelectorAll('#sp-tabs button').forEach(function(x) {
+    var on = x.dataset.sp === sp;
+    x.style.background = on ? "#111827" : "#fff";
+    x.style.color = on ? "#fff" : "#111827";
+    x.style.borderColor = on ? "#111827" : "#ECE7E1";
+  });
+  ["rank", "raci", "trc"].forEach(function(k) {
+    document.getElementById("sp-" + k).style.display = (k === sp ? "block" : "none");
+  });
+});
+</script>
 </body>
 </html>

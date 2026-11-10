@@ -220,6 +220,8 @@ export function approverFor(w, customer, pct) {
 
 export function askDiscount(w0, id, actor, pct, reason) {
   const w = clone(w0); const task = findTask(w, id); mustBeRep(task, actor);
+  const openRecovery = w.tasks.find(x => x.rep === actor && x.kind === 'recovery' && x.status === 'open');
+  if (openRecovery) fail(`Blocked by Every Rupee (R7): ${actor} has an unresolved short-payment recovery task (${openRecovery.id} · ${openRecovery.customer}). Clear or attach proof on ${openRecovery.id} before asking for new discounts.`);
   if (task.status !== 'open') fail('Only open tasks can ask for a discount.');
   if (!BLOCKING.includes(task.stage)) fail(`Discounts are asked at Quote sent or Negotiation. This deal is at ${task.stage}.`);
   if (!(pct > 0 && pct <= 30)) fail('Enter a discount between 0.5% and 30%.');
@@ -468,6 +470,38 @@ export function verifyChain(w) {
     prev = e.hash;
   }
   return { ok: true, count: w.chain.length, head: prev };
+}
+/* Detailed per-block audit so the UI can show expected vs stored hash, prev-hash cascades, and finance link validity. */
+export function auditChain(w) {
+  let expectedPrev = 'GENESIS', brokenAt = null;
+  const blocks = w.chain.map((e, i) => {
+    const recomputed = entryHash(e);
+    const hashMismatch = recomputed !== e.hash;
+    const prevMismatch = e.prev !== expectedPrev;
+    const seqMismatch = e.n !== i + 1;
+    let status = 'ok';
+    if (brokenAt !== null) status = 'cascade';
+    else if (hashMismatch || prevMismatch || seqMismatch) { status = 'tampered'; brokenAt = i + 1; }
+    const out = {
+      n: e.n, who: e.who, at: e.at, text: e.text, ref: e.ref,
+      storedPrev: e.prev, expectedPrev,
+      storedHash: e.hash, recomputedHash: recomputed,
+      hashMismatch, prevMismatch, status,
+    };
+    expectedPrev = recomputed;
+    return out;
+  });
+  return { ok: brokenAt === null, count: w.chain.length, brokenAt, head: expectedPrev, blocks };
+}
+/* Verify whether an approval's record in the chain is still intact before Finance relies on it. */
+export function verifyFinanceContract(w, apvId) {
+  const a = findApv(w, apvId);
+  const audit = auditChain(w);
+  const blk = audit.blocks.find(b => b.ref === apvId && /^Approved|^Accepted/.test(b.text)) ?? audit.blocks.find(b => b.ref === apvId);
+  const o = { v: 1, id: a.id, customer: a.customer, rep: a.rep, approver: a.decidedBy, capPct: a.capPct, validTo: a.validTo };
+  const payloadSeal = contractSeal(o);
+  const chainIntact = audit.ok && (!blk || blk.status === 'ok');
+  return { ok: chainIntact, apvId: a.id, customer: a.customer, capPct: a.capPct, amount: a.amount, payloadSeal, chainSeal: a.seal ?? null, brokenAt: audit.brokenAt, blockStatus: blk?.status ?? 'ok' };
 }
 /* Demo only: quietly edit an old entry the way an insider might, without re-sealing it. */
 export function simulateTamper(w0) {

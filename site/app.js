@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794245868';
+import * as E from './engine.js?v=1794305000';
 
 const KEY = 'tentoday-product-v3';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -9,10 +9,10 @@ const inr = n => '₹' + Number(n).toLocaleString('en-IN');
 const fmt = d => new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const time = t => new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-let sealEdit = 0, signedIn = false; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
+let sealEdit = 0, signedIn = true; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
 
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; signedIn = !!s.signedIn; return; } } catch { /* storage unavailable */ }
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; signedIn = true; return; } } catch { /* storage unavailable */ }
   w = E.sample(realToday);
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ w, actor, signedIn })); } catch { /* fine without */ } }
@@ -29,42 +29,86 @@ const tierChip = task => { const t = E.tier(w, task); return task.callbackAt ? `
 const apvOf = task => w.approvals.find(a => a.id === task.approvalId);
 const counters = rep => w.approvals.filter(a => a.status === 'countered' && a.rep === rep);
 
+const ROLE_WHY = {
+  Rahul: 'FMCG Field Rep · Sees max 10 ranked actions/day; quotes schemes automatically; task freezes when asking >0% extra discount.',
+  Neha: 'Pharma Field Rep · Isolated Pharma bucket; FMCG tasks cannot move to her without a reason and 2nd manager sign-off.',
+  Imran: 'FMCG Field Rep · Receives same-bucket overflow when Rahul is over the 10-task cap.',
+  Kavita: 'Sales Manager · Approves/counters discount asks ≤10% within margin floor; proposes schemes (needs Arjun as 2nd approver).',
+  Sanjay: 'Area Sales Manager · Stand-in approver when Kavita delegates on leave (logged as "acting for Kavita").',
+  Arjun: 'Sales Head · Decides >10% asks, below-floor exceptions, credit-hold overrides, and asks Kavita leaves >1 working day.',
+};
+
 /* ---------- actor switch ---------- */
 function renderActors() {
-  const p = E.person(actor);
-  $('#actors').innerHTML = signedIn ? `<span class="who on">${esc(actor)} <small>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</small></span><button type="button" class="btn link" id="signout">Sign out</button>` : '';
-  document.querySelector('.actor > span').textContent = signedIn ? 'Signed in as' : '';
-  document.querySelector('.actor').hidden = !signedIn;
-}
-function renderSignIn() {
   const badge = n => { const p = E.person(n); return p.rep ? E.today(w, n).list.length + counters(n).length : E.decisionsFor(w, n).length + E.transfersFor(w, n).length; };
-  $('#desk').innerHTML = `<section class="signin card"><h2>Sign in</h2><p class="sub">Demo accounts: no passwords, and your data stays in this browser. In the real product each person signs in with their company account and sees only their own desk. Nobody can switch to someone else's view.</p>
-    <div class="accts">${E.PEOPLE.map(p => `<button type="button" class="acct" data-signin="${p.name}"><b>${p.name}</b><span>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</span>${badge(p.name) ? `<i>${badge(p.name)} ${p.rep ? 'today' : 'to decide'}</i>` : ''}</button>`).join('')}</div>
-    <p class="hint" style="margin-top:10px">New here? Press <b>▶ 60-second tour</b>: it starts with the rep's queue, then the manager's decision, then the sealed record.</p></section>`;
-  $('#seal').hidden = true; $('#next').hidden = true;
+  const mainSeats = ['Rahul', 'Neha', 'Kavita', 'Arjun', 'Imran', 'Sanjay'];
+  $('#actors').innerHTML = mainSeats.map(name => {
+    const p = E.person(name);
+    const b = badge(name);
+    const on = actor === name;
+    return `<button type="button" class="who ${on ? 'on' : ''}" data-actor="${name}"><b>${esc(name)}</b> <small>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</small>${b ? `<span class="badge">${b} ${p.rep ? 'due' : 'wait'}</span>` : ''}</button>`;
+  }).join('');
+  const whyEl = $('#actor-why');
+  if (whyEl) whyEl.textContent = ROLE_WHY[actor] || '';
+}
+function renderQ2CBridge() {
+  const el = $('#q2c-bridge'); if (!el) return;
+  const rec = w.tasks.find(t => t.kind === 'recovery' && t.status === 'open');
+  const approved = [...w.approvals].reverse().find(a => a.status === 'approved');
+  const audit = E.auditChain(w);
+  el.innerHTML = `<div class="q2c-in">
+    <div>
+      <span class="q2c-k">2-WAY CRYPTOGRAPHIC HANDOFF · TEN TODAY ⇄ EVERY RUPEE (FINANCE)</span>
+      <p class="q2c-p">${rec
+        ? `<b style="color:var(--bad)">⛔ Active Finance Hold (R7):</b> ${esc(rec.rep)} has an open >15-day Every Rupee claim (<b>${esc(rec.id)} · ${esc(rec.customer)} · ${inr(rec.value)}</b>). New discount asks by ${esc(rec.rep)} are blocked until resolved.`
+        : `<b>Contract v1 active:</b> Approved discounts pass a SHA-256 payload seal to Every Rupee. Unapproved short-payments (>15d) return as a rep recovery task that blocks new discount asks.`}</p>
+    </div>
+    <div class="q2c-acts">
+      <button type="button" class="btn ${rec ? 'ok' : ''}" data-q2c="${rec ? 'clear-rec' : 'sim-rec'}">${rec ? `✓ Clear ${rec.rep}'s ₹9,440 Finance Hold` : '⚡ Simulate >15d Every Rupee Claim Block (R7)'}</button>
+      ${approved
+        ? (audit.ok
+            ? `<a class="btn pri" href="${E.financeLink(w, approved.id)}" target="_blank" rel="noopener">Send ${esc(approved.id)} (${approved.capPct}% · 🔒 ${esc((approved.seal || '').slice(0, 8))}) to Every Rupee ↗</a>`
+            : `<button type="button" class="btn" disabled title="Chain is tampered at Block #${audit.brokenAt}">⛔ Handoff blocked: SHA-256 chain altered at #${audit.brokenAt}</button>`)
+        : `<button type="button" class="btn" data-q2c="quick-apv">Approve a sample discount to test Finance handoff →</button>`}
+    </div>
+  </div>`;
 }
 function switchTo(n) { actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 /* ---------- sealed record: visible on every screen ---------- */
 function renderSeal() {
-  const el = $('#seal'); const n = w.chain.length; const r = sealRes;
-  const st = e => !r ? '' : r.ok ? 'ok' : e.n < r.brokenAt ? 'ok' : e.n === r.brokenAt ? 'bad' : 'after';
-  const tag = e => ({ ok: '✓ matches', bad: '✗ edited', after: '⚠ link broken' }[st(e)] ?? '');
-  const blocks = w.chain.map((e, k) => `${k ? `<span class="link ${r && !r.ok && e.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(e)}"><small>#${e.n} · ${esc(e.who)}</small><span class="tx">${esc(e.text.length > 64 ? e.text.slice(0, 62) + '…' : e.text)}</span><code title="${esc(e.hash)}">${esc(e.hash.slice(0, 8))}</code><em>${e.n === 1 ? 'first block' : `built from #${e.n - 1}'s <code>${esc(e.prev.slice(0, 6))}</code>`}</em>${st(e) === 'bad' && w.tampered?.n === e.n ? `<em>sealed as: <s>${esc((w.tampered.original.match(/\d+(\.\d+)?%/) || [''])[0])}</s> → now ${esc((e.text.match(/\d+(\.\d+)?%/) || [''])[0])}</em>` : ''}${tag(e) ? `<b>${tag(e)}</b>` : ''}</div>`).join('');
-  const status = !r ? `<div class="res idle">Not checked in this view yet. Press <b>Verify record</b> to recompute every fingerprint.</div>`
-    : r.ok ? `<div class="res ok">✓ Checked just now as ${esc(E.label(actor))}: all ${r.count} fingerprints recomputed and match. Nothing was changed.</div>`
-    : `<div class="res no">✗ Block #${r.brokenAt} was edited after it was recorded: recomputing its fingerprint gives a different value from the one sealed.${n - r.brokenAt ? ` Blocks #${r.brokenAt + 1}–#${n} were built on the original, so they can't be trusted either.` : ''}</div>`;
+  const el = $('#seal'); const n = w.chain.length;
+  const audit = E.auditChain(w);
+  const r = sealRes ? audit : null;
+  const st = b => !r ? '' : b.status === 'ok' ? 'ok' : b.status === 'tampered' ? 'bad' : 'after';
+  const tag = b => ({ ok: '✓ hash verified', bad: '✗ payload tampered', after: '⚠ prev-hash cascade broken' }[st(b)] ?? '');
+  const blocks = audit.blocks.map((b, k) => `${k ? `<span class="link ${r && !r.ok && b.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(b)}"><small>#${b.n} · ${esc(b.who)}</small><span class="tx">${esc(b.text.length > 64 ? b.text.slice(0, 62) + '…' : b.text)}</span><code title="Stored seal: ${esc(b.storedHash)}">${esc(b.storedHash.slice(0, 8))}</code>${r && b.hashMismatch ? `<code style="background:#FEE2E2;border-color:#EF4444;color:#991B1B" title="Recomputed SHA-256: ${esc(b.recomputedHash)}">calc: ${esc(b.recomputedHash.slice(0, 8))} ≠</code>` : ''}<em>${b.n === 1 ? 'genesis (prev: GENESIS)' : `prev: <code>${esc(b.storedPrev.slice(0, 6))}</code>${r && b.prevMismatch ? ` ≠ <code>${esc(b.expectedPrev.slice(0, 6))}</code>` : ''}`}</em>${st(b) === 'bad' && w.tampered?.n === b.n ? `<em>was: <s>${esc(w.tampered.original.slice(0, 42))}…</s></em>` : ''}${tag(b) ? `<b>${tag(b)}</b>` : ''}</div>`).join('');
+  const status = !r ? `<div class="res idle">Live chain has <b>${n} SHA-256 block${n === 1 ? '' : 's'}</b>${w.tampered ? ' <b style="color:var(--bad)">(1 unverified raw DB edit pending check)</b>' : ''}. Press <b>Verify record</b> to recompute every SHA-256 digest, or <b>Try tampering yourself</b> to edit a raw row.</div>`
+    : r.ok ? `<div class="res ok">✓ Verified by ${esc(E.label(actor))}: all ${r.count} SHA-256 digests recomputed from <code>{n, at, who, text, ref, prev}</code> and match stored seals. Head digest: <code>${esc(r.head.slice(0, 16))}…</code></div>`
+    : (() => {
+        const badBlk = r.blocks[r.brokenAt - 1];
+        const cascadeCount = n - r.brokenAt;
+        return `<div class="res no">✗ <b>CRYPTOGRAPHIC TAMPER DETECTED AT BLOCK #${r.brokenAt} (${esc(badBlk.who)}):</b><br>
+        · Stored seal in DB: <code>${esc(badBlk.storedHash.slice(0, 24))}…</code><br>
+        · Recomputed SHA-256: <code>${esc(badBlk.recomputedHash.slice(0, 24))}…</code> (mismatch!)<br>
+        ${cascadeCount > 0 ? `· <b>Cascade failure:</b> Block${cascadeCount > 1 ? 's' : ''} #${r.brokenAt + 1}–#${n} built on #${r.brokenAt}'s original seal are automatically invalidated. Outbound Every Rupee finance handoff is locked.` : '· Outbound Every Rupee finance handoff is locked until restored.'}</div>`;
+      })();
   el.className = 'seal' + (r && !r.ok ? ' bad' : '');
-  el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record</b> <span class="hint">· one record for the whole team · ${n} block${n === 1 ? '' : 's'}</span></div>
-    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the edit' : 'Try tampering yourself'}</button></div></div>
+  el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record (SHA-256 hash chain)</b> <span class="hint">· one append-only ledger for the whole team · ${n} block${n === 1 ? '' : 's'}</span></div>
+    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the DB edit' : 'Try tampering yourself'}</button></div></div>
     <div class="cv" id="cv">${blocks || '<p class="hint">Nothing recorded yet.</p>'}</div>
-    ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">The app has no edit button for this record. An insider with database access could change a stored row directly, like this. No new fingerprint is made, because that only happens when a decision goes through the app.</p>
-      <div class="row"><label>Block<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)}</option>`).join('')}</select></label></div>
-      <label style="margin-top:6px">text<textarea id="db-text" rows="2">${esc(e.text)}</textarea></label>
-      <p class="mono" style="margin:4px 0 0;font-size:.72rem;color:#A8A29E">who: ${esc(e.who)} · at: ${esc(e.at)} · stored fingerprint: ${esc(e.hash.slice(0, 16))}…</p>
-      <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save to database</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
+    ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; const liveCalc = E.sha256(JSON.stringify({ n: e.n, at: e.at, who: e.who, text: e.text, ref: e.ref, prev: e.prev })); return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row editor (insider attack simulator)</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">The app UI has no edit or delete button for decisions. Here you act as a database admin editing a stored row directly (e.g. changing an asked/approved <b>8%</b> discount to <b>12%</b>). Because the edit bypasses the engine, <code>stored_hash</code> is not updated—or if recalculated, it breaks the <code>prev</code> pointer of the next block.</p>
+      <div class="row"><label>Select block to tamper<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)} (${esc(x.text.slice(0, 36))}…)</option>`).join('')}</select></label>
+      <button class="btn" type="button" data-seal="preset-inflate" style="background:#292524;color:#FDBA74;border-color:#FDBA74;font-size:.76rem;padding:6px 10px">⚡ Preset: Inflate % by +4% in DB</button></div>
+      <label style="margin-top:6px">Raw stored <code>text</code> payload (change any character or number below)<textarea id="db-text" rows="2">${esc(e.text)}</textarea></label>
+      <div class="mono" style="margin:4px 0 0;font-size:.72rem;color:#A8A29E;display:grid;gap:2px">
+        <span>actor: <b>${esc(e.who)}</b> · timestamp: <b>${esc(e.at)}</b> · prev_hash: <b>${esc(e.prev.slice(0, 16))}…</b></span>
+        <span>stored_hash (sealed): <code style="background:#292524;color:#86EFAC;border-color:#3F3A36">${esc(e.hash.slice(0, 32))}…</code></span>
+        <span id="db-live-hash">live_recomputed_sha256: <code style="background:#292524;color:#FDBA74;border-color:#3F3A36">${esc(liveCalc.slice(0, 32))}…</code></span>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save raw edit &amp; run SHA-256 verification</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
     ${status}
-    <details class="how"><summary>How it works, in 3 steps</summary><ol class="steps"><li><b>Fingerprint.</b> Each decision (ask, approval, counter, hand-over, order) gets a SHA-256 fingerprint of its exact words, time and person.</li><li><b>Chain.</b> Each fingerprint is built from the previous one too, so blocks are linked like the arrows above.</li><li><b>Verify.</b> Recomputing every fingerprint shows instantly if any block was edited, deleted, reordered or backdated, and which one.</li></ol><p class="hint" style="margin:6px 0 0">It proves the record wasn't altered after the fact. It doesn't prove a decision was right. Not a blockchain: one company keeps it. Approvals sent to Every Rupee carry their fingerprint, so finance can tell if the link was edited.</p></details>`;
+    <details class="how"><summary>How the SHA-256 chain &amp; Every Rupee contract seal work (3 steps)</summary><ol class="steps"><li><b>Block seal.</b> Every ask, approval, counter, transfer, or order computes <code>SHA-256(JSON.stringify({n, at, who, text, ref, prev}))</code>.</li><li><b>Cascade link.</b> Block <code>#k</code> embeds Block <code>#k-1</code>'s 64-hex-char SHA-256 digest in <code>prev</code>. Altering an earlier discount % changes its digest and invalidates every subsequent block.</li><li><b>Cross-app Finance Contract v1.</b> When you click <b>Send to Every Rupee</b>, the URL carries <code>contractSeal = SHA-256([v, id, customer, rep, approver, capPct, validTo])</code> so Finance's AR desk rejects any tampered URL parameter on arrival.</li></ol></details>`;
   const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
 }
 
@@ -307,7 +351,7 @@ function render() {
   try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.sample(realToday)); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
 function renderInner() {
-  renderActors(); if (!signedIn) { $('#next').hidden = true; return renderSignIn(); } $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
+  renderActors(); renderQ2CBridge(); $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
@@ -319,8 +363,34 @@ function renderInner() {
 document.addEventListener('click', e => {
   const b = e.target.closest('button,[data-open]'); if (!b) return;
   if (b.dataset.actor) return switchTo(b.dataset.actor);
-  if (b.dataset.signin) { signedIn = true; result = null; return switchTo(b.dataset.signin); }
-  if (b.id === 'signout') { signedIn = false; result = null; panel = null; sealRes = null; save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (b.dataset.q2c) {
+    if (b.dataset.q2c === 'sim-rec') {
+      const tok = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, kind: 'recovery', invoiceId: 'INV-5031', customer: 'Krishna Marketing, Surat', short: 9440, rep: 'Rahul' })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const r = E.importRecovery(w, tok); w = r.w; actor = 'Rahul'; save();
+      result = { text: `Every Rupee (R7) sent recovery task ${r.task.id}: Krishna Marketing paid ₹9,440 short on INV-5031.`, sub: `Rahul is now blocked from asking for new discounts until he resolves ${r.task.id} in Today.` };
+      toast('Finance hold active: Rahul blocked from new discount asks.');
+      return render();
+    }
+    if (b.dataset.q2c === 'clear-rec') {
+      const rec = w.tasks.find(t => t.kind === 'recovery' && t.status === 'open');
+      if (rec) {
+        w = E.complete(w, rec.id, rec.rep, 'Attached credit-note proof / collected ₹9,440 short payment', false).w;
+        save(); result = { text: `${rec.id} cleared by ${rec.rep}. Every Rupee R7 hold lifted.`, sub: `${rec.rep} can now ask for discounts again.` };
+        toast('Finance hold cleared.');
+      }
+      return render();
+    }
+    if (b.dataset.q2c === 'quick-apv') {
+      const pend = w.approvals.find(a => a.status === 'pending' && a.approver === 'Kavita');
+      if (pend) {
+        w = E.approve(w, pend.id, 'Kavita', Math.min(pend.askPct, 8), E.addDays(w.today, 14));
+        actor = 'Kavita'; save();
+        result = { text: `Approved ${pend.id} (${pend.customer}) with a SHA-256 seal.`, sub: 'Click "Send to Every Rupee ↗" in the bridge bar above to pass the sealed approval to Finance.' };
+        toast('Sample discount approved & sealed.');
+      }
+      return render();
+    }
+  }
   if (b.dataset.sug) { const [id, to] = b.dataset.sug.split('|'); try { w = E.rebalance(w, id, actor, to); save(); sealRes = null; const t = w.tasks.find(x => x.id === id); toast('Suggested move accepted.'); result = { text: `Moved ${t.customer} to ${E.label(to)}: same ${E.bucketOf(w, t.customer)} bucket, suggested by the rules.`, sub: 'Original target kept. Sealed in the record.' }; render(); } catch (err) { result = { err: err.message }; render(); } return; }
   if (b.dataset.open) return openTask(b.dataset.open, b.dataset.tab);
   if (b.hasAttribute('data-close')) { panel = null; $('#panel').close(); return; }
@@ -328,15 +398,35 @@ document.addEventListener('click', e => {
   if (b.dataset.do) return panelAction(b.dataset.do);
   if (b.dataset.dec) return decide(b.dataset.dec, b.dataset.id);
   if (b.dataset.go) { document.querySelector(b.dataset.go)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-  if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; save(); render(); toast('Sample reset.'); return; }
+  if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; sealEdit = 0; sealRes = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; const bk = E.bucketOf(w, t.customer); const fits = E.owns(to, bk);
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); return; }
   if (b.dataset.tool) { toolTab = b.dataset.tool; toolChosen = true; document.querySelectorAll('.ttabs button').forEach(x => { const on = x.dataset.tool === toolTab; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); document.querySelectorAll('.tbody .tool').forEach(x => { x.hidden = x.id !== toolTab; }); if (!b.closest('.ttabs')) $('.tools')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
-  if (b.dataset.seal) { if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w); if (b.dataset.seal === 'tamper') { const ap = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0]; sealEdit = ap?.n ?? 0; sealRes = null; }
+  if (b.dataset.seal) {
+    if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w);
+    if (b.dataset.seal === 'tamper') { const ap = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0]; sealEdit = ap?.n ?? 0; sealRes = null; }
+    if (b.dataset.seal === 'preset-inflate') {
+      const ta = $('#db-text');
+      if (ta) {
+        ta.value = ta.value.replace(/(\d+(\.\d+)?)%/, (_, n) => `${Number(n) + 4}%`);
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      return;
+    }
     if (b.dataset.seal === 'dbcancel') sealEdit = 0;
-    if (b.dataset.seal === 'dbsave') { try { w = E.tamperEntry(w, Number($('#db-n').value), $('#db-text').value); save(); sealEdit = 0; sealRes = null; toast('Row changed in the database. Now press Verify record.'); } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; } } if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyChain(w); } return renderSeal(); }
+    if (b.dataset.seal === 'dbsave') {
+      try {
+        w = E.tamperEntry(w, Number($('#db-n').value), $('#db-text').value);
+        save(); sealEdit = 0; sealRes = E.verifyChain(w);
+        toast('Raw DB row modified & SHA-256 chain verified: mismatch caught.');
+      } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; }
+    }
+    if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyChain(w); toast('Original database row restored & verified.'); }
+    renderQ2CBridge();
+    return renderSeal();
+  }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000\n,City Pharma,New lead,${w.today},40000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
@@ -347,7 +437,18 @@ document.addEventListener('click', e => {
     render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#mv-confirm').insertAdjacentHTML('afterbegin', `<div class="err" role="alert" style="margin-bottom:6px">${esc(err.message)}</div>`); } return; }
   if (b.dataset.tr) { try { const ok = b.dataset.ok === '1'; w = E.decideTransfer(w, b.dataset.tr, actor, ok, $(`#tr-why-${CSS.escape(b.dataset.tr)}`)?.value); save(); sealRes = null; const tr = w.transfers.find(x => x.id === b.dataset.tr); toast(ok ? 'Transfer approved.' : 'Transfer rejected.'); result = { text: ok ? `${tr.id} approved: ${tr.customer} is now with ${E.label(tr.to)}.` : `${tr.id} rejected: ${tr.customer} stays with ${E.label(tr.from)}.`, sub: `Decided by ${actor}, not ${tr.by} who asked. Sealed in the record.`, switchTo: ok ? tr.to : tr.from }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { b.closest('div').insertAdjacentHTML('beforebegin', `<div class="err" role="alert">${esc(err.message)}</div>`); } return; }
 });
-document.addEventListener('input', e => { if (e.target.id === 'f-pct') routePreview(); });
+document.addEventListener('input', e => {
+  if (e.target.id === 'f-pct') routePreview();
+  if (e.target.id === 'db-text' && sealEdit) {
+    const blk = w.chain[sealEdit - 1];
+    const el = $('#db-live-hash');
+    if (blk && el) {
+      const liveCalc = E.sha256(JSON.stringify({ n: blk.n, at: blk.at, who: blk.who, text: e.target.value.trim(), ref: blk.ref, prev: blk.prev }));
+      const diff = liveCalc !== blk.hash;
+      el.innerHTML = `live_recomputed_sha256: <code style="background:#292524;color:${diff ? '#FCA5A5' : '#86EFAC'};border-color:${diff ? '#DC2626' : '#3F3A36'}">${esc(liveCalc.slice(0, 32))}…</code> ${diff ? '<b style="color:#FCA5A5">≠ STORED SEAL (TAMPERED)</b>' : '<b style="color:#86EFAC">= MATCHES STORED SEAL</b>'}`;
+    }
+  }
+});
 document.addEventListener('change', e => { if (e.target.id === 'mv-task' || e.target.id === 'mv-to') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); } if (e.target.id === 'db-n') { sealEdit = Number(e.target.value); renderSeal(); } });
 document.addEventListener('change', async e => {
   if (!['imp-dealers', 'imp-tasks'].includes(e.target.id) || !e.target.files[0]) return;
@@ -395,7 +496,7 @@ function tourShow(i) {
 function tourEnd(finished) {
   clearTimeout(tTimer); tStep = -1; tourEl.classList.remove('on'); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null;
-  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; signedIn = false; sealRes = null; sealOpen = false; save();
+  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; signedIn = true; sealRes = null; sealOpen = false; save();
   result = null;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
