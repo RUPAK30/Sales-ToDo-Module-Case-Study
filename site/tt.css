@@ -68,8 +68,9 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 @media (max-width:860px){.grid{grid-template-columns:1fr}}
 @media (max-width:560px){.head{flex-direction:column}.next{flex-direction:column;align-items:stretch}.facts{grid-template-columns:1fr 1fr}.task{grid-template-columns:26px 1fr}.task .val{grid-column:2}.who small{display:none}}
 
-.bar .in{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.bar nav{justify-self:start}.bar .logo{justify-self:center}.bar .hr{justify-self:end}
+.bar .in{display:grid;grid-template-columns:1fr auto 1fr}.bar nav{justify-self:start}.bar .logo{justify-self:center}.bar .hr{justify-self:end}
 .bar .btn{padding:7px 12px}
+@media(max-width:900px){.bar .hide-s{display:none}}
 @media(max-width:600px){.bar nav a{padding:6px 8px;font-size:.8rem}.bar .btn{font-size:.8rem;padding:7px 9px}.bar .logo{font-size:1.05rem}}
 .tour-hi{outline:3px solid var(--tt)!important;outline-offset:3px;border-radius:12px;position:relative;z-index:30}
 #tour{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);width:min(560px,calc(100vw - 24px));background:#1C1917;color:#fff;border-radius:16px;padding:14px 16px;z-index:60;box-shadow:0 20px 50px rgba(0,0,0,.35);display:none}
