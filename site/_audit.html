@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Width audit</title>
+<style>body{font:13px/1.4 monospace;margin:0;padding:8px}pre{white-space:pre-wrap}</style></head>
+<body><pre id="out">running…</pre>
+<script>
+var WIDTHS = [320,360,390,414,480,600,720,768,820,900,1024,1280,1440,1600];
+var PAGES = ['index.html','app.html','cockpit.html'];
+
+function measure(url, w) {
+  return new Promise(function (resolve) {
+    var f = document.createElement('iframe');
+    f.style.cssText = 'width:' + w + 'px;height:900px;border:0;position:absolute;left:-99999px;top:0';
+    f.src = url + '?audit=' + Math.random();
+    f.onload = function () {
+      setTimeout(function () {
+        try {
+          var d = f.contentDocument, win = f.contentWindow, vw = win.innerWidth;
+          var scroll = Math.max(d.documentElement.scrollWidth, d.body.scrollWidth);
+          var off = [];
+          var all = d.querySelectorAll('body *');
+          for (var i = 0; i < all.length && off.length < 6; i++) {
+            var b = all[i].getBoundingClientRect();
+            if (b.width > 0 && b.right > vw + 1) {
+              off.push({ tag: all[i].tagName.toLowerCase(), cls: String(all[i].className || '').slice(0, 34), right: Math.round(b.right), w: Math.round(b.width) });
+            }
+          }
+          var hdr = d.querySelector('header');
+          var navL = hdr && hdr.querySelector('nav');
+          var logo = hdr && hdr.querySelector('.logo');
+          var hr = hdr && hdr.querySelector('.hr, nav.r');
+          var hdrInfo = null;
+          if (navL && logo) {
+            var nb = navL.getBoundingClientRect(), lb = logo.getBoundingClientRect();
+            hdrInfo = { gapNavLogo: Math.round(lb.left - nb.right), logoLeft: Math.round(lb.left), logoRight: Math.round(lb.right), navRight: Math.round(nb.right) };
+            if (hr) hdrInfo.ctaRight = Math.round(hr.getBoundingClientRect().right);
+          }
+          resolve({ url: url, w: w, vw: vw, scroll: scroll, overflow: scroll > vw + 1, off: off, hdr: hdrInfo });
+        } catch (e) { resolve({ url: url, w: w, err: String(e).slice(0, 120) }); }
+        f.parentNode && f.parentNode.removeChild(f);
+      }, 900);
+    };
+    document.body.appendChild(f);
+  });
+}
+
+(async function () {
+  var out = [];
+  for (var p = 0; p < PAGES.length; p++) {
+    for (var i = 0; i < WIDTHS.length; i++) out.push(await measure(PAGES[p], WIDTHS[i]));
+  }
+  document.getElementById('out').textContent = JSON.stringify(out);
+  window.__DONE__ = out;
+})();
+</script></body></html>
