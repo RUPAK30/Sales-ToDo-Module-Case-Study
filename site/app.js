@@ -30,12 +30,12 @@ const apvOf = task => w.approvals.find(a => a.id === task.approvalId);
 const counters = rep => w.approvals.filter(a => a.status === 'countered' && a.rep === rep);
 
 const ROLE_WHY = {
-  Rahul: 'FMCG Field Rep · Sees max 10 ranked actions/day; quotes schemes automatically; task freezes when asking >0% extra discount.',
-  Neha: 'Pharma Field Rep · Isolated Pharma bucket; FMCG tasks cannot move to her without a reason and 2nd manager sign-off.',
-  Imran: 'FMCG Field Rep · Receives same-bucket overflow when Rahul is over the 10-task cap.',
-  Kavita: 'Sales Manager · Approves/counters discount asks ≤10% within margin floor; proposes schemes (needs Arjun as 2nd approver).',
-  Sanjay: 'Area Sales Manager · Stand-in approver when Kavita delegates on leave (logged as "acting for Kavita").',
-  Arjun: 'Sales Head · Decides >10% asks, below-floor exceptions, credit-hold overrides, and asks Kavita leaves >1 working day.',
+  Rahul: 'FMCG Sales Rep · Sees his top 10 tasks today. Can apply pre-approved schemes, or ask Kavita for a discount (which freezes his task).',
+  Neha: 'Pharma Sales Rep · Handles Pharma shops only. FMCG tasks cannot be dumped on her without a second manager’s approval.',
+  Imran: 'FMCG Sales Rep · Takes overflow FMCG tasks when Rahul has more than 10 due today.',
+  Kavita: 'Sales Manager · Approves or counters discount asks up to 10% (if within margin floor). Needs Arjun to co-sign new schemes.',
+  Sanjay: 'Area Sales Manager · Acts as stand-in approver when Kavita goes on leave (every decision is logged as "acting for Kavita").',
+  Arjun: 'Sales Head · Approves big discounts (>10%), dealers on credit hold, and any ask Kavita leaves undecided for more than 1 day.',
 };
 
 /* ---------- actor switch ---------- */
@@ -57,19 +57,42 @@ function renderQ2CBridge() {
   const approved = [...w.approvals].reverse().find(a => a.status === 'approved');
   const audit = E.auditChain(w);
   el.innerHTML = `<div class="q2c-in">
-    <div>
-      <span class="q2c-k">2-WAY CRYPTOGRAPHIC HANDOFF · TEN TODAY ⇄ EVERY RUPEE (FINANCE)</span>
-      <p class="q2c-p">${rec
-        ? `<b style="color:var(--bad)">⛔ Active Finance Hold (R7):</b> ${esc(rec.rep)} has an open >15-day Every Rupee claim (<b>${esc(rec.id)} · ${esc(rec.customer)} · ${inr(rec.value)}</b>). New discount asks by ${esc(rec.rep)} are blocked until resolved.`
-        : `<b>Contract v1 active:</b> Approved discounts pass a SHA-256 payload seal to Every Rupee. Unapproved short-payments (>15d) return as a rep recovery task that blocks new discount asks.`}</p>
-    </div>
-    <div class="q2c-acts">
-      <button type="button" class="btn ${rec ? 'ok' : ''}" data-q2c="${rec ? 'clear-rec' : 'sim-rec'}">${rec ? `✓ Clear ${rec.rep}'s ₹9,440 Finance Hold` : '⚡ Simulate >15d Every Rupee Claim Block (R7)'}</button>
-      ${approved
-        ? (audit.ok
-            ? `<a class="btn pri" href="${E.financeLink(w, approved.id)}" target="_blank" rel="noopener">Send ${esc(approved.id)} (${approved.capPct}% · 🔒 ${esc((approved.seal || '').slice(0, 8))}) to Every Rupee ↗</a>`
-            : `<button type="button" class="btn" disabled title="Chain is tampered at Block #${audit.brokenAt}">⛔ Handoff blocked: SHA-256 chain altered at #${audit.brokenAt}</button>`)
-        : `<button type="button" class="btn" data-q2c="quick-apv">Approve a sample discount to test Finance handoff →</button>`}
+    <div style="width:100%">
+      <span class="q2c-k">HOW SALES (TEN TODAY) &amp; FINANCE (EVERY RUPEE) STOP VERBAL DISCOUNT LEAKS</span>
+      <p class="q2c-p" style="max-width:none;margin-bottom:10px">In real business, a salesperson promises a discount on a call, and weeks later the shop pays less than the invoice. These two live connections keep Sales and Finance in sync:</p>
+      <div class="q2c-cards">
+        <div class="q2c-card ${rec ? 'active-hold' : ''}">
+          <div class="q2c-card-hd">
+            <span class="q2c-dir">1 · INBOUND FROM FINANCE (EVERY RUPEE → TEN TODAY)</span>
+            <span class="chip ${rec ? 'st-bad' : 'p3'}">${rec ? '⛔ Rahul Blocked' : 'Ready to test'}</span>
+          </div>
+          <b>What if a shop deducts ₹9,440 without an approved discount?</b>
+          <p>${rec
+            ? `<b style="color:var(--bad)">Active right now:</b> Krishna Marketing paid <b>₹9,440 short</b> on bill <code>INV-5031</code> with no approval on record. Finance sent task <b>${esc(rec.id)}</b> to Rahul's queue and <b>locked Rahul from asking for any new discounts</b> until he collects the ₹9,440 or attaches proof.`
+            : `When a shop short-pays an invoice and claims "Rahul promised us a discount" with no record in Ten Today, Finance routes the ₹9,440 gap back to Rahul and <b>freezes his ability to ask for new discounts</b> after 15 days.`}</p>
+          <div class="row" style="margin-top:6px">
+            <button type="button" class="btn ${rec ? 'ok' : ''}" data-q2c="${rec ? 'clear-rec' : 'sim-rec'}">${rec ? `✓ Resolve ₹9,440 short-payment & unblock Rahul` : '⚡ Test this: Send ₹9,440 unapproved short-payment from Finance'}</button>
+            ${rec ? `<button type="button" class="btn pri" data-q2c="try-blocked-ask">Try asking for a discount as Rahul (watch it block) →</button>` : ''}
+          </div>
+        </div>
+        <div class="q2c-card">
+          <div class="q2c-card-hd">
+            <span class="q2c-dir">2 · OUTBOUND TO FINANCE (TEN TODAY → EVERY RUPEE)</span>
+            <span class="chip ${approved ? (audit.ok ? 'st-ok' : 'st-bad') : 'p3'}">${approved ? (audit.ok ? `✓ ${approved.id} Sealed` : '✗ Seal Broken') : 'Needs 1 approval'}</span>
+          </div>
+          <b>What happens when a manager approves a discount here?</b>
+          <p>${approved
+            ? `<b>${esc(approved.decidedBy)}</b> approved <b>${approved.capPct}% off</b> for <b>${esc(approved.customer)}</b> (<code>${esc(approved.id)}</code>). It is sealed with SHA-256 fingerprint <code>${esc((approved.seal || '').slice(0, 8))}</code> so when the shop pays less, Finance's desk clears the ${approved.capPct}% automatically.`
+            : `When Kavita or Arjun approves a discount, Ten Today seals the cap, expiry date, and SHA-256 fingerprint into a link for Finance so the customer's short-payment clears automatically on Day 0.`}</p>
+          <div class="row" style="margin-top:6px">
+            ${approved
+              ? (audit.ok
+                  ? `<a class="btn pri" href="${E.financeLink(w, approved.id)}" target="_blank" rel="noopener">Send ${esc(approved.id)} (${approved.capPct}% · 🔒 ${esc((approved.seal || '').slice(0, 8))}) to Every Rupee (Finance) ↗</a>`
+                  : `<button type="button" class="btn" disabled>⛔ Blocked: Block #${audit.brokenAt} was tampered in DB (undo edit below first)</button>`)
+              : `<button type="button" class="btn pri" data-q2c="quick-apv">✓ Approve Delta Pharma's 8% ask as Kavita to test Finance handoff →</button>`}
+          </div>
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -81,34 +104,34 @@ function renderSeal() {
   const audit = E.auditChain(w);
   const r = sealRes ? audit : null;
   const st = b => !r ? '' : b.status === 'ok' ? 'ok' : b.status === 'tampered' ? 'bad' : 'after';
-  const tag = b => ({ ok: '✓ hash verified', bad: '✗ payload tampered', after: '⚠ prev-hash cascade broken' }[st(b)] ?? '');
-  const blocks = audit.blocks.map((b, k) => `${k ? `<span class="link ${r && !r.ok && b.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(b)}"><small>#${b.n} · ${esc(b.who)}</small><span class="tx">${esc(b.text.length > 64 ? b.text.slice(0, 62) + '…' : b.text)}</span><code title="Stored seal: ${esc(b.storedHash)}">${esc(b.storedHash.slice(0, 8))}</code>${r && b.hashMismatch ? `<code style="background:#FEE2E2;border-color:#EF4444;color:#991B1B" title="Recomputed SHA-256: ${esc(b.recomputedHash)}">calc: ${esc(b.recomputedHash.slice(0, 8))} ≠</code>` : ''}<em>${b.n === 1 ? 'genesis (prev: GENESIS)' : `prev: <code>${esc(b.storedPrev.slice(0, 6))}</code>${r && b.prevMismatch ? ` ≠ <code>${esc(b.expectedPrev.slice(0, 6))}</code>` : ''}`}</em>${st(b) === 'bad' && w.tampered?.n === b.n ? `<em>was: <s>${esc(w.tampered.original.slice(0, 42))}…</s></em>` : ''}${tag(b) ? `<b>${tag(b)}</b>` : ''}</div>`).join('');
-  const status = !r ? `<div class="res idle">Live chain has <b>${n} SHA-256 block${n === 1 ? '' : 's'}</b>${w.tampered ? ' <b style="color:var(--bad)">(1 unverified raw DB edit pending check)</b>' : ''}. Press <b>Verify record</b> to recompute every SHA-256 digest, or <b>Try tampering yourself</b> to edit a raw row.</div>`
-    : r.ok ? `<div class="res ok">✓ Verified by ${esc(E.label(actor))}: all ${r.count} SHA-256 digests recomputed from <code>{n, at, who, text, ref, prev}</code> and match stored seals. Head digest: <code>${esc(r.head.slice(0, 16))}…</code></div>`
+  const tag = b => ({ ok: '✓ matches seal', bad: '✗ edited in DB', after: '⚠ link broken' }[st(b)] ?? '');
+  const blocks = audit.blocks.map((b, k) => `${k ? `<span class="link ${r && !r.ok && b.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(b)}"><small>#${b.n} · ${esc(b.who)}</small><span class="tx">${esc(b.text.length > 64 ? b.text.slice(0, 62) + '…' : b.text)}</span><code title="Stored seal: ${esc(b.storedHash)}">${esc(b.storedHash.slice(0, 8))}</code>${r && b.hashMismatch ? `<code style="background:#FEE2E2;border-color:#EF4444;color:#991B1B" title="Recomputed SHA-256: ${esc(b.recomputedHash)}">now: ${esc(b.recomputedHash.slice(0, 8))} ≠</code>` : ''}<em>${b.n === 1 ? 'first block' : `built from #${b.n - 1}'s <code>${esc(b.storedPrev.slice(0, 6))}</code>`}</em>${st(b) === 'bad' && w.tampered?.n === b.n ? `<em>was: <s>${esc(w.tampered.original.slice(0, 42))}…</s></em>` : ''}${tag(b) ? `<b>${tag(b)}</b>` : ''}</div>`).join('');
+  const status = !r ? `<div class="res idle">Every decision above is locked with a SHA-256 fingerprint. Press <b>Verify record</b> to check that nothing was changed, or <b>Try tampering yourself</b> to see what happens if someone edits a discount in the database.</div>`
+    : r.ok ? `<div class="res ok">✓ Checked just now as ${esc(E.label(actor))}: all ${r.count} fingerprints match. No discount or decision was edited after the fact.</div>`
     : (() => {
         const badBlk = r.blocks[r.brokenAt - 1];
         const cascadeCount = n - r.brokenAt;
-        return `<div class="res no">✗ <b>CRYPTOGRAPHIC TAMPER DETECTED AT BLOCK #${r.brokenAt} (${esc(badBlk.who)}):</b><br>
-        · Stored seal in DB: <code>${esc(badBlk.storedHash.slice(0, 24))}…</code><br>
-        · Recomputed SHA-256: <code>${esc(badBlk.recomputedHash.slice(0, 24))}…</code> (mismatch!)<br>
-        ${cascadeCount > 0 ? `· <b>Cascade failure:</b> Block${cascadeCount > 1 ? 's' : ''} #${r.brokenAt + 1}–#${n} built on #${r.brokenAt}'s original seal are automatically invalidated. Outbound Every Rupee finance handoff is locked.` : '· Outbound Every Rupee finance handoff is locked until restored.'}</div>`;
+        return `<div class="res no">✗ <b>TAMPERING CAUGHT AT BLOCK #${r.brokenAt} (${esc(badBlk.who)}):</b><br>
+        · Original sealed fingerprint: <code>${esc(badBlk.storedHash.slice(0, 20))}…</code><br>
+        · New fingerprint after edit: <code>${esc(badBlk.recomputedHash.slice(0, 20))}…</code> (does not match!)<br>
+        ${cascadeCount > 0 ? `· <b>Chain broken:</b> Block${cascadeCount > 1 ? 's' : ''} #${r.brokenAt + 1}–#${n} were built on Block #${r.brokenAt}, so they are automatically flagged too. Sending to Finance is locked.` : '· Sending to Finance is locked until the original record is restored.'}</div>`;
       })();
   el.className = 'seal' + (r && !r.ok ? ' bad' : '');
-  el.innerHTML = `<div class="top"><div><b class="t">🔒 Sealed approval record (SHA-256 hash chain)</b> <span class="hint">· one append-only ledger for the whole team · ${n} block${n === 1 ? '' : 's'}</span></div>
+  el.innerHTML = `<div class="top"><div><b class="t">🔒 Tamper-proof approval record (SHA-256 chain)</b> <span class="hint">· stops anyone from quietly changing an approved 6% discount to 10% · ${n} block${n === 1 ? '' : 's'}</span></div>
     <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the DB edit' : 'Try tampering yourself'}</button></div></div>
     <div class="cv" id="cv">${blocks || '<p class="hint">Nothing recorded yet.</p>'}</div>
-    ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; const liveCalc = E.sha256(JSON.stringify({ n: e.n, at: e.at, who: e.who, text: e.text, ref: e.ref, prev: e.prev })); return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row editor (insider attack simulator)</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">The app UI has no edit or delete button for decisions. Here you act as a database admin editing a stored row directly (e.g. changing an asked/approved <b>8%</b> discount to <b>12%</b>). Because the edit bypasses the engine, <code>stored_hash</code> is not updated—or if recalculated, it breaks the <code>prev</code> pointer of the next block.</p>
-      <div class="row"><label>Select block to tamper<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)} (${esc(x.text.slice(0, 36))}…)</option>`).join('')}</select></label>
-      <button class="btn" type="button" data-seal="preset-inflate" style="background:#292524;color:#FDBA74;border-color:#FDBA74;font-size:.76rem;padding:6px 10px">⚡ Preset: Inflate % by +4% in DB</button></div>
-      <label style="margin-top:6px">Raw stored <code>text</code> payload (change any character or number below)<textarea id="db-text" rows="2">${esc(e.text)}</textarea></label>
+    ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; const liveCalc = E.sha256(JSON.stringify({ n: e.n, at: e.at, who: e.who, text: e.text, ref: e.ref, prev: e.prev })); return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row (insider edit test)</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">There is no "Edit" button in the app. But what if someone with database access quietly changes a stored discount from <b>8%</b> to <b>12%</b>? Change the text below (or click the orange button) and press <b>Save &amp; check</b> to see how the SHA-256 fingerprint catches it immediately.</p>
+      <div class="row"><label>Block<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)} (${esc(x.text.slice(0, 36))}…)</option>`).join('')}</select></label>
+      <button class="btn" type="button" data-seal="preset-inflate" style="background:#292524;color:#FDBA74;border-color:#FDBA74;font-size:.76rem;padding:6px 10px">⚡ Change discount % by +4% in DB</button></div>
+      <label style="margin-top:6px">Stored database text (type anything below to tamper)<textarea id="db-text" rows="2">${esc(e.text)}</textarea></label>
       <div class="mono" style="margin:4px 0 0;font-size:.72rem;color:#A8A29E;display:grid;gap:2px">
-        <span>actor: <b>${esc(e.who)}</b> · timestamp: <b>${esc(e.at)}</b> · prev_hash: <b>${esc(e.prev.slice(0, 16))}…</b></span>
-        <span>stored_hash (sealed): <code style="background:#292524;color:#86EFAC;border-color:#3F3A36">${esc(e.hash.slice(0, 32))}…</code></span>
-        <span id="db-live-hash">live_recomputed_sha256: <code style="background:#292524;color:#FDBA74;border-color:#3F3A36">${esc(liveCalc.slice(0, 32))}…</code></span>
+        <span>who: <b>${esc(e.who)}</b> · time: <b>${esc(e.at)}</b></span>
+        <span>original sealed fingerprint: <code style="background:#292524;color:#86EFAC;border-color:#3F3A36">${esc(e.hash.slice(0, 28))}…</code></span>
+        <span id="db-live-hash">new fingerprint as you type: <code style="background:#292524;color:#FDBA74;border-color:#3F3A36">${esc(liveCalc.slice(0, 28))}…</code></span>
       </div>
-      <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save raw edit &amp; run SHA-256 verification</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
+      <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save to database &amp; verify</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
     ${status}
-    <details class="how"><summary>How the SHA-256 chain &amp; Every Rupee contract seal work (3 steps)</summary><ol class="steps"><li><b>Block seal.</b> Every ask, approval, counter, transfer, or order computes <code>SHA-256(JSON.stringify({n, at, who, text, ref, prev}))</code>.</li><li><b>Cascade link.</b> Block <code>#k</code> embeds Block <code>#k-1</code>'s 64-hex-char SHA-256 digest in <code>prev</code>. Altering an earlier discount % changes its digest and invalidates every subsequent block.</li><li><b>Cross-app Finance Contract v1.</b> When you click <b>Send to Every Rupee</b>, the URL carries <code>contractSeal = SHA-256([v, id, customer, rep, approver, capPct, validTo])</code> so Finance's AR desk rejects any tampered URL parameter on arrival.</li></ol></details>`;
+    <details class="how"><summary>Why this matters in plain words (3 steps)</summary><ol class="steps"><li><b>Digital seal.</b> Every ask, approval, counter-offer, or order creates a unique SHA-256 fingerprint from the person, time, and exact discount %.</li><li><b>Linked blocks.</b> Each block's fingerprint includes the block before it. If someone changes an old 6% approval to 10%, that block's fingerprint changes and breaks every block after it.</li><li><b>Checked by Finance.</b> When an approval is sent to Every Rupee (Finance), the fingerprint travels with it so Finance knows the discount wasn't altered on the way.</li></ol></details>`;
   const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
 }
 
@@ -366,17 +389,27 @@ document.addEventListener('click', e => {
   if (b.dataset.q2c) {
     if (b.dataset.q2c === 'sim-rec') {
       const tok = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, kind: 'recovery', invoiceId: 'INV-5031', customer: 'Krishna Marketing, Surat', short: 9440, rep: 'Rahul' })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      const r = E.importRecovery(w, tok); w = r.w; actor = 'Rahul'; save();
-      result = { text: `Every Rupee (R7) sent recovery task ${r.task.id}: Krishna Marketing paid ₹9,440 short on INV-5031.`, sub: `Rahul is now blocked from asking for new discounts until he resolves ${r.task.id} in Today.` };
-      toast('Finance hold active: Rahul blocked from new discount asks.');
+      const r = E.importRecovery(w, tok); w = r.w; actor = 'Rahul'; flashId = r.task.id; save();
+      result = { text: `Finance (Every Rupee) sent task ${r.task.id} to Rahul: Krishna Marketing paid ₹9,440 short on bill INV-5031 with no discount approval.`, sub: `Look at Rahul's list below or click "Try asking for a discount as Rahul" above—he is now blocked from asking for new discounts until he resolves ${r.task.id}.` };
+      toast('₹9,440 unapproved short-payment added to Rahul’s queue.');
       return render();
+    }
+    if (b.dataset.q2c === 'try-blocked-ask') {
+      actor = 'Rahul'; save(); render();
+      const targetTask = w.tasks.find(t => t.rep === 'Rahul' && t.status === 'open' && ['Quote sent', 'Negotiation'].includes(t.stage));
+      if (targetTask) {
+        openTask(targetTask.id, 'ask');
+        try { E.askDiscount(w, targetTask.id, 'Rahul', 6, 'Customer wants 6% off'); }
+        catch (err) { panel.err = err.message; renderPanel(); }
+      }
+      return;
     }
     if (b.dataset.q2c === 'clear-rec') {
       const rec = w.tasks.find(t => t.kind === 'recovery' && t.status === 'open');
       if (rec) {
-        w = E.complete(w, rec.id, rec.rep, 'Attached credit-note proof / collected ₹9,440 short payment', false).w;
-        save(); result = { text: `${rec.id} cleared by ${rec.rep}. Every Rupee R7 hold lifted.`, sub: `${rec.rep} can now ask for discounts again.` };
-        toast('Finance hold cleared.');
+        w = E.complete(w, rec.id, rec.rep, 'Collected ₹9,440 short payment / attached credit-note proof', false).w;
+        save(); result = { text: `${rec.id} resolved by ${rec.rep}. The Finance hold is lifted.`, sub: `${rec.rep} can now ask for discounts on new orders again.` };
+        toast('₹9,440 short-payment resolved. Rahul is unblocked.');
       }
       return render();
     }
