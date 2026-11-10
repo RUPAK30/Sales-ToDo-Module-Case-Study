@@ -201,7 +201,7 @@ function renderNext() {
 function repDesk() {
   const q = E.today(w, actor), ib = E.inbox(w, actor), m = E.metrics(w);
   const r = E.repSnapshot(w, actor);
-  const snap = `<section class="snap" aria-label="My snapshot"><p class="k">My snapshot · only your work, not compared with anyone</p><div class="tiles">
+  const snap = `<section class="snap" aria-label="Since you started"><p class="k">Since you started · only your work, not compared with anyone</p><div class="tiles">
     <div class="${r.toAnswer ? 'warn' : ''}"><span>Asks with approvers</span><b>${r.waiting}</b><small>${r.toAnswer ? `${r.toAnswer} counter-offer waiting for your answer` : 'the clock is on them, not you'}</small></div>
     <div class="${r.expiring ? 'warn' : ''}"><span>Approved, not yet booked</span><b>${r.approvedOpen}</b><small>${r.expiring ? `${r.expiring} expiring within 3 days: book or re-ask` : 'book the order before the approval expires'}</small></div>
     <div><span>Orders booked</span><b>${r.orders}</b><small>${inr(r.booked)} · every one within its approval</small></div>
