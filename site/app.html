@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tt.css?v=1794377498">
+<link rel="stylesheet" href="tt.css?v=1794378134">
 </head>
 <body>
 <header class="bar"><div class="in"><button class="btn ghost menu" id="menu-go" type="button" aria-label="Menu" aria-controls="drawer">☰</button><a class="logo" href="app.html" aria-label="Ten Today">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="hr"><a class="btn ghost hide-m" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><button class="btn pri" id="tour-go" type="button">▶ <span class="hide-m">60-second </span>tour</button></div></div></header>
@@ -25,12 +25,24 @@
     <div>
       <p class="eyebrow">B2B Sales Execution &amp; Discount Governance</p>
       <h1>Today desk</h1>
-      <p class="lede"><b>Reps promise discounts nobody approved; finance finds out when the bill is short-paid.</b> Ten Today gives each rep 10 ranked actions, sends every discount ask to the one person allowed to decide it, and seals the decision so nobody can rewrite it later.</p>
+      <p class="lede"><b>Reps promise discounts nobody approved; finance finds out when the bill is short-paid.</b> I built the desk where every discount is decided within one working day, no order can exceed what was approved, and nobody can quietly rewrite the decision.</p>
       <p class="pubfacts">Published data: sellers spend well under a third of their week actually selling (<a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener">Salesforce</a>) · 45% of companies lost a deal to a slow quote approval in six months (<a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener">Conga</a>) · since FY24 Indian auditors must report whether the audit trail "has not been tampered with" (<a href="https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities" target="_blank" rel="noopener">ICAI, Rule 11(g)</a>)</p>
     </div>
   </div>
 
   <p class="builder">Designed &amp; built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · 28 tests on the rules · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a> · <a href="https://rupak-lemon.vercel.app" target="_blank" rel="noopener">Portfolio</a></p>
+  <section class="score" aria-label="Before and after">
+    <p class="k">Before → after · every row tagged by how far you can trust it</p>
+    <table><thead><tr><th>What changes</th><th>Before (published)</th><th>With Ten Today</th><th>Type</th></tr></thead><tbody>
+      <tr><td>Rep's daily list</td><td>100+ CRM rows; sellers spend under a third of the week selling (<a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener">Salesforce</a>)</td><td><b>10 ranked actions</b>, each with its reason</td><td><span class="tag en">Enforced</span></td></tr>
+      <tr><td>Discount decision</td><td>45% of firms lost a deal to a slow quote approval (<a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener">Conga</a>)</td><td><b>Decided or escalated within 1 working day</b></td><td><span class="tag en">Enforced</span></td></tr>
+      <tr><td>Orders above the approval</td><td>Verbal promises, found when the bill is short-paid</td><td><b>0</b>: the order is blocked</td><td><span class="tag en">Enforced</span></td></tr>
+      <tr><td>"Who approved this?"</td><td>Weeks of email; auditors must now certify the trail wasn't tampered with (<a href="https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities" target="_blank" rel="noopener">ICAI</a>)</td><td><b>One click</b>: sealed decision, checked against the daily anchor</td><td><span class="tag en">Enforced</span></td></tr>
+      <tr><td>Discount held back in the tour</td><td>Asked 9% on ₹4.8L</td><td><b>₹14,400</b> kept (6% approved)</td><td><span class="tag co">Computed</span></td></tr>
+      <tr><td>Selling time won back</td><td>—</td><td>Measure in a 4-week pilot with 3 reps</td><td><span class="tag pi">Pilot target</span></td></tr>
+    </tbody></table>
+    <p class="hint" style="margin:6px 0 0"><b>Enforced</b> = a rule with a test (28 tests). <b>Computed</b> = from this sample. <b>Pilot target</b> = what I'd prove with a real team. I don't claim results from customers I don't have.</p>
+  </section>
   <details class="why"><summary>How a deal moves, and why it matters <span>3 steps · public benchmarks</span></summary>
   <section class="story-strip" aria-label="How a real deal moves through Ten Today in 3 steps">
     <div class="story-step">
@@ -76,7 +88,16 @@
     <li><b>Buckets, like a bank MIS.</b> A task moves freely inside its bucket; a wrong-bucket move needs a reason and a second manager.</li>
     <li><b>Tamper-evident, not blockchain.</b> One company keeps this record, so a hash chain with a daily anchor shared outside is enough. It's the model Microsoft's SQL Ledger uses, and it answers the auditor's Rule 11(g) question.</li>
     <li><b>Validate before building more.</b> Next: shadow 3 field reps and 1 approver for a week to test the 10-cap and the 1-day escalation.</li>
-  </ol></details>
+  </ol><p class="hint" style="margin:8px 0 0"><b>What I'd do differently:</b> I fixed the cap at 10 from published research before watching a rep's real day. A pilot tests that first, and the cap becomes a setting if 10 is wrong.</p></details>
+  <details class="why decisions"><summary>Ready from day one <span>HDFC evidence → this product</span></summary>
+    <table class="d1"><thead><tr><th>Your team needs</th><th>I did it at HDFC Bank</th><th>Visible here</th></tr></thead><tbody>
+      <tr><td>Requirements</td><td>25+ BRDs/FRDs; templates cut clarification queries 25%</td><td>Every rule written as a testable spec (<a href="cockpit.html">Spec &amp; UAT</a>)</td></tr>
+      <tr><td>UAT &amp; releases</td><td>20+ UAT cycles, 95% of defects fixed pre-release; 15+ releases on time</td><td>28 tests on the rules, plus 18 UAT cases you can run</td></tr>
+      <tr><td>Controls</td><td>Maker-checker approvals; zero findings across 4–5 SOX audits</td><td>Approval limits, second-manager transfers, sealed record</td></tr>
+      <tr><td>KPIs &amp; MIS</td><td>Weekly MIS of 15+ KPIs; prep cut from 8h to 3h</td><td>The before → after table and the leadership snapshot</td></tr>
+    </tbody></table>
+    <p style="margin:10px 0 0"><b>Week one with your team:</b> map your approval flow, write the rules, and run UAT with three users. No ramp-up needed for the BRD, the UAT or the KPI. <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk →</a></p>
+  </details>
 </main>
 
 <dialog id="panel" aria-labelledby="p-title"><div id="panel-body"></div></dialog>
