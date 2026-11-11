@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794377422';
+import * as E from './engine.js?v=1794378672';
 
 const KEY = 'tentoday-product-v4';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -107,7 +107,7 @@ function renderSeal() {
   const st = b => !r ? '' : b.status === 'ok' ? 'ok' : b.status === 'tampered' ? 'bad' : 'after';
   const tag = b => ({ ok: '✓ matches seal', bad: '✗ edited in DB', after: '⚠ link broken' }[st(b)] ?? '');
   const blocks = audit.blocks.map((b, k) => `${k ? `<span class="link ${r && !r.ok && b.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(b)}"><small>#${b.n} · ${esc(b.who)}</small><span class="tx">${esc(b.text.length > 64 ? b.text.slice(0, 62) + '…' : b.text)}</span><code title="Stored seal: ${esc(b.storedHash)}">${esc(b.storedHash.slice(0, 8))}</code>${r && b.hashMismatch ? `<code style="background:#FEE2E2;border-color:#EF4444;color:#991B1B" title="Recomputed SHA-256: ${esc(b.recomputedHash)}">now: ${esc(b.recomputedHash.slice(0, 8))} ≠</code>` : ''}<em>${b.n === 1 ? 'first block' : `built from #${b.n - 1}'s <code>${esc(b.storedPrev.slice(0, 6))}</code>`}</em>${st(b) === 'bad' && w.tampered?.n === b.n ? `<em>was: <s>${esc(w.tampered.original.slice(0, 42))}…</s></em>` : ''}${tag(b) ? `<b>${tag(b)}</b>` : ''}</div>`).join('');
-  const status = !r ? `<div class="res idle">Every decision above is locked with a SHA-256 fingerprint. Press <b>Verify record</b> to check that nothing was changed, or <b>Try tampering yourself</b> to see what happens if someone edits a discount in the database.</div>`
+  const status = !r ? `<div class="res idle">Press <b>Verify</b> to check nothing was changed.</div>`
     : r.anchorFail ? `<div class="res no">✗ <b>Whole chain rewritten.</b> Every link looks consistent, but block #${r.brokenAt} no longer matches the anchor shared with ${esc(w.anchor.to)} at ${esc(w.anchor.at)}. An admin rewrite is caught too.</div>`
     : r.ok ? `<div class="res ok">✓ Checked just now as ${esc(E.label(actor))}: all ${r.count} fingerprints match${anc.anchored ? ` and the chain still ends at yesterday's anchor (${esc(w.anchor.hash.slice(0, 8))}, shared with ${esc(w.anchor.to)})` : ''}. No discount or decision was edited after the fact.</div>`
     : (() => {
@@ -134,7 +134,7 @@ function renderSeal() {
       <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:#FDBA74"><input type="checkbox" id="db-rebuild"> Admin with full access: also recompute every fingerprint after the edit</label>
       <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save to database &amp; verify</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
     ${status}
-    <p class="hint" style="margin:0">Tamper-evident, not tamper-proof: it detects edits, it doesn't prevent them. Same model as Microsoft's SQL Ledger (a chain of blocks plus a digest kept outside the database). Supports the auditor's Rule 11(g) check that the audit trail wasn't tampered with. Production writes it on the server.</p>
+    <details class="how"><summary>Tamper-evident, not tamper-proof: what that means</summary><p class="hint" style="margin:6px 0 0">Tamper-evident, not tamper-proof: it detects edits, it doesn't prevent them. Same model as Microsoft's SQL Ledger (a chain of blocks plus a digest kept outside the database). Supports the auditor's Rule 11(g) check that the audit trail wasn't tampered with. Production writes it on the server.</p></details>
     <details class="how"><summary>Why this matters in plain words (3 steps)</summary><ol class="steps"><li><b>Digital seal.</b> Every ask, approval, counter-offer, or order creates a unique SHA-256 fingerprint from the person, time, and exact discount %.</li><li><b>Linked blocks.</b> Each block's fingerprint includes the block before it. If someone changes an old 6% approval to 10%, that block's fingerprint changes and breaks every block after it.</li><li><b>Checked by Finance.</b> When an approval is sent to Every Rupee (Finance), the fingerprint travels with it so Finance knows the discount wasn't altered on the way.</li></ol></details>`;
   const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
 }
