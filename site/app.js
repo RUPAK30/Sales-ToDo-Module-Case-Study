@@ -1,6 +1,6 @@
-import * as E from './engine.js?v=1794392976';
+import * as E from './engine.js?v=1794393754';
 
-const KEY = 'tentoday-product-v4';
+const KEY = 'tentoday-product-v5';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -13,7 +13,7 @@ let drillBackup = null, sealEdit = 0, signedIn = true; let w, actor = 'Rahul', p
 
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; signedIn = true; return; } } catch { /* storage unavailable */ }
-  w = E.sample(realToday);
+  w = E.withHistory(E.sample(realToday));
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ w, actor, signedIn })); } catch { /* fine without */ } }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2600); }
@@ -269,7 +269,7 @@ function managerDesk() {
   </div></section>`;
   const misT = `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl" type="button">⬇ Download MIS (CSV)</button></div>
     <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
-    <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>No data yet?</b> Decide an ask above or book an order and watch it update.</p></section>`;
+    <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
   return `${snap}${misT}<div class="grid">
     <div class="side">
       <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
@@ -378,7 +378,7 @@ function decide(kind, id) {
 }
 
 function render() {
-  try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.sample(realToday)); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
+  try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
 function renderInner() {
   renderActors(); renderQ2CBridge(); $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
@@ -441,7 +441,7 @@ document.addEventListener('click', e => {
   if (b.dataset.go) { document.querySelector(b.dataset.go)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (b.id === 'menu-go') { $('#drawer').hidden = false; return; }
   if (b.id === 'menu-x') { $('#drawer').hidden = true; return; }
-  if (b.id === 'reset') { $('#drawer').hidden = true; w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; sealEdit = 0; sealRes = null; save(); render(); toast('Sample reset.'); return; }
+  if (b.id === 'reset') { $('#drawer').hidden = true; w = E.withHistory(E.sample(realToday)); actor = 'Rahul'; result = null; panel = null; sealEdit = 0; sealRes = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; const bk = E.bucketOf(w, t.customer); const fits = E.owns(to, bk);
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
@@ -515,7 +515,7 @@ render();
 
 /* ---------- 60-second guided tour: runs the real engine on a fresh sample ---------- */
 const TOUR = [
-  { who: 'Rahul', k: 'The rep', h: '100 open leads. 10 actions today.', p: 'Rahul has 17 open tasks: 12 are due now, and Today shows at most 10 of them, so the two over the cap are counted, not hidden. Ranked by rules he can read: days past target, money-blocking stage, then deal value as a tie-break.', run: () => { w = E.sample(realToday); }, at: () => $('#desk .card') },
+  { who: 'Rahul', k: 'The rep', h: '100 open leads. 10 actions today.', p: 'Rahul has 17 open tasks: 12 are due now, and Today shows at most 10 of them, so the two over the cap are counted, not hidden. Ranked by rules he can read: days past target, money-blocking stage, then deal value as a tie-break.', run: () => { w = E.withHistory(E.sample(realToday)); }, at: () => $('#desk .card') },
   { who: 'Rahul', k: 'Scheme, no ask', h: 'A live scheme applies by itself', p: 'Aarav’s ₹4.8L order qualifies for the 3% volume slab. Pre-approved, so it applies at once: ₹14,400 off before GST, logged.', run: () => { w = E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01'); }, open: 'T-101', at: () => $('#panel') },
   { who: 'Rahul', k: 'Discount ask', h: 'He asks for 9% more. The task freezes.', p: 'The ask goes to Kavita, who is allowed to decide up to 10% within the margin floor. Rahul’s task leaves Today; the clock is now on her.', run: () => { w = E.askDiscount(w, 'T-101', 'Rahul', 9, 'Rival quoted 9% lower'); }, at: () => document.querySelectorAll('#desk .side .card')[0] },
   { who: 'Kavita', k: 'The approver', h: 'Three numbers to decide', p: 'Kavita sees the ask in rupees before GST, the margin floor and the dealer’s credit. She can approve, counter or send back. She can’t decide her own asks.', at: () => [...document.querySelectorAll('.ask')].find(x => x.textContent.includes('Aarav')) },
@@ -543,7 +543,7 @@ function tourEnd(finished) {
   clearTimeout(tTimer); tStep = -1; tourEl.classList.remove('on'); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null;
   const im = E.impact(w);
-  w = E.escalate(E.sample(realToday)); actor = 'Rahul'; signedIn = true; sealRes = null; sealOpen = false; save();
+  w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; signedIn = true; sealRes = null; sealOpen = false; save();
   result = finished ? { text: `Outcome: ${inr(im.notGiven)} of discount asked was held back, every decision is sealed, and silent write-offs stay at ₹0.`, sub: "Your turn: the sample is fresh. Like what you see? Let's talk: rupakr2g@gmail.com" } : null;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }

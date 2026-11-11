@@ -656,6 +656,19 @@ export function impact(w) {
     intact: verifyChain(w).ok, blocks: w.chain.length,
   };
 }
+/* Demo only: last week's activity layered on the sample, so the MIS opens with real numbers.
+   One ask decided the same day and booked within its cap; five tasks closed, one of them late. */
+export function withHistory(w0) {
+  // Closed work from last week lives on its own tasks, so today's queue (and the 10-cap story) is untouched.
+  const w1 = clone(w0);
+  const mk = (n, rep, customer, stage, value, lateDays) => ({ id: `T-${n}`, rep, customer, stage, title: NEXT_STEP[stage] ?? 'Follow up', due: addDays(w1.today, -lateDays), target: addDays(w1.today, -lateDays), value, status: 'open', reschedules: [], hold: null, approvalId: null, log: [] });
+  w1.tasks.push(mk(901, 'Rahul', 'Royal Foods', 'Quote sent', 110000, 0), mk(902, 'Rahul', 'Kiran Agencies', 'Qualified', 90000, 0), mk(903, 'Neha', 'Green Leaf', 'New lead', 30000, 0), mk(904, 'Imran', 'Balaji Provisions', 'Qualified', 55000, 0), mk(905, 'Rahul', 'Ashok Bros', 'New lead', 35000, 2));
+  let w = askDiscount(w1, 'T-901', 'Rahul', 7, 'Rival offered 7% on the repeat order');
+  w = approve(w, w.approvals.at(-1).id, 'Kavita', 5, addDays(w.today, 7));
+  w = placeOrder(w, 'T-901', 'Rahul', 110000, 5).w;
+  for (const [id, who, out] of [['T-902', 'Rahul', 'Shared the price list; meeting fixed'], ['T-903', 'Neha', 'Intro call done; catalogue sent'], ['T-904', 'Imran', 'First visit done'], ['T-905', 'Rahul', 'Reached the owner after two days of follow-ups']]) w = complete(w, id, who, out).w;
+  return w;
+}
 /* Weekly MIS: only KPIs that prove a control works. Each row: value, target, pass/fail. */
 export function mis(w) {
   const t = w.approvals.filter(a => a.decidedOn);

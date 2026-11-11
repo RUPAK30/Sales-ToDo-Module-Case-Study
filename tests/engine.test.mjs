@@ -252,3 +252,11 @@ test('weekly MIS: every proof KPI passes on the sample and the CSV has one row p
   assert.ok(m.every(r => r.kpi && r.value && r.target && r.proves));
   assert.equal(E.misCsv(w).split('\n').length, 9);
 });
+
+test('demo history: MIS opens with real numbers and today\'s queue is unchanged', () => {
+  const base = E.escalate(E.sample('2026-11-11')), w = E.escalate(E.withHistory(E.sample('2026-11-11')));
+  const ids = x => x.tasks.filter(t => t.status === 'open').map(t => t.id).join();
+  assert.equal(ids(w), ids(base));
+  assert.ok(E.mis(w).filter(r => r.target !== 'Tracked').every(r => r.ok === true));
+  assert.equal(E.verifyAnchored(w).ok, true);
+});
