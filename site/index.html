@@ -28,6 +28,18 @@
 .score-grid small{display:block;font-size:.73rem;color:var(--muted);line-height:1.38;margin-top:3px}
 .score-grid small a{color:#9A3412;font-weight:600}
 </style>
+<style>
+.x-prom{font-size:clamp(1.05rem,2.4vw,1.3rem);line-height:1.35;margin:12px 0 0;max-width:680px}
+.x-cta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.x-cta a{text-decoration:none;font-weight:650;border-radius:10px;padding:10px 14px;font-size:.92rem}
+.x-pri{background:#C2410C;color:#fff}.x-sec{background:#fff;border:1px solid #ECE7E1;color:#1C1917}
+.x-more{margin:12px 0 0}.x-more>summary{cursor:pointer;font-weight:600;color:#9A3412;font-size:.88rem}.x-more[open]>summary{margin-bottom:10px}
+.x-ba{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:18px 0 0}.x-ba>div{display:grid;gap:2px;background:#fff;border:1px solid #ECE7E1;border-radius:12px;padding:10px 12px}
+.x-ba span{font-size:.74rem;color:#6B6460;font-weight:600}.x-ba s{font-size:.8rem;color:#A8A29E}.x-ba b{font-size:1.45rem;letter-spacing:-.02em;color:#1C1917}.x-ba em{font-style:normal;justify-self:start;font-size:.66rem;font-weight:700;background:#ECFDF5;color:#065F46;border-radius:6px;padding:2px 6px}
+.x-seal{margin:10px 0 0;font-size:.86rem;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:8px 12px}
+.x-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 0}.x-stats a{text-decoration:none;color:#1C1917;font-size:.8rem;background:#fff;border:1px solid #ECE7E1;border-radius:12px;padding:8px 12px;line-height:1.35}.x-stats b{color:#9A3412;font-size:1.05rem;margin-right:4px}.x-stats i{display:block;font-style:normal;font-size:.68rem;color:#6B6460;text-decoration:underline}
+@media(max-width:640px){.x-ba{grid-template-columns:1fr 1fr}.x-stats{grid-template-columns:1fr}.mini-ph{display:none!important}
+ .tt-head nav.l{order:-1} .tt-head .in{grid-template-columns:auto 1fr auto!important;flex-wrap:nowrap!important}.tt-head nav.l{grid-column:1!important;grid-row:1!important}.tt-head .logo{grid-column:2!important;grid-row:1!important;justify-self:center}.tt-head nav.r{grid-column:3!important;grid-row:1!important}}
+</style>
 </head>
 <body>
 <header class="appbar tt-head">
@@ -56,10 +68,11 @@
 <header class="wrap hero">
   <div class="hero-grid">
     <div>
-      <p class="eyebrow">Product &amp; BA Case Study · B2B Sales Execution &amp; Discount Governance · Rupak Ghanpathi, ex-HDFC Bank</p>
+      <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
       <h1>100 open leads. 10 actions today.</h1>
-      <p style="margin:10px 0 0;font-size:.9rem;color:#6B6460">Designed &amp; built by <b style="color:#1C1917">Rupak Ghanpathi</b>, ex-HDFC Bank BA · 28 tests on the rules · <a href="app.html" style="color:#9A3412;font-weight:600">Try the live product →</a> · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today" style="color:#9A3412;font-weight:600">Let's talk</a></p>
-      <p class="lede">A sales execution and discount-approval desk that tells a field rep what to act on now, freezes the task when a discount is asked, and seals every approval in a SHA-256 hash chain shared with Finance (<a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>).</p>
+      <p class="x-prom"><b>Every discount decided in 1 working day. No order above what was approved. No decision rewritten later.</b></p>
+      <p class="x-cta"><a class="x-pri" href="app.html">Try the live product →</a><a class="x-sec" href="app.html?tour=1">▶ 60-sec tour</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
+      <details class="x-more"><summary>In plain words, and who's who</summary>
       <div style="background:#fff;border:1px solid #FED7AA;border-left:4px solid #C2410C;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.92rem;color:#1C1917">
         <b>In plain words (for non-sales readers):</b> In Indian B2B sales, a salesperson has 100+ shops to call, promises a shop an extra discount on a phone call to win an order, and weeks later the shop pays less than the bill. <b>Ten Today</b> solves both problems: it picks the rep's <b>top 10 actions for today</b>, and makes sure <b>every discount is approved by the right manager and locked with a digital seal</b> before Finance ever sees the bill.
       </div>
@@ -70,6 +83,7 @@
         <span class="m"><b>Kavita · Sales Manager</b> (approves/counters discounts up to 10% · needs Arjun to co-sign schemes)</span>
         <span class="m"><b>Arjun · Sales Head</b> (decides &gt;10% discounts, credit-hold overrides &amp; asks Kavita leaves &gt;1 day)</span>
       </div>
+      </details>
     </div>
     <a class="mini-ph" href="app.html" aria-label="Open the live product">
       <p class="ph-hi" style="margin:0 0 8px">Today desk · capped at 10</p>
@@ -79,10 +93,19 @@
         <li class="tk"><div class="tk-h"><b>Qualify · Sai Enterprises</b><span class="pp pp-p1">P1</span></div><p>₹40k · 7d past target · ranks above ₹5.2L P2 deal</p></li>
         <li class="tk"><div class="tk-h"><b>Ask 8% · Delta Pharma</b><span class="pp pp-p2">Frozen</span></div><p>₹3.0L · waiting on Kavita · sealed in SHA-256 chain</p></li>
       </ul>
-      <div class="foot2"><span class="pp pp-ok">27 / 27 engine tests · <a href="cockpit.html?uat=1" style="color:inherit;text-decoration:underline">18 UAT</a></span><span>Open live desk →</span></div>
+      <div class="foot2"><span class="pp pp-ok">28 / 28 engine tests · 18 UAT</span><span>Open live desk →</span></div>
     </a>
   </div>
 
+  <div class="x-ba" aria-label="Before and after">
+    <div><span>Rep's list</span><s>100+ rows</s><b>10 actions</b><em>Enforced</em></div>
+    <div><span>Discount decision</span><s>days, ad hoc</s><b>≤ 1 day</b><em>Enforced</em></div>
+    <div><span>Orders above approval</span><s>verbal promises</s><b>0</b><em>Enforced</em></div>
+    <div><span>"Who approved this?"</span><s>weeks of email</s><b>1 click</b><em>Enforced</em></div>
+  </div>
+  <p class="x-seal">🔒 <b>Every approval is sealed (SHA-256) and anchored daily.</b> If anyone later changes a 6% approval to 10%, one click shows which entry was edited.</p>
+  <div class="x-stats"><a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener"><b>45%</b> of firms lost a deal to slow approvals <i>Conga</i></a><a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener"><b>&lt;⅓</b> of a seller's week is spent selling <i>Salesforce</i></a><a href="https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities" target="_blank" rel="noopener"><b>FY24</b> auditors must certify the audit trail wasn't tampered with <i>ICAI</i></a></div>
+  <details class="x-more"><summary>Benchmarks in detail</summary>
   <div class="score-grid" aria-label="Measured business outcomes backed by public data">
     <div>
       <b>100+ → 10 / day</b>
@@ -105,6 +128,7 @@
       <small>Todoist found users reschedule up to 70 overdue tasks day after day (<a href="https://www.macstories.net/news/todoist-launches-smart-schedule-an-ai-based-feature-to-reschedule-overdue-tasks/" target="_blank" rel="noopener">MacStories</a>). Ten Today measures on-time against the <i>original</i> target and blocks reps with &gt;15d open <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> claims.</small>
     </div>
   </div>
+  </details>
 </header>
 
 <section class="wrap" id="proof" style="padding-top:28px">
