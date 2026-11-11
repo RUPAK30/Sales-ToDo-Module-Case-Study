@@ -1,0 +1,37 @@
+/* Shared app-style sections: bottom bar on phones, top tabs on desktop. Motion uses only transform and opacity, so it runs on the compositor at the screen's full refresh rate (60, 90 or 120 Hz). */
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+a,button,summary{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body[data-tab] [data-sec]:not(.on){display:none!important}
+.sx-bar ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);width:100%}
+.sx-bar a{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;padding:6px 4px;color:#57534E;text-decoration:none;font:500 .72rem/1.1 Inter,system-ui,sans-serif;transition:color .2s}
+.sx-bar svg{width:22px;height:22px;padding:4px 16px;box-sizing:content-box;border-radius:999px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:background-color .25s cubic-bezier(.2,.8,.2,1),transform .25s cubic-bezier(.2,.8,.2,1)}
+.sx-bar a[aria-current="page"]{color:#C2410C;font-weight:700}
+.sx-bar a[aria-current="page"] svg{background:#FFF1E6;stroke-width:2.5;transform:translateY(-1px)}
+.sx-bar a:active svg{transform:scale(.9)}
+.sx-bar a:focus-visible{outline:3px solid #C2410C;outline-offset:-3px;border-radius:12px}
+@media (max-width:760px){
+  .sx-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);border-top:1px solid rgba(0,0,0,.06);padding-bottom:env(safe-area-inset-bottom)}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+}
+@media (min-width:761px){
+  .sx-bar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.9);-webkit-backdrop-filter:saturate(180%) blur(12px);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid #ECE7E1}
+  .sx-bar ul{max-width:640px;margin:0 auto}
+  .sx-bar a{flex-direction:row;gap:8px;min-height:50px;font-size:.88rem}
+  .sx-bar svg{width:18px;height:18px;padding:3px 8px}
+}
+/* section change: a short fade-and-rise, like iOS */
+@keyframes sx-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+body[data-tab] [data-sec].on{animation:sx-in .26s cubic-bezier(.2,.8,.2,1) both}
+/* press feedback on every tappable thing */
+a.cta,.x-cta a,button{transition:transform .12s ease}
+a.cta:active,.x-cta a:active,button:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media (max-width:760px){
+  #mb-tbl thead{display:none}
+  #mb-tbl,#mb-tbl tbody,#mb-tbl tr,#mb-tbl td{display:block;width:auto}
+  #mb-tbl tr{border:1px solid #ECE7E1!important;border-radius:14px;padding:12px;margin:0 0 10px;background:#fff}
+  #mb-tbl td{padding:3px 0!important;text-align:left!important}
+  #mb-tbl td:nth-child(3)::before{content:'Outcome: ';font-weight:700;color:#1C1917}
+}
+@media (max-width:760px){#proof .tbl{overflow:visible}#mb-tbl{min-width:0!important;table-layout:auto}#mb-tbl td{white-space:normal!important;word-break:normal;overflow-wrap:anywhere}}
+.wwh-c li b{display:inline;margin:0}

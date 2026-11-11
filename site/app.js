@@ -404,7 +404,8 @@ function setTab(t, { push = true, keepScroll = true } = {}) {
   if (t === tab) { if (push) window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   scrollMem[tab] = window.scrollY; tab = t;
   if (push) { try { history.pushState(null, '', '#' + t); } catch { } }
-  render(); window.scrollTo(0, keepScroll ? (scrollMem[t] ?? 0) : 0);
+  render(); window.scrollTo({ top: keepScroll ? (scrollMem[t] ?? 0) : 0, behavior: 'instant' });
+  const m = document.querySelector('main'); m.classList.remove('sx-anim'); void m.offsetWidth; m.classList.add('sx-anim');
 }
 function badgeCount() {
   if (isRep(actor)) return w.approvals.filter(a => a.rep === actor && a.status === 'countered').length;

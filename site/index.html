@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ten Today — 100 open leads. 10 actions today.</title>
 <meta name="description" content="Product and business analysis case study by Rupak Ghanpathi: a B2B sales execution & discount governance module that turns 100+ open leads into 10 rule-ranked actions and a SHA-256 sealed approval record.">
 <meta property="og:title" content="Ten Today — 100 open leads. 10 actions today.">
@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="tabs.css?v=1794414200">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -65,7 +66,7 @@
 </aside>
 <script>(function(){var d=document.getElementById('ix-drawer');document.getElementById('ix-menu').onclick=function(){d.hidden=false};document.getElementById('ix-x').onclick=function(){d.hidden=true};d.addEventListener('click',function(e){if(e.target.tagName==='A')d.hidden=true});})();</script>
 
-<header class="wrap hero">
+<header class="wrap hero" data-sec="overview">
   <div class="hero-grid">
     <div>
       <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
@@ -131,7 +132,7 @@
   </details>
 </header>
 
-<section class="wrap" id="proof" style="padding-top:28px">
+<section class="wrap" id="proof" data-sec="try" style="padding-top:28px">
   <h2>Make-or-Break Controls · Test Rahul (Field Rep) &amp; Kavita (Sales Manager)</h2>
   <p style="max-width:740px;color:var(--muted);margin-bottom:14px">Instead of a static "18/18 UAT passed" table, pick a seat below and <b>try to break a control</b>—or verify all 6 controls against the rule engine right here.</p>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
@@ -162,7 +163,7 @@
   </div>
 </section>
 
-<section class="wrap" style="padding-top:12px">
+<section class="wrap" data-sec="spec" style="padding-top:12px">
   <h2>Core BA Specification · Ranking, Lifecycle, RACI &amp; Traceability</h2>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px">
     <div style="display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #ECE7E1;padding-bottom:10px;margin-bottom:14px" id="sp-tabs">
@@ -234,7 +235,7 @@
   </div>
 </section>
 
-<section class="wrap" id="sources" style="padding-top:12px">
+<section class="wrap" id="sources" data-sec="sources" style="padding-top:12px">
   <h2>Public Data Sources, Benchmarks &amp; Guardrails</h2>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px;overflow-x:auto">
     <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.83rem">
@@ -272,7 +273,7 @@
   </div>
 </section>
 
-<section class="wrap" style="padding-top:12px">
+<section class="wrap" data-sec="overview try spec sources" style="padding-top:12px">
   <div style="border:1px solid #ECE7E1;border-radius:16px;padding:18px 20px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
     <div style="max-width:620px">
       <p style="margin:0 0 4px;font-weight:700;font-size:1.02rem">Hiring for product in sales-tech or finance ops?</p>
@@ -285,7 +286,7 @@
   </div>
 </section>
 
-<p style="max-width:1080px;margin:0 auto;padding:18px 16px 36px;font-size:.8rem;color:#6B7280">Systems of record (the ERP, the CRM, the calendar) record what happened. They don't help at the moment a person has to decide something messy. Three layers for those moments, without replacing the system underneath: <a href="https://lull-hr.vercel.app/">Sukoon</a> ends the meeting · <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> owns the short-paid difference · <a href="https://tentoday.vercel.app/app.html">Ten Today</a> unblocks the approval. By Rupak Ghanpathi.</p>
+<p data-sec="overview" style="max-width:1080px;margin:0 auto;padding:18px 16px 36px;font-size:.8rem;color:#6B7280">Systems of record (the ERP, the CRM, the calendar) record what happened. They don't help at the moment a person has to decide something messy. Three layers for those moments, without replacing the system underneath: <a href="https://lull-hr.vercel.app/">Sukoon</a> ends the meeting · <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> owns the short-paid difference · <a href="https://tentoday.vercel.app/app.html">Ten Today</a> unblocks the approval. By Rupak Ghanpathi.</p>
 
 <script>
 var MB = {
@@ -367,7 +368,7 @@ document.getElementById('mb-runall').addEventListener('click', function() {
   renderMB();
   var out = document.getElementById('mb-out');
   out.style.display = 'block';
-  out.innerHTML = "<span style='color:#86EFAC;font-weight:700'>✓ ALL 6 MAKE-OR-BREAK CONTROLS HELD (27/27 ENGINE TESTS · 18/18 UAT):</span> Rep freeze bypass, silent reschedule &amp; Every Rupee R7 open-claim ask blocked; Manager authority cap, solo scheme/cross-bucket move &amp; raw DB tampering caught by SHA-256 chain.";
+  out.innerHTML = "<span style='color:#86EFAC;font-weight:700'>✓ ALL 6 MAKE-OR-BREAK CONTROLS HELD (30/30 ENGINE TESTS · 18/18 UAT):</span> Rep freeze bypass, silent reschedule &amp; Every Rupee R7 open-claim ask blocked; Manager authority cap, solo scheme/cross-bucket move &amp; raw DB tampering caught by SHA-256 chain.";
 });
 renderMB();
 
@@ -385,5 +386,6 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
   });
 });
 </script>
+<script src="tabs.js?v=1794414119"></script>
 </body>
 </html>
