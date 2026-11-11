@@ -35,3 +35,11 @@ a.cta:active,.x-cta a:active,button:active{transform:scale(.97)}
 }
 @media (max-width:760px){#proof .tbl{overflow:visible}#mb-tbl{min-width:0!important;table-layout:auto}#mb-tbl td{white-space:normal!important;word-break:normal;overflow-wrap:anywhere}}
 .wwh-c li b{display:inline;margin:0}
+@media (max-width:760px){
+  .tt-head .in{display:flex!important;align-items:center;gap:10px}
+  .tt-head .in>.l{order:0}.tt-head .in>.logo{order:1;margin-right:auto}.tt-head .in>.r{order:2}
+  .x-cta{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .x-cta>:first-child{grid-column:1/-1;justify-content:center;text-align:center}
+  .x-cta>*{text-align:center;justify-content:center}
+}
+@media (max-width:760px){.tt-head .in>.l{flex:0 0 auto!important;width:auto!important}.tt-head .in>.logo{margin-right:auto!important}}

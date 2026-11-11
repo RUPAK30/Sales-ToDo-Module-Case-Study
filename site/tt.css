@@ -312,3 +312,21 @@ main.sx-anim>*:not([hidden]){animation:sx-in .26s cubic-bezier(.2,.8,.2,1) both}
 .btn:active,.who:active,.task:active{transform:scale(.98)}
 @media (max-width:760px){.bn{background:rgba(255,255,255,.86);-webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);border-top:1px solid rgba(0,0,0,.06);box-shadow:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* hero: one number, one line, one action */
+.ti{padding:16px 18px}
+.hx{display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center}
+.hx-n{grid-row:span 2;font-size:3.2rem;line-height:1;font-weight:700;letter-spacing:-.03em;color:#1C1917;font-variant-numeric:tabular-nums}
+.hx-c{margin:0;font-size:.98rem;line-height:1.4;color:#292524;font-weight:500}
+.hx-a{margin-top:10px}
+.hx-a .btn{min-height:44px;display:inline-flex;align-items:center}
+.hx-w{margin:12px 0 0;padding-top:10px;border-top:1px dashed #E7E5E4;font-size:.82rem;line-height:1.45;color:#57534E}
+.hx-w small{color:#78716C}
+@media (max-width:760px){
+  .hx{grid-template-columns:1fr}
+  .hx-n{grid-row:auto;font-size:3rem}
+  .hx-c{margin-top:4px}
+  .hx-a .btn{width:100%;justify-content:center}
+  .hx-w{font-size:.78rem}
+}
+.hx-a a.btn{text-decoration:none}
+@media (max-width:760px){body[data-tab="today"] #desk [data-in="today"]>h2+p.sub{display:none}}

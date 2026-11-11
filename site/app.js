@@ -253,7 +253,7 @@ function askCard(a) {
   </div>`;
 }
 function misTable() {
-  return `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl" type="button">⬇ Download MIS (CSV)</button></div>
+  return `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl2" type="button">⬇ CSV</button></div>
     <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
     <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
 }
@@ -439,24 +439,39 @@ const UH = {
   },
 };
 function intro() {
-  const m = E.mis(w), passing = m.filter(x => x.ok === true && x.target !== 'Tracked').length, judged = m.filter(x => x.ok !== null && x.target !== 'Tracked').length;
-  const q = isRep(actor) ? E.today(w, actor) : null, open = isRep(actor) ? w.tasks.filter(t => t.rep === actor && t.status === 'open').length : 0;
-  const over = E.workload(w).filter(r => r.overCap).length, pend = E.decisionsFor(w, actor).length, ch = E.verifyChain(w);
-  const T = {
-    today: ['22% of workers say unclear priorities make them miss deadlines.', 'Asana, 10,624 workers', isRep(actor) ? `${E.label(actor)}: ${open} open tasks → ${q.list.length} to do today, ranked by rules he can read.` : `${over} rep${over === 1 ? '' : 's'} over the cap of ${E.CAP}. Tasks move only within the same bucket.`, 'Ten, not everything: a list you can finish beats a list you ignore.'],
-    approvals: ['45% of companies lost a deal to a slow quote approval in six months.', 'Conga', isRep(actor) ? `Your asks: the clock is on the approver, not you. ${m[0].value} decided within 1 working day.` : `${pend} waiting for you · ${m[0].value} decided within 1 working day.`, "Silence escalates: if the manager doesn't decide in 1 working day, it moves up on its own."],
-    mis: ['At HDFC Bank my weekly MIS took 8 hours to prepare. I cut it to 3.', 'my own work', `${passing} of ${judged} controls passing this week · zero prep, computed live.`, 'Only KPIs that prove a control works, each with a target and pass or fail.'],
-    record: ['Indian companies must keep an audit trail that cannot be switched off (since FY 2023-24).', 'MCA Rule 3(1)', `${w.chain.length} sealed entries · ${ch.ok ? '✓ intact' : '✗ altered'}.`, 'Tamper-evident, not blockchain: enough for one company, checkable by anyone.'],
+  const m = E.mis(w), judged = m.filter(x => x.ok !== null && x.target !== 'Tracked'), passing = judged.filter(x => x.ok === true).length;
+  const rep = isRep(actor), q = rep ? E.today(w, actor) : null, open = rep ? w.tasks.filter(t => t.rep === actor && t.status === 'open').length : 0;
+  const pend = E.decisionsFor(w, actor), mine = w.approvals.filter(a => a.rep === actor && ['pending', 'countered'].includes(a.status));
+  const over = E.workload(w).filter(r => r.overCap).length, ch = E.verifyChain(w), pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const top = rep && q.list[0];
+  // One number, one line, one action per tab. The why sits below in small type.
+  const H = {
+    today: rep
+      ? { n: `${q.list.length}`, cap: `to do today, out of ${pl(open, 'open task', 'open tasks')}. Ranked by rules anyone can read.`, cta: top ? `<button class="btn pri" data-open="${top.id}" type="button">Start with #1: ${esc(top.customer)}</button>` : '' }
+      : { n: `${over}`, cap: `${over === 1 ? 'rep is' : 'reps are'} over the cap of ${E.CAP} today. Move work only within the same bucket.`, cta: `<a class="btn pri" href="#team" data-jump="team">Balance the team</a>` },
+    approvals: rep
+      ? { n: `${mine.length}`, cap: `${mine.length === 1 ? 'ask is' : 'asks are'} with an approver. The clock is on them, not you.`, cta: `<a class="btn" href="#today" data-tab="today">Back to today's list</a>` }
+      : { n: `${pend.length}`, cap: `${pend.length === 1 ? 'ask is' : 'asks are'} waiting for you. Undecided after 1 working day, it moves up on its own.`, cta: pend.length ? `<a class="btn pri" href="#asks" data-jump="asks">Decide the oldest</a>` : '' },
+    mis: { n: `${passing}/${judged.length}`, cap: 'controls passing this week. Computed live, zero prep.', cta: `<button class="btn pri" id="mis-dl" type="button">⬇ Download MIS</button>` },
+    record: { n: ch.ok ? `✓ ${w.chain.length}` : '✗', cap: ch.ok ? 'sealed entries, untouched. Any rewrite gets caught.' : 'The record was altered. The check shows which entry.', cta: `<a class="btn pri" href="#seal" data-jump="seal">Check what was approved</a>` },
+  }[tab];
+  const WHY = {
+    today: ['22% of workers say unclear priorities make them miss deadlines', 'Asana, 10,624 workers', 'Ten, not everything: a list you can finish beats a list you ignore.'],
+    approvals: ['45% of companies lost a deal to a slow quote approval in six months', 'Conga', "Silence escalates, so nobody has to chase."],
+    mis: ['At HDFC Bank my weekly MIS took 8 hours to prepare; I cut it to 3', 'my own work', 'Only KPIs that prove a control works, each with a target and pass or fail.'],
+    record: ['Indian companies must keep an audit trail that cannot be switched off', 'MCA Rule 3(1), since FY 2023-24', 'Tamper-evident, not blockchain: enough for one company, checkable by anyone.'],
   }[tab];
   const u = UH[tab];
   const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  $('#tabintro').innerHTML = `<dl class="ti-l"><div><dt>Problem</dt><dd>${esc(T[0])} <small>(${esc(T[1])})</small></dd></div><div><dt>Live proof</dt><dd><b>${esc(T[2])}</b></dd></div><div><dt>Decision</dt><dd>${esc(T[3])}</dd></div></dl>
+  $('#tabintro').innerHTML = `<div class="hx"><b class="hx-n">${H.n}</b><p class="hx-c">${H.cap}</p>${H.cta ? `<div class="hx-a">${H.cta}</div>` : ''}</div>
+  <p class="hx-w"><b>Why it matters:</b> ${esc(WHY[0])} <small>(${esc(WHY[1])})</small>. <b>My call:</b> ${esc(WHY[2])}</p>
   <details class="uh"><summary>Under the hood <span>for product, finance ops and BA reviewers</span></summary><div class="uh-g">${sec('Product manager', u.pm)}${sec('Finance ops', u.fin)}${sec('Senior BA', u.ba)}</div></details>
   <p class="ti-b">Built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>`;
 }
 
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
+  const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; return; }
   const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }
   const hl = e.target.closest('a[href^="#"]'); if (hl && ALIAS[hl.getAttribute('href').slice(1)]) { e.preventDefault(); const id = hl.getAttribute('href').slice(1); setTab(ALIAS[id], { keepScroll: false }); document.getElementById(id)?.scrollIntoView({ block: 'start' }); return; }
   const b = e.target.closest('button,[data-open]'); if (!b) return;
@@ -541,7 +556,7 @@ document.addEventListener('click', e => {
     return renderSeal();
   }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
-  if (b.id === 'mis-dl') { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([E.misCsv(w)], { type: 'text/csv' })), download: `tentoday-mis-${w.today}.csv` }); a.click(); return; }
+  if (b.id === 'mis-dl' || b.id === 'mis-dl2') { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([E.misCsv(w)], { type: 'text/csv' })), download: `tentoday-mis-${w.today}.csv` }); a.click(); return; }
     if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000\n,City Pharma,New lead,${w.today},40000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.id === 's-go') { try { w = E.proposeScheme(w, actor, $('#s-name').value, Number($('#s-min').value), Number($('#s-pct').value)); save(); const sc = w.schemes.at(-1); toast('Scheme proposed.'); result = { text: `${sc.id} proposed: ${sc.name}.`, sub: 'It is not usable until a second person approves it.', switchTo: actor === 'Kavita' ? 'Arjun' : 'Kavita' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#s-err').innerHTML = `<div class="err" role="alert" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
