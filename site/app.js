@@ -221,10 +221,10 @@ function repDesk() {
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
     </div>
     <div class="side">
-      <div class="card" data-in="approvals"><h2>Your discount asks</h2>${mini(ib.frozen, frozenLine, 'No discount asks open.')}</div>
-      <div class="card" data-in="today"><h2>On hold</h2>${mini(ib.hold, t => `back ${fmt(t.hold.revisit)} · ${esc(t.hold.reason)}`, 'Nothing on hold.')}</div>
-      <div class="card" data-in="today"><h2>Coming up</h2>${mini(ib.later, t => `${fmt(t.target)} · ${esc(t.title)}`, 'Nothing scheduled.')}</div>
-      <div class="card" data-in="today"><h2>Done</h2>${mini(ib.done, t => `${esc(t.outcome)} ${t.doneAt <= t.due ? '<span class="chip st-ok">on time</span>' : '<span class="chip st-bad">late</span>'}`, 'Nothing done yet today.')}</div>
+      <div class="card" id="c-myasks" data-in="approvals"><h2>Your discount asks</h2>${mini(ib.frozen, frozenLine, 'No discount asks open.')}</div>
+      <div class="card" id="c-hold" data-in="today"><h2>On hold</h2>${mini(ib.hold, t => `back ${fmt(t.hold.revisit)} · ${esc(t.hold.reason)}`, 'Nothing on hold.')}</div>
+      <div class="card" id="c-later" data-in="today"><h2>Coming up</h2>${mini(ib.later, t => `${fmt(t.target)} · ${esc(t.title)}`, 'Nothing scheduled.')}</div>
+      <div class="card" id="c-done" data-in="today"><h2>Done</h2>${mini(ib.done, t => `${esc(t.outcome)} ${t.doneAt <= t.due ? '<span class="chip st-ok">on time</span>' : '<span class="chip st-bad">late</span>'}`, 'Nothing done yet today.')}</div>
       <div class="card" data-in="mis"><h2>Team metric</h2><div class="metric"><div><b>${m.pct === null ? '–' : m.pct + '%'}</b><span>done by the original target (${m.onTime}/${m.done})</span></div><div><b>${m.movedThrice}</b><span>tasks moved 3+ times (guardrail)</span></div></div></div>
     </div></div>`;
 }
@@ -253,7 +253,7 @@ function askCard(a) {
   </div>`;
 }
 function misTable() {
-  return `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl2" type="button">⬇ CSV</button></div>
+  return `<section class="mis" id="c-mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl2" type="button">⬇ CSV</button></div>
     <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
     <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
 }
@@ -279,7 +279,7 @@ function managerDesk() {
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
         ${others.length ? `<p class="more">${others.length} other ask(s) waiting for ${others.map(a => esc(E.label(a.approver))).join(', ')}.</p>` : ''}
       </div>
-      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a> · <button type="button" class="btn link" data-chk="${a.id}">Check what was really approved</button>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
+      <div class="card" id="c-decided"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a> · <button type="button" class="btn link" data-chk="${a.id}">Check what was really approved</button>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
     </div>
     <div class="side" data-in="today">
       <div class="card" id="team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
@@ -461,9 +461,24 @@ function intro() {
     mis: ['At HDFC Bank my weekly MIS took 8 hours to prepare; I cut it to 3', 'my own work', 'Only KPIs that prove a control works, each with a target and pass or fail.'],
     record: ['Indian companies must keep an audit trail that cannot be switched off', 'MCA Rule 3(1), since FY 2023-24', 'Tamper-evident, not blockchain: enough for one company, checkable by anyone.'],
   }[tab];
+  const mgrTools = new Set(TOOLS.map(t => t[0]).filter(id => id !== 'leave' || !E.person(actor).senior));
+  const TL = {
+    today: rep
+      ? [['c-hold', 'On hold', 'Comes back on its revisit date'], ['c-later', 'Coming up', 'Future tasks wait, they never clutter today'], ['c-done', 'Done', 'On time is judged by the original date']]
+      : [['tool:movebox', 'Move work', 'Same bucket only, else a second manager signs'], ['tool:leave', 'Leave cover', 'A stand-in decides, with the same limits'], ['tool:eff', 'Discount wins', 'Do discounts actually win deals?'], ['tool:schemes', 'Schemes', 'Two people to switch one on']].filter(t => mgrTools.has(t[0].slice(5))),
+    approvals: rep
+      ? [['c-myasks', 'Task freezes', 'Nothing moves until the approver decides'], ['c-myasks', 'Counter-offers', 'Accept or decline in one tap'], ['c-myasks', 'Excess comes back', 'Every Rupee returns anything above the approval']]
+      : [['asks', 'Limits by role', 'Up to 10% here, more goes to the head'], ['asks', 'Credit hold', 'Over-limit dealers need a written override'], ['asks', 'Counter-offer', 'Offer less than asked; the rep decides'], ['c-decided', 'Decided', 'Every decision is sealed']],
+    mis: [['c-mis', 'Control KPIs', 'Each with a target and pass or fail'], ['c-mis', 'No fake passes', 'Nothing to measure says No data yet'], ['dl', 'CSV for Monday', 'One tap, ready for the review']],
+    record: [['seal', 'Audit drill', 'Edit history directly, watch it get caught'], ['seal', 'Daily anchor', 'Even a full admin rewrite fails'], ['q2c-wrap', 'Every Rupee link', 'Short-pays are checked against the seal']],
+  }[tab];
+  const tile = ([to, t, d]) => to === 'dl' ? `<button type="button" class="tl" id="mis-dl3"><b>${t}</b><span>${d}</span></button>`
+    : to.startsWith('tool:') ? `<button type="button" class="tl" data-tool="${to.slice(5)}" data-gotools="1"><b>${t}</b><span>${d}</span></button>`
+    : `<a class="tl" href="#${to}" data-jump="${to}"><b>${t}</b><span>${d}</span></a>`;
+  const tiles = TL.length ? `<div class="tls" role="list">${TL.map(tile).join('')}</div>` : '';
   const u = UH[tab];
   const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  $('#tabintro').innerHTML = `<div class="hx"><b class="hx-n">${H.n}</b><p class="hx-c">${H.cap}</p>${H.cta ? `<div class="hx-a">${H.cta}</div>` : ''}</div>
+  $('#tabintro').innerHTML = `<div class="hx"><b class="hx-n">${H.n}</b><p class="hx-c">${H.cap}</p>${H.cta ? `<div class="hx-a">${H.cta}</div>` : ''}</div>${tiles}
   <p class="hx-w"><b>Why it matters:</b> ${esc(WHY[0])} <small>(${esc(WHY[1])})</small>. <b>My call:</b> ${esc(WHY[2])}</p>
   <details class="uh"><summary>Under the hood <span>for product, finance ops and BA reviewers</span></summary><div class="uh-g">${sec('Product manager', u.pm)}${sec('Finance ops', u.fin)}${sec('Senior BA', u.ba)}</div></details>
   <p class="ti-b">Built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>`;
@@ -471,7 +486,7 @@ function intro() {
 
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
-  const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; return; }
+  const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
   const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }
   const hl = e.target.closest('a[href^="#"]'); if (hl && ALIAS[hl.getAttribute('href').slice(1)]) { e.preventDefault(); const id = hl.getAttribute('href').slice(1); setTab(ALIAS[id], { keepScroll: false }); document.getElementById(id)?.scrollIntoView({ block: 'start' }); return; }
   const b = e.target.closest('button,[data-open]'); if (!b) return;
@@ -556,7 +571,7 @@ document.addEventListener('click', e => {
     return renderSeal();
   }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
-  if (b.id === 'mis-dl' || b.id === 'mis-dl2') { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([E.misCsv(w)], { type: 'text/csv' })), download: `tentoday-mis-${w.today}.csv` }); a.click(); return; }
+  if (b.id === 'mis-dl' || b.id === 'mis-dl2' || b.id === 'mis-dl3') { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([E.misCsv(w)], { type: 'text/csv' })), download: `tentoday-mis-${w.today}.csv` }); a.click(); return; }
     if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000\n,City Pharma,New lead,${w.today},40000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.id === 's-go') { try { w = E.proposeScheme(w, actor, $('#s-name').value, Number($('#s-min').value), Number($('#s-pct').value)); save(); const sc = w.schemes.at(-1); toast('Scheme proposed.'); result = { text: `${sc.id} proposed: ${sc.name}.`, sub: 'It is not usable until a second person approves it.', switchTo: actor === 'Kavita' ? 'Arjun' : 'Kavita' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#s-err').innerHTML = `<div class="err" role="alert" style="margin-top:6px">${esc(err.message)}</div>`; } return; }

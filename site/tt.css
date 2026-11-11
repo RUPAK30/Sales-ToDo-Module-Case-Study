@@ -330,3 +330,26 @@ main.sx-anim>*:not([hidden]){animation:sx-in .26s cubic-bezier(.2,.8,.2,1) both}
 }
 .hx-a a.btn{text-decoration:none}
 @media (max-width:760px){body[data-tab="today"] #desk [data-in="today"]>h2+p.sub{display:none}}
+/* capability tiles: the feature name and its rule, one tap to the real thing */
+.tls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:14px}
+.tl{display:flex;flex-direction:column;gap:3px;text-align:left;padding:11px 12px;border:1px solid #E7E5E4;border-radius:12px;background:#FAFAF9;color:inherit;text-decoration:none;font:inherit;cursor:pointer;transition:transform .12s ease,border-color .2s,background-color .2s}
+.tl b{font-size:.9rem;color:#1C1917}
+.tl b::after{content:' →';color:var(--tt);font-weight:600}
+.tl span{font-size:.78rem;line-height:1.35;color:#57534E}
+.tl:hover{border-color:var(--tt);background:#fff}
+.tl:active{transform:scale(.98)}
+.tl:focus-visible{outline:3px solid var(--tt);outline-offset:2px}
+@media (max-width:760px){.tls{grid-template-columns:1fr 1fr}.tl{padding:10px}}
+/* desktop: number and action on the left, why on the right */
+@media (min-width:761px){
+  .ti{padding:20px 24px}
+  .hx{grid-template-columns:auto 1fr auto;column-gap:20px}
+  .hx-n{grid-row:auto;font-size:3.6rem}
+  .hx-c{font-size:1.05rem;max-width:46ch}
+  .hx-a{margin:0}
+}
+/* desktop: the pitch stays on Today only; the builder line lives in each tab's card */
+.builder{display:none!important}
+body:not([data-tab="today"]) .head{display:none}
+body[data-tab="today"] .ti-b{display:block}
+@media (min-width:761px){.head{padding-top:6px}.head h1{font-size:1.5rem;margin:2px 0}.head .lede.big{font-size:1.15rem}.actor{padding:10px 12px}}
