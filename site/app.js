@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794378672';
+import * as E from './engine.js?v=1794392976';
 
 const KEY = 'tentoday-product-v4';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -267,7 +267,10 @@ function managerDesk() {
     <div class="${im.creditHolds ? 'warn' : ''}"><span>Credit holds caught</span><b>${im.creditHolds}</b><small>dealer over limit or past credit days</small></div>
     <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
   </div></section>`;
-  return `${snap}<div class="grid">
+  const misT = `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl" type="button">⬇ Download MIS (CSV)</button></div>
+    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>No data yet?</b> Decide an ask above or book an order and watch it update.</p></section>`;
+  return `${snap}${misT}<div class="grid">
     <div class="side">
       <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
@@ -470,7 +473,8 @@ document.addEventListener('click', e => {
     return renderSeal();
   }
   if (b.dataset.leave) { try { if (b.dataset.leave === 'end') { w = E.endDelegation(w, actor); result = { text: 'Hand-over ended. New asks come to you again.' }; } else { const r = E.delegate(w, actor, $('#l-to').value, $('#l-from').value, $('#l-end').value); w = r.w; result = { text: `Approvals handed to ${E.label($('#l-to').value)}.`, sub: r.moved ? `${r.moved} waiting ask moved to them now. Each decision is logged as acting for ${actor}.` : `New asks go to them during those dates, logged as acting for ${actor}.`, switchTo: $('#l-to').value }; } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#l-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
-  if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000\n,City Pharma,New lead,${w.today},40000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
+  if (b.id === 'mis-dl') { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([E.misCsv(w)], { type: 'text/csv' })), download: `tentoday-mis-${w.today}.csv` }); a.click(); return; }
+    if (b.dataset.exp || b.dataset.tpl) { const txt = b.dataset.exp ? E.exportCsv(w, b.dataset.exp) : (b.dataset.tpl === 'dealers' ? E.DEALER_COLS.join(',') + '\nSample Traders,300000,50000,30,10,8' : E.TASK_COLS.join(',') + `\nRahul,Sample Traders,Quote sent,${w.today},150000\n,City Pharma,New lead,${w.today},40000`); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([txt], { type: 'text/csv' })), download: `tentoday-${b.dataset.exp || b.dataset.tpl + '-template'}.csv` }); document.body.append(a); a.click(); a.remove(); toast('CSV downloaded.'); return; }
   if (b.dataset.sch) { try { w = E.approveScheme(w, b.dataset.sch, actor); save(); toast('Scheme approved.'); result = { text: `${b.dataset.sch} is live.`, sub: 'Reps can now apply it to qualifying orders without asking.' }; render(); } catch (err) { result = { err: err.message }; render(); } window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.id === 's-go') { try { w = E.proposeScheme(w, actor, $('#s-name').value, Number($('#s-min').value), Number($('#s-pct').value)); save(); const sc = w.schemes.at(-1); toast('Scheme proposed.'); result = { text: `${sc.id} proposed: ${sc.name}.`, sub: 'It is not usable until a second person approves it.', switchTo: actor === 'Kavita' ? 'Arjun' : 'Kavita' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (err) { $('#s-err').innerHTML = `<div class="err" role="alert" style="margin-top:6px">${esc(err.message)}</div>`; } return; }
   if (b.id === 'mv-yes') { try { w = E.rebalance(w, b.dataset.t, actor, b.dataset.to, $('#mv-why')?.value); save(); sealRes = null; const t = w.tasks.find(x => x.id === b.dataset.t);

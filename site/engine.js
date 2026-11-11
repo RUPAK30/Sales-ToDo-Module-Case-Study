@@ -656,6 +656,29 @@ export function impact(w) {
     intact: verifyChain(w).ok, blocks: w.chain.length,
   };
 }
+/* Weekly MIS: only KPIs that prove a control works. Each row: value, target, pass/fail. */
+export function mis(w) {
+  const t = w.approvals.filter(a => a.decidedOn);
+  const fast = t.filter(a => workingDaysBetween(a.askedOn, a.decidedOn) <= SLA_DAYS).length;
+  const stuck = w.approvals.filter(a => a.status === 'pending' && !a.escalated && workingDaysBetween(a.askedOn, w.today) >= SLA_DAYS && a.approver !== 'Arjun').length;
+  const over = w.orders.filter(o => { const a = o.approvalId && w.approvals.find(x => x.id === o.approvalId); return a && o.discountPct > (a.capPct ?? 0); }).length;
+  const im = impact(w), m = metrics(w), ch = verifyChain(w);
+  const pct = (a, b) => (b ? Math.round(100 * a / b) : null);
+  return [
+    { kpi: 'Discount asks decided within 1 working day', value: t.length ? `${fast} of ${t.length} (${pct(fast, t.length)}%)` : '–', target: '100%', ok: t.length ? fast === t.length : null, proves: 'Approvals never stall a deal' },
+    { kpi: 'Asks past the 1-day clock, not escalated', value: String(stuck), target: '0', ok: stuck === 0, proves: 'Silence escalates automatically' },
+    { kpi: 'Orders booked above the approved discount', value: w.orders.length ? `${over} of ${w.orders.length}` : '–', target: '0', ok: w.orders.length ? over === 0 : null, proves: 'No margin given away unapproved' },
+    { kpi: 'Discount held back (asked − approved)', value: `₹${im.notGiven.toLocaleString('en-IN')}`, target: 'Tracked', ok: true, proves: 'Rupee value of the approval step' },
+    { kpi: 'Asks stopped by a credit hold', value: String(im.creditHolds), target: 'Tracked', ok: true, proves: 'Over-limit dealers are caught before the order' },
+    { kpi: 'Tasks done on time vs the original date', value: m.pct == null ? '–' : `${m.onTime} of ${m.done} (${m.pct}%)`, target: '≥ 80%', ok: m.pct == null ? null : m.pct >= 80, proves: 'On-time is real, not rescheduled' },
+    { kpi: 'Tasks rescheduled 3+ times', value: String(m.movedThrice), target: '0', ok: m.movedThrice === 0, proves: 'Date gaming is visible' },
+    { kpi: 'Approval record intact', value: ch.ok ? `✓ ${w.chain.length} sealed entries` : '✗ altered', target: 'Intact', ok: ch.ok, proves: 'Any rewrite gets caught' },
+  ];
+}
+export function misCsv(w) {
+  const q = v => `"${String(v).replace(/"/g, '""')}"`;
+  return [['kpi', 'value', 'target', 'status', 'proves'], ...mis(w).map(r => [r.kpi, r.value, r.target, r.ok == null ? 'NO DATA YET' : r.ok ? 'PASS' : 'FAIL', r.proves])].map(r => r.map(q).join(',')).join('\n');
+}
 /* The rep's own snapshot: only their work, no team comparison. */
 export function repSnapshot(w, rep) {
   const mine = w.approvals.filter(a => a.rep === rep);

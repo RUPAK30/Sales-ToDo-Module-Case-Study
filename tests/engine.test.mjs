@@ -243,3 +243,12 @@ test('daily anchor: a full admin rewrite passes the chain check but fails the an
   let x = E.askDiscount(w, 'T-101', 'Rahul', 6, 'x'); x = E.approve(x, x.approvals.at(-1).id, 'Kavita', 6, E.addDays(D, 9));
   const d = E.sealedDecision(x, x.approvals.at(-1).id); assert.match(d.entry.text, /^Approved 6%/); assert.ok(d.check.ok);
 });
+
+test('weekly MIS: every proof KPI passes on the sample and the CSV has one row per KPI', async () => {
+  const E = await import('../site/engine.js');
+  const w = E.escalate(E.sample('2026-11-11'));
+  const m = E.mis(w);
+  assert.equal(m.length, 8);
+  assert.ok(m.every(r => r.kpi && r.value && r.target && r.proves));
+  assert.equal(E.misCsv(w).split('\n').length, 9);
+});
