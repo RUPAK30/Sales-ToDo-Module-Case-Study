@@ -205,3 +205,68 @@ details.src{margin-top:8px}details.src>summary{cursor:pointer;font-size:.8rem;fo
 .mis{margin:14px 0 0;border:1px solid var(--tt-line);border-radius:16px;background:#fff;padding:14px 16px}.mis-h{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:8px}.mis .k{margin:0;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--tt)}.mis h2{margin:2px 0 0;font-size:1.05rem}
 .mis-w{overflow-x:auto}.mis table{width:100%;border-collapse:collapse;font-size:.86rem}.mis th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#78716C;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--tt-line)}.mis td{padding:8px;border-bottom:1px solid #F5F0EA;vertical-align:top}.mis tr:last-child td{border:0}.mis td:nth-child(5){color:#78716C}
 .mis-f{margin:8px 0 0;font-size:.78rem;color:#78716C}
+
+/* ---------- sections: hide what doesn't belong to the open tab ---------- */
+body[data-tab="today"] [data-in]:not([data-in~="today"]){display:none!important}
+body[data-tab="approvals"] [data-in]:not([data-in~="approvals"]){display:none!important}
+body[data-tab="mis"] [data-in]:not([data-in~="mis"]){display:none!important}
+body[data-tab="record"] [data-in]:not([data-in~="record"]){display:none!important}
+body[data-tab="approvals"] #desk .grid,body[data-tab="mis"] #desk .grid,body[data-tab="record"] #desk .grid{grid-template-columns:1fr}
+
+/* bottom bar on phones, tabs under the header on wider screens */
+.bn ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr)}
+.bn a{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:6px 4px;color:#57534E;text-decoration:none;font-size:.74rem;font-weight:500;-webkit-tap-highlight-color:transparent}
+.bn svg{width:24px;height:24px;padding:3px 14px;box-sizing:content-box;border-radius:999px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bn a[aria-current="page"]{color:var(--tt);font-weight:700}
+.bn a[aria-current="page"] svg{background:var(--tt-soft,#FFF1E6);stroke-width:2.6}
+.bn a:focus-visible{outline:3px solid var(--tt);outline-offset:-3px;border-radius:12px}
+.bn-b{position:absolute;top:4px;left:calc(50% + 8px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#DC2626;color:#fff;font-size:.68rem;font-weight:700;line-height:18px;text-align:center}
+@media (max-width:760px){
+  .bn{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid #E7E5E4;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 16px rgba(28,25,23,.06)}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  #tour{bottom:calc(76px + env(safe-area-inset-bottom))}
+  #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  input,select,textarea{font-size:16px}
+}
+@media (min-width:761px){
+  .bn{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid #E7E5E4}
+  .bn ul{max-width:640px;margin:0 auto}
+  .bn a{flex-direction:row;gap:8px;min-height:48px;font-size:.88rem}
+  .bn svg{width:18px;height:18px;padding:3px 8px}
+  .bn-b{position:static;margin-left:2px}
+}
+dialog{overscroll-behavior:contain}
+
+/* three-line opener + under the hood */
+.ti{margin:12px 0;border:1px solid #E7E5E4;border-radius:16px;background:#fff;padding:12px 16px}
+.ti-l{margin:0;display:grid;gap:8px}
+.ti-l>div{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:baseline}
+.ti-l dt{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#78716C}
+.ti-l dd{margin:0;font-size:.92rem;line-height:1.45}
+.ti-l dd small{color:#78716C}
+.ti-l>div:nth-child(2) dt{color:var(--tt)}
+.uh{margin-top:10px;border-top:1px dashed #E7E5E4;padding-top:8px}
+.uh>summary{cursor:pointer;font-weight:600;font-size:.88rem;list-style:none;min-height:32px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.uh>summary::-webkit-details-marker{display:none}
+.uh>summary::before{content:'+';color:var(--tt);font-weight:700}
+.uh[open]>summary::before{content:'−'}
+.uh>summary span{font-weight:400;font-size:.78rem;color:#78716C}
+.uh-g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+.uh-g h4{margin:0 0 4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--tt)}
+.uh-g ul{margin:0;padding-left:18px;font-size:.84rem;line-height:1.45;color:#44403C}
+.uh-g li+li{margin-top:4px}
+@media (max-width:760px){.uh-g{grid-template-columns:1fr}.ti-l>div{grid-template-columns:1fr;gap:2px}}
+/* phones: the role switcher is one swipeable row, so each tab's content starts above the fold */
+@media (max-width:760px){
+  body:not([data-tab="today"]) .actor-top>small{display:none}
+  .actor{padding:8px 10px}
+  #actors{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  #actors::-webkit-scrollbar{display:none}
+  #actors .who{flex:0 0 auto}
+}
+body:not([data-tab="today"]) .builder{display:none}
+.ti-b{margin:10px 0 0;font-size:.8rem;color:#78716C}.ti-b a{color:var(--tt-d);font-weight:600}
+body[data-tab="today"] .ti-b{display:none}
+#desk .grid>*,#desk .side>*{min-width:0}.ask .row{flex-wrap:wrap}.ask .row label{min-width:0}
+.actor>*{min-width:0}#actors{max-width:100%}
+.mini li{overflow-wrap:anywhere;min-width:0}

@@ -1,6 +1,6 @@
-import * as E from './engine.js?v=1794393754';
+import * as E from './engine.js?v=1794402497';
 
-const KEY = 'tentoday-product-v5';
+const KEY = 'tentoday-product-v6';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -96,7 +96,7 @@ function renderQ2CBridge() {
     </div>
   </div>`;
 }
-function switchTo(n) { actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function switchTo(n) { tab = isRep(n) ? 'today' : 'approvals'; try { history.replaceState(null, '', '#' + tab); } catch { } actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 /* ---------- sealed record: visible on every screen ---------- */
 function renderSeal() {
@@ -152,7 +152,7 @@ function buildTools() {
   const desk = $('#desk'); const have = TOOLS.filter(([id]) => desk.querySelector('#' + id)); if (!have.length) return;
   if (!have.some(([id]) => id === toolTab)) toolTab = have[0][0];
   const closed = !toolChosen && matchMedia('(max-width:600px)').matches;
-  const wrap = document.createElement('section'); wrap.className = 'tools card'; wrap.setAttribute('aria-label', 'Manager tools');
+  const wrap = document.createElement('section'); wrap.className = 'tools card'; wrap.dataset.in = 'today'; wrap.setAttribute('aria-label', 'Manager tools');
   wrap.innerHTML = `<div class="ttabs" role="tablist">${have.map(([id, l]) => `<button type="button" role="tab" aria-selected="${!closed && id === toolTab}" class="${!closed && id === toolTab ? 'on' : ''}" data-tool="${id}">${l}</button>`).join('')}</div><div class="tbody"></div>`;
   const body = wrap.querySelector('.tbody');
   for (const [id] of have) { const el = desk.querySelector('#' + id); el.classList.add('tool'); el.hidden = closed || id !== toolTab; body.append(el); }
@@ -166,7 +166,7 @@ function collapseForMobile() {
   if (!matchMedia('(max-width:600px)').matches) return;
   document.querySelectorAll('#desk .card:not(.tool):not(.tools)').forEach((c, k) => {
     const h = c.querySelector('h2'); if (!h) return; const key = h.textContent.replace(/[\d·]+/g, '').trim();
-    if (k === 0 || c.id === 'asks') return; // the main list always stays open
+    if (k === 0 || c.id === 'asks' || (c.closest('[data-in]')?.dataset.in ?? 'today') !== 'today') return; // the main list, and every non-Today tab, stays open
     c.classList.add('fold'); if (!openCards.has(key)) c.classList.add('cl');
     h.setAttribute('role', 'button'); h.tabIndex = 0;
     h.onclick = () => { c.classList.toggle('cl'); c.classList.contains('cl') ? openCards.delete(key) : openCards.add(key); };
@@ -215,17 +215,17 @@ function repDesk() {
   const row = (t, i) => `<li><button type="button" class="task ${i === 0 ? 'top' : ''} ${flashId === t.id ? 'flash' : ''}" data-open="${t.id}"><span class="rank">${i + 1}</span><span><span class="c">${esc(t.customer)}</span> ${tierChip(t)}<span class="chip p3">${esc(t.stage)}</span><div class="t">${esc(t.title)}</div><div class="why">${esc(E.explain(w, t))}</div></span><span class="val">${inr(t.value)}</span></button></li>`;
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
-  return `${snap}<div class="grid">
-    <div class="card"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
+  return `<div data-in="mis">${snap}${misTable()}</div><div class="grid">
+    <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
     </div>
     <div class="side">
-      <div class="card"><h2>Waiting on others</h2>${mini(ib.frozen, frozenLine, 'No discount asks open.')}</div>
-      <div class="card"><h2>On hold</h2>${mini(ib.hold, t => `back ${fmt(t.hold.revisit)} · ${esc(t.hold.reason)}`, 'Nothing on hold.')}</div>
-      <div class="card"><h2>Coming up</h2>${mini(ib.later, t => `${fmt(t.target)} · ${esc(t.title)}`, 'Nothing scheduled.')}</div>
-      <div class="card"><h2>Done</h2>${mini(ib.done, t => `${esc(t.outcome)} ${t.doneAt <= t.due ? '<span class="chip st-ok">on time</span>' : '<span class="chip st-bad">late</span>'}`, 'Nothing done yet today.')}</div>
-      <div class="card"><h2>Team metric</h2><div class="metric"><div><b>${m.pct === null ? '–' : m.pct + '%'}</b><span>done by the original target (${m.onTime}/${m.done})</span></div><div><b>${m.movedThrice}</b><span>tasks moved 3+ times (guardrail)</span></div></div></div>
+      <div class="card" data-in="approvals"><h2>Your discount asks</h2>${mini(ib.frozen, frozenLine, 'No discount asks open.')}</div>
+      <div class="card" data-in="today"><h2>On hold</h2>${mini(ib.hold, t => `back ${fmt(t.hold.revisit)} · ${esc(t.hold.reason)}`, 'Nothing on hold.')}</div>
+      <div class="card" data-in="today"><h2>Coming up</h2>${mini(ib.later, t => `${fmt(t.target)} · ${esc(t.title)}`, 'Nothing scheduled.')}</div>
+      <div class="card" data-in="today"><h2>Done</h2>${mini(ib.done, t => `${esc(t.outcome)} ${t.doneAt <= t.due ? '<span class="chip st-ok">on time</span>' : '<span class="chip st-bad">late</span>'}`, 'Nothing done yet today.')}</div>
+      <div class="card" data-in="mis"><h2>Team metric</h2><div class="metric"><div><b>${m.pct === null ? '–' : m.pct + '%'}</b><span>done by the original target (${m.onTime}/${m.done})</span></div><div><b>${m.movedThrice}</b><span>tasks moved 3+ times (guardrail)</span></div></div></div>
     </div></div>`;
 }
 
@@ -252,6 +252,11 @@ function askCard(a) {
     ${!E.person(actor).senior ? `<p class="hint">Your limit: up to ${E.MANAGER_LIMIT}% and within the margin floor. Anything else goes to Arjun.</p>` : ''}
   </div>`;
 }
+function misTable() {
+  return `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl" type="button">⬇ Download MIS (CSV)</button></div>
+    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
+}
 function managerDesk() {
   const d = E.decisionsFor(w, actor);
   const others = w.approvals.filter(a => a.status === 'pending' && a.approver !== actor);
@@ -267,18 +272,16 @@ function managerDesk() {
     <div class="${im.creditHolds ? 'warn' : ''}"><span>Credit holds caught</span><b>${im.creditHolds}</b><small>dealer over limit or past credit days</small></div>
     <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
   </div></section>`;
-  const misT = `<section class="mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl" type="button">⬇ Download MIS (CSV)</button></div>
-    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
-    <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
-  return `${snap}${misT}<div class="grid">
-    <div class="side">
+
+  return `<div data-in="mis">${snap}${misTable()}</div><div class="grid">
+    <div class="side" data-in="approvals">
       <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
         ${others.length ? `<p class="more">${others.length} other ask(s) waiting for ${others.map(a => esc(E.label(a.approver))).join(', ')}.</p>` : ''}
       </div>
       <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a> · <button type="button" class="btn link" data-chk="${a.id}">Check what was really approved</button>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
     </div>
-    <div class="side">
+    <div class="side" data-in="today">
       <div class="card" id="team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
         <table><thead><tr><th>Rep</th><th>Bucket</th><th>Due now</th><th>P1</th><th>Waiting on approval</th></tr></thead><tbody>${wl.map(r => `<tr><td>${esc(E.label(r.rep))}</td><td>${esc(E.person(r.rep).buckets.join(', '))}</td><td class="${r.overCap ? 'over' : ''}">${r.actionable}${r.overCap ? ` (${r.overCap} over)` : ''}</td><td>${r.p1}</td><td>${r.frozen}</td></tr>`).join('')}</tbody></table>
         <div class="box" id="movebox" style="margin-top:12px"><b>Move a task</b>
@@ -381,7 +384,7 @@ function render() {
   try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
 function renderInner() {
-  renderActors(); renderQ2CBridge(); $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
+  renderTabs(); intro(); renderActors(); renderQ2CBridge(); $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
@@ -389,8 +392,72 @@ function renderInner() {
   collapseForMobile();
 }
 
+
+/* ---------- sections: one fixed set of tabs for every role; content adapts to who is signed in ---------- */
+const TABS = [['today', 'Today', 'M4 5h16M4 12h16M4 19h10'], ['approvals', 'Approvals', 'M5 12l4 4 10-10'], ['mis', 'MIS', 'M5 20V10M12 20V4M19 20v-7'], ['record', 'Record', 'M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z']];
+const ALIAS = { seal: 'record', asks: 'approvals', team: 'today', proof: 'record' };
+let tab = 'today';
+const scrollMem = {};
+function tabFromHash() { const h = location.hash.slice(1); return TABS.some(t => t[0] === h) ? h : ALIAS[h] ?? null; }
+function setTab(t, { push = true, keepScroll = true } = {}) {
+  if (!TABS.some(x => x[0] === t)) t = 'today';
+  if (t === tab) { if (push) window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  scrollMem[tab] = window.scrollY; tab = t;
+  if (push) { try { history.pushState(null, '', '#' + t); } catch { } }
+  render(); window.scrollTo(0, keepScroll ? (scrollMem[t] ?? 0) : 0);
+}
+function badgeCount() {
+  if (isRep(actor)) return w.approvals.filter(a => a.rep === actor && a.status === 'countered').length;
+  return E.decisionsFor(w, actor).length;
+}
+function renderTabs() {
+  document.body.dataset.tab = tab;
+  const n = badgeCount();
+  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
+}
+const UH = {
+  today: {
+    pm: ['Trade-off: Today shows 10, not everything. Reps lose the full view; they gain a list they can finish. The rest is counted, never hidden.', 'Kill metric: if on-time stays under 80% with the cap, the cap becomes a setting.', 'Next: shadow 3 field reps and 1 approver for a week before building more.'],
+    fin: ['Deal value only breaks ties, so a big new deal never jumps an older overdue one.', 'Money-blocking stages (quote sent, negotiation) rank first, because that is where cash is stuck.', "Dealer credit (limit and credit days) is checked before any discount ask, like a distributor ERP."],
+    ba: ['Rule → story → test: "Today shows at most 10" → "As a rep I see 10 ranked tasks" → test: Today is capped at 10 and the rest are counted, not hidden.', 'Edge cases covered: a pinned callback sits above the tiers; future tasks wait in the inbox; on-hold tasks return on their revisit date.', 'Moving a task outside its bucket needs a reason and a second manager.'],
+  },
+  approvals: {
+    pm: ['Trade-off: auto-escalation can bypass a manager who was about to decide. Chosen because a lost deal costs more than a skipped manager.', 'Success metric: asks decided within 1 working day (target 100%), shown live in the MIS.', 'The rep never chases: the frozen task tells him the clock is on the approver.'],
+    fin: ['Discounts are stated before GST. Kavita decides up to 10% and within the margin floor; anything more goes to the sales head.', 'A dealer over his credit limit or past credit days can only be approved with a written override.', 'One approval covers one order, with an expiry date. An order above the approved % is blocked.'],
+    ba: ['Tests: "order must match the approval: cap, expiry and one order per approval"; "working days: Sunday and holidays do not count".', 'Delegation: when Kavita is on leave, asks go to her stand-in, logged as "acting for", and her limits still apply.', 'Responsible: rep asks · Accountable: manager or head decides · Informed: finance gets the sealed decision.'],
+  },
+  mis: {
+    pm: ['Why these 8: each one proves a control works. No vanity counts like "tasks created".', 'A KPI with nothing to measure says "No data yet", never Pass.', 'Download as CSV for the Monday review.'],
+    fin: ['"Discount held back" = asked minus approved, in rupees before GST.', '"Orders above the approved discount" at 0 means no margin was given away unapproved.', 'On-time is measured against the original date, so rescheduling cannot fake it.'],
+    ba: ['All 8 KPIs come from one pure function with a unit test, so the numbers are reproducible.', 'Each row states its target and what it proves: acceptance criteria you can read.', 'Built like the weekly MIS I ran at HDFC Bank (15+ KPIs across JIRA and ServiceNow).'],
+  },
+  record: {
+    pm: ['Trade-off: tamper-evident, not blockchain. One company keeps the record, so a hash chain plus a daily anchor shared outside is enough.', "It's the model Microsoft's SQL Ledger uses.", 'Try the audit drill below: edit an old approval directly and watch the check catch it.'],
+    fin: ["Supports the auditor's MCA Rule 11(g) check on the audit trail. It does not certify compliance.", 'Every Rupee checks a short payment against the exact sealed cap, so the excess goes back to the rep.', 'Any rewrite of history gets caught, even a full admin rebuild (the daily anchor no longer matches).'],
+    ba: ['Tests: "SHA-256 is correct, and any edit, deletion or reorder is caught"; "a full admin rewrite passes the chain check but fails the anchor".', 'Every decision, order and scheme change is sealed with who, when and what.', '"Check what was really approved" answers a dispute in one click.'],
+  },
+};
+function intro() {
+  const m = E.mis(w), passing = m.filter(x => x.ok === true && x.target !== 'Tracked').length, judged = m.filter(x => x.ok !== null && x.target !== 'Tracked').length;
+  const q = isRep(actor) ? E.today(w, actor) : null, open = isRep(actor) ? w.tasks.filter(t => t.rep === actor && t.status === 'open').length : 0;
+  const over = E.workload(w).filter(r => r.overCap).length, pend = E.decisionsFor(w, actor).length, ch = E.verifyChain(w);
+  const T = {
+    today: ['22% of workers say unclear priorities make them miss deadlines.', 'Asana, 10,624 workers', isRep(actor) ? `${E.label(actor)}: ${open} open tasks → ${q.list.length} to do today, ranked by rules he can read.` : `${over} rep${over === 1 ? '' : 's'} over the cap of ${E.CAP}. Tasks move only within the same bucket.`, 'Ten, not everything: a list you can finish beats a list you ignore.'],
+    approvals: ['45% of companies lost a deal to a slow quote approval in six months.', 'Conga', isRep(actor) ? `Your asks: the clock is on the approver, not you. ${m[0].value} decided within 1 working day.` : `${pend} waiting for you · ${m[0].value} decided within 1 working day.`, "Silence escalates: if the manager doesn't decide in 1 working day, it moves up on its own."],
+    mis: ['At HDFC Bank my weekly MIS took 8 hours to prepare. I cut it to 3.', 'my own work', `${passing} of ${judged} controls passing this week · zero prep, computed live.`, 'Only KPIs that prove a control works, each with a target and pass or fail.'],
+    record: ['Indian companies must keep an audit trail that cannot be switched off (since FY 2023-24).', 'MCA Rule 3(1)', `${w.chain.length} sealed entries · ${ch.ok ? '✓ intact' : '✗ altered'}.`, 'Tamper-evident, not blockchain: enough for one company, checkable by anyone.'],
+  }[tab];
+  const u = UH[tab];
+  const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  $('#tabintro').innerHTML = `<dl class="ti-l"><div><dt>Problem</dt><dd>${esc(T[0])} <small>(${esc(T[1])})</small></dd></div><div><dt>Live proof</dt><dd><b>${esc(T[2])}</b></dd></div><div><dt>Decision</dt><dd>${esc(T[3])}</dd></div></dl>
+  <details class="uh"><summary>Under the hood <span>for product, finance ops and BA reviewers</span></summary><div class="uh-g">${sec('Product manager', u.pm)}${sec('Finance ops', u.fin)}${sec('Senior BA', u.ba)}</div></details>
+  <p class="ti-b">Built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>`;
+}
+
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
+  const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }
+  const hl = e.target.closest('a[href^="#"]'); if (hl && ALIAS[hl.getAttribute('href').slice(1)]) { e.preventDefault(); const id = hl.getAttribute('href').slice(1); setTab(ALIAS[id], { keepScroll: false }); document.getElementById(id)?.scrollIntoView({ block: 'start' }); return; }
   const b = e.target.closest('button,[data-open]'); if (!b) return;
   if (b.dataset.chk) { const d = E.sealedDecision(w, b.dataset.chk); result = d ? { text: `${b.dataset.chk} was sealed as: “${d.entry.text}” by ${E.label(d.entry.who)} at ${time(d.entry.at)}.`, sub: d.check.ok ? `✓ Unchanged since it was sealed${d.check.anchored ? ", and the record still ends at yesterday's anchor shared with finance" : ''}. A claim of any other figure is wrong.` : '✗ The record fails verification. Don\'t rely on any figure until it is restored.' } : { err: 'No sealed decision found for this approval.' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.dataset.actor) return switchTo(b.dataset.actor);
@@ -504,7 +571,8 @@ document.addEventListener('change', async e => {
 });
 $('#panel').addEventListener('close', () => { panel = null; });
 
-load(); w = E.escalate(E.wakeHolds(w));
+load(); w = E.escalate(E.wakeHolds(w)); tab = tabFromHash() ?? (isRep(actor) ? 'today' : 'approvals');
+window.addEventListener('popstate', () => { const t = tabFromHash() ?? 'today'; if (t !== tab) { scrollMem[tab] = window.scrollY; tab = t; render(); window.scrollTo(0, scrollMem[t] ?? 0); } });
 (() => {
   const tok = new URLSearchParams(location.search).get('task'); if (!tok) return;
   try { const r = E.importRecovery(w, tok); w = r.w; actor = r.task.rep; signedIn = true; save(); result = { text: r.fresh ? `New task from Every Rupee: ${r.task.title}.` : `Already in ${r.task.rep}'s list: ${r.task.title}.`, sub: `Finance handed this short payment to ${r.task.rep}. Recover it from ${r.task.customer}, or get it approved. Open it in Today.` }; setTimeout(() => openTask(r.task.id), 300); }
@@ -533,7 +601,8 @@ function tourShow(i) {
   s.run?.(); actor = s.who; signedIn = true; save(); render();
   if (s.open) { openTask(s.open); const d = $('#panel'); d.close(); d.show(); }
   s.after?.();
-  const t = s.at?.(); if (t) { t.classList.add('tour-hi'); if (!s.open) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  let t = s.at?.(); const home = t?.closest?.('[data-in]')?.dataset.in; if (home && home !== tab && !s.open) { tab = home; render(); t = s.at?.(); }
+  if (t) { t.classList.add('tour-hi'); if (!s.open) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   tourEl.innerHTML = `<p class="k">${i + 1} / ${TOUR.length} · ${s.k} · acting as ${esc(E.label(s.who))}</p><h3>${esc(s.h)}</h3><p>${esc(s.p)}</p><div class="bar2"><i></i></div><div class="ctl"><button type="button" data-t="exit">Exit</button><button type="button" data-t="pause">${tPaused ? 'Play' : 'Pause'}</button><button type="button" class="go" data-t="next">${i === TOUR.length - 1 ? 'Finish' : 'Next →'}</button></div>`;
   tourEl.classList.add('on');
   const bar = tourEl.querySelector('.bar2 i');

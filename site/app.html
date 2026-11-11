@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ten Today — Today desk: 10 ranked actions, one sealed approval record</title>
 <meta name="description" content="Ten Today, the product: a sales rep's Today queue capped at 10, discount asks that freeze the task and route to the right approver, and a manager desk with limits, counter-offers and workload. Every rule is enforced and tested.">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tt.css?v=1794393754">
+<link rel="stylesheet" href="tt.css?v=1794402497">
 </head>
 <body>
 <header class="bar"><div class="in"><button class="btn ghost menu" id="menu-go" type="button" aria-label="Menu" aria-controls="drawer">☰</button><a class="logo" href="./" aria-label="Ten Today home">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="hr"><a class="btn ghost hide-m" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><button class="btn pri" id="tour-go" type="button">▶ <span class="hide-m">60-second </span>tour</button></div></div></header>
@@ -20,8 +20,9 @@
 <a href="./" class="home">⌂ Home · case study</a><a href="cockpit.html">Spec &amp; UAT (18 cases)</a><a href="./#sources">Sources</a><a href="https://everyrupee-o2c.vercel.app/">Quote to cash · Every Rupee ↗</a><a href="https://rupak-lemon.vercel.app" target="_blank" rel="noopener">Portfolio ↗</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk ✉</a><button type="button" class="btn ghost" id="reset">↺ Reset sample</button></aside>
 <div class="strip">Sample workspace · changes stay in this browser · no CRM connected</div>
 
+<nav class="bn" id="bn" aria-label="Sections"></nav>
 <main class="wrap">
-  <div class="head">
+  <div class="head" data-in="today">
     <div>
       <p class="eyebrow">B2B Sales Execution &amp; Discount Governance</p>
       <h1>Today desk</h1>
@@ -31,7 +32,7 @@
   </div>
 
   <p class="builder">Built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
-  <details class="why"><summary>How a deal moves, and why it matters <span>3 steps · public benchmarks</span></summary>
+  <details class="why" data-in="today"><summary>How a deal moves, and why it matters <span>3 steps · public benchmarks</span></summary>
   <section class="story-strip" aria-label="How a real deal moves through Ten Today in 3 steps">
     <div class="story-step">
       <span class="st-num">STEP 1 · FIELD REP (RAHUL / NEHA)</span>
@@ -65,11 +66,12 @@
     <div class="actor-top"><span>Choose who you want to act as (1-click switch)</span><small id="actor-why"></small></div>
     <div id="actors"></div>
   </div>
-  <details class="why"><summary>Connected to Every Rupee (finance) <span>2 live tests</span></summary><section id="q2c-bridge" class="q2c-bar" aria-live="polite"></section></details>
-  <section id="seal" class="seal" aria-live="polite"></section>
+  <section id="tabintro" class="ti" aria-live="polite"></section>
+  <details class="why" data-in="record"><summary>Connected to Every Rupee (finance) <span>2 live tests</span></summary><section id="q2c-bridge" class="q2c-bar" aria-live="polite"></section></details>
+  <section id="seal" data-in="record" class="seal" aria-live="polite"></section>
   <section id="next" class="next" aria-live="polite"></section>
   <section id="desk"></section>
-  <details class="why decisions"><summary>Why I built it this way <span>6 decisions</span></summary><ol>
+  <details class="why decisions" data-in="record"><summary>Why I built it this way <span>6 decisions</span></summary><ol>
     <li><b>Ten, not everything.</b> A list a rep can finish beats a list they ignore; the rest is counted, never hidden.</li>
     <li><b>Value only breaks ties.</b> Ranking by deal size teaches cherry-picking; lateness and money-blocking stage come first.</li>
     <li><b>Route by limit, not by hierarchy.</b> Kavita decides up to 10% within the margin floor; anything else goes to the head, and a day's silence escalates.</li>
@@ -77,7 +79,7 @@
     <li><b>Tamper-evident, not blockchain.</b> One company keeps this record, so a hash chain with a daily anchor shared outside is enough. It's the model Microsoft's SQL Ledger uses, and it answers the auditor's Rule 11(g) question.</li>
     <li><b>Validate before building more.</b> Next: shadow 3 field reps and 1 approver for a week to test the 10-cap and the 1-day escalation.</li>
   </ol><p class="hint" style="margin:8px 0 0"><b>What I'd do differently:</b> I fixed the cap at 10 from published research before watching a rep's real day. A pilot tests that first, and the cap becomes a setting if 10 is wrong.</p></details>
-  <details class="why decisions"><summary>Ready from day one <span>HDFC evidence → this product</span></summary>
+  <details class="why decisions" data-in="record"><summary>Ready from day one <span>HDFC evidence → this product</span></summary>
     <table class="d1"><thead><tr><th>Your team needs</th><th>I did it at HDFC Bank</th><th>Visible here</th></tr></thead><tbody>
       <tr><td>Requirements</td><td>25+ BRDs/FRDs; templates cut clarification queries 25%</td><td>Every rule written as a testable spec (<a href="cockpit.html">Spec &amp; UAT</a>)</td></tr>
       <tr><td>UAT &amp; releases</td><td>20+ UAT cycles, 95% of defects fixed pre-release; 15+ releases on time</td><td>30 tests on the rules, plus 18 UAT cases you can run</td></tr>
@@ -91,6 +93,6 @@
 <dialog id="panel" aria-labelledby="p-title"><div id="panel-body"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 30 engine tests · <a href="cockpit.html?uat=1" style="color:inherit">18 UAT cases</a></span><span style="display:flex;gap:14px;flex-wrap:wrap"><a href="./">How it was designed →</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough">Hiring? Talk to me →</a></span></footer>
-<script type="module" src="app.js?v=1794393754"></script>
+<script type="module" src="app.js?v=1794402497"></script>
 </body>
 </html>
