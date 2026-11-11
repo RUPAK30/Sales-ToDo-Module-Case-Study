@@ -175,7 +175,7 @@ function collapseForMobile() {
 
 /* ---------- do this next ---------- */
 function renderNext() {
-  const el = $('#next');
+  const el = $('#next'); el.hidden = !result && (tab !== 'today' || matchMedia('(max-width:760px)').matches); if (el.hidden) return;
   if (result) {
     el.className = 'next' + (result.err ? '' : ' calm');
     el.innerHTML = result.err ? `<div><p class="k">Not allowed</p><p>${esc(result.err)}</p></div>` :
@@ -215,7 +215,7 @@ function repDesk() {
   const row = (t, i) => `<li><button type="button" class="task ${i === 0 ? 'top' : ''} ${flashId === t.id ? 'flash' : ''}" data-open="${t.id}"><span class="rank">${i + 1}</span><span><span class="c">${esc(t.customer)}</span> ${tierChip(t)}<span class="chip p3">${esc(t.stage)}</span><div class="t">${esc(t.title)}</div><div class="why">${esc(E.explain(w, t))}</div></span><span class="val">${inr(t.value)}</span></button></li>`;
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
-  return `<div data-in="mis">${snap}${misTable()}</div><div class="grid">
+  return `<div data-in="mis">${misTable()}${snap}</div><div class="grid">
     <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
@@ -273,7 +273,7 @@ function managerDesk() {
     <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
   </div></section>`;
 
-  return `<div data-in="mis">${snap}${misTable()}</div><div class="grid">
+  return `<div data-in="mis">${misTable()}${snap}</div><div class="grid">
     <div class="side" data-in="approvals">
       <div class="card" id="asks"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
@@ -384,7 +384,7 @@ function render() {
   try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
 function renderInner() {
-  renderTabs(); intro(); renderActors(); renderQ2CBridge(); $('#seal').hidden = false; $('#next').hidden = false; renderSeal(); renderNext();
+  renderTabs(); intro(); renderActors(); renderQ2CBridge(); $('#seal').hidden = false; renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;

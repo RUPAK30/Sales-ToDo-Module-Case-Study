@@ -270,3 +270,32 @@ body[data-tab="today"] .ti-b{display:none}
 #desk .grid>*,#desk .side>*{min-width:0}.ask .row{flex-wrap:wrap}.ask .row label{min-width:0}
 .actor>*{min-width:0}#actors{max-width:100%}
 .mini li{overflow-wrap:anywhere;min-width:0}
+/* v2: full-width bar, content first */
+.bn{display:block}.bn ul{width:100%}
+@media (max-width:760px){
+  .bn a{min-height:60px;font-size:.72rem}
+  .bn svg{width:22px;height:22px;padding:4px 16px}
+  body:not([data-tab="today"]) .actor-top{display:none}
+  body:not([data-tab="today"]) .actor{margin-top:10px;padding:6px 8px;background:transparent;border:0}
+  body:not([data-tab="today"]) #actors .who{padding:6px 10px;font-size:.85rem}
+  .ti{padding:10px 14px;margin:8px 0}
+  .ti-l{gap:4px}
+  .ti-l>div{display:block}
+  .ti-l dt{display:none}
+  .ti-l>div:nth-child(1) dd{font-size:.8rem;color:#78716C}
+  .ti-l>div:nth-child(2) dd{font-size:1rem;margin:2px 0}
+  .ti-l>div:nth-child(3) dd{font-size:.8rem;color:#57534E}
+  .ti-l>div:nth-child(3) dd::before{content:'Decision: ';font-weight:700;color:#57534E}
+  .uh{margin-top:6px;padding-top:4px}
+  .uh>summary{min-height:36px;font-size:.84rem}
+  .uh>summary span{display:none}
+  .ti-b{margin-top:4px;font-size:.74rem}
+}
+@media (max-width:760px){
+  .head,.builder,.actor-top{display:none!important}
+  body[data-tab="today"] .ti-b{display:block}
+  .actor{margin-top:10px;padding:6px 8px;background:transparent;border:0}
+  #actors .who{padding:6px 10px;font-size:.85rem}
+  #actors .who small{display:none}
+}
+@media (max-width:760px){.strip{font-size:.68rem;padding:4px 10px}}
