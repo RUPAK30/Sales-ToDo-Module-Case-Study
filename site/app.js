@@ -1,6 +1,6 @@
-import * as E from './engine.js?v=1794305000';
+import * as E from './engine.js?v=1794377422';
 
-const KEY = 'tentoday-product-v3';
+const KEY = 'tentoday-product-v4';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -9,7 +9,7 @@ const inr = n => '₹' + Number(n).toLocaleString('en-IN');
 const fmt = d => new Date(d + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 const time = t => new Date(t).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
-let sealEdit = 0, signedIn = true; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
+let drillBackup = null, sealEdit = 0, signedIn = true; let w, actor = 'Rahul', panel = null, result = null, flashId = null, sealRes = null, sealOpen = false;
 
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && fits(s.w) && s.w.today === realToday) { w = s.w; actor = s.actor || actor; signedIn = true; return; } } catch { /* storage unavailable */ }
@@ -102,12 +102,14 @@ function switchTo(n) { actor = n; signedIn = true; result = null; panel = null; 
 function renderSeal() {
   const el = $('#seal'); const n = w.chain.length;
   const audit = E.auditChain(w);
-  const r = sealRes ? audit : null;
+  const r0 = sealRes ? audit : null; const anc = E.verifyAnchored(w);
+  const r = r0 && r0.ok && anc.anchorFail ? { ...r0, ok: false, anchorFail: true, brokenAt: anc.brokenAt } : r0;
   const st = b => !r ? '' : b.status === 'ok' ? 'ok' : b.status === 'tampered' ? 'bad' : 'after';
   const tag = b => ({ ok: '✓ matches seal', bad: '✗ edited in DB', after: '⚠ link broken' }[st(b)] ?? '');
   const blocks = audit.blocks.map((b, k) => `${k ? `<span class="link ${r && !r.ok && b.n >= r.brokenAt ? 'cut' : ''}" aria-hidden="true">→</span>` : ''}<div class="blk ${st(b)}"><small>#${b.n} · ${esc(b.who)}</small><span class="tx">${esc(b.text.length > 64 ? b.text.slice(0, 62) + '…' : b.text)}</span><code title="Stored seal: ${esc(b.storedHash)}">${esc(b.storedHash.slice(0, 8))}</code>${r && b.hashMismatch ? `<code style="background:#FEE2E2;border-color:#EF4444;color:#991B1B" title="Recomputed SHA-256: ${esc(b.recomputedHash)}">now: ${esc(b.recomputedHash.slice(0, 8))} ≠</code>` : ''}<em>${b.n === 1 ? 'first block' : `built from #${b.n - 1}'s <code>${esc(b.storedPrev.slice(0, 6))}</code>`}</em>${st(b) === 'bad' && w.tampered?.n === b.n ? `<em>was: <s>${esc(w.tampered.original.slice(0, 42))}…</s></em>` : ''}${tag(b) ? `<b>${tag(b)}</b>` : ''}</div>`).join('');
   const status = !r ? `<div class="res idle">Every decision above is locked with a SHA-256 fingerprint. Press <b>Verify record</b> to check that nothing was changed, or <b>Try tampering yourself</b> to see what happens if someone edits a discount in the database.</div>`
-    : r.ok ? `<div class="res ok">✓ Checked just now as ${esc(E.label(actor))}: all ${r.count} fingerprints match. No discount or decision was edited after the fact.</div>`
+    : r.anchorFail ? `<div class="res no">✗ <b>Whole chain rewritten.</b> Every link looks consistent, but block #${r.brokenAt} no longer matches the anchor shared with ${esc(w.anchor.to)} at ${esc(w.anchor.at)}. An admin rewrite is caught too.</div>`
+    : r.ok ? `<div class="res ok">✓ Checked just now as ${esc(E.label(actor))}: all ${r.count} fingerprints match${anc.anchored ? ` and the chain still ends at yesterday's anchor (${esc(w.anchor.hash.slice(0, 8))}, shared with ${esc(w.anchor.to)})` : ''}. No discount or decision was edited after the fact.</div>`
     : (() => {
         const badBlk = r.blocks[r.brokenAt - 1];
         const cascadeCount = n - r.brokenAt;
@@ -117,8 +119,8 @@ function renderSeal() {
         ${cascadeCount > 0 ? `· <b>Chain broken:</b> Block${cascadeCount > 1 ? 's' : ''} #${r.brokenAt + 1}–#${n} were built on Block #${r.brokenAt}, so they are automatically flagged too. Sending to Finance is locked.` : '· Sending to Finance is locked until the original record is restored.'}</div>`;
       })();
   el.className = 'seal' + (r && !r.ok ? ' bad' : '');
-  el.innerHTML = `<div class="top"><div><b class="t">🔒 Tamper-proof approval record (SHA-256 chain)</b> <span class="hint">· stops anyone from quietly changing an approved 6% discount to 10% · ${n} block${n === 1 ? '' : 's'}</span></div>
-    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the DB edit' : 'Try tampering yourself'}</button></div></div>
+  el.innerHTML = `<div class="top"><div><b class="t">🔒 Tamper-evident approval record (SHA-256 chain)</b> <span class="hint">· ${n} block${n === 1 ? '' : 's'}${w.anchor ? ` · anchored daily: ${esc(w.anchor.hash.slice(0, 8))} shared with ${esc(w.anchor.to)} at ${esc(w.anchor.at)}` : ''}</span></div>
+    <div class="acts"><button class="btn ok" type="button" data-seal="verify">Verify record</button><button class="btn" type="button" data-seal="${w.tampered ? 'undo' : 'tamper'}">${w.tampered ? 'Undo the drill' : 'Run an audit drill'}</button></div></div>
     <div class="cv" id="cv">${blocks || '<p class="hint">Nothing recorded yet.</p>'}</div>
     ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; const liveCalc = E.sha256(JSON.stringify({ n: e.n, at: e.at, who: e.who, text: e.text, ref: e.ref, prev: e.prev })); return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row (insider edit test)</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">There is no "Edit" button in the app. But what if someone with database access quietly changes a stored discount from <b>8%</b> to <b>12%</b>? Change the text below (or click the orange button) and press <b>Save &amp; check</b> to see how the SHA-256 fingerprint catches it immediately.</p>
       <div class="row"><label>Block<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)} (${esc(x.text.slice(0, 36))}…)</option>`).join('')}</select></label>
@@ -129,8 +131,10 @@ function renderSeal() {
         <span>original sealed fingerprint: <code style="background:#292524;color:#86EFAC;border-color:#3F3A36">${esc(e.hash.slice(0, 28))}…</code></span>
         <span id="db-live-hash">new fingerprint as you type: <code style="background:#292524;color:#FDBA74;border-color:#3F3A36">${esc(liveCalc.slice(0, 28))}…</code></span>
       </div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:#FDBA74"><input type="checkbox" id="db-rebuild"> Admin with full access: also recompute every fingerprint after the edit</label>
       <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save to database &amp; verify</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
     ${status}
+    <p class="hint" style="margin:0">Tamper-evident, not tamper-proof: it detects edits, it doesn't prevent them. Same model as Microsoft's SQL Ledger (a chain of blocks plus a digest kept outside the database). Supports the auditor's Rule 11(g) check that the audit trail wasn't tampered with. Production writes it on the server.</p>
     <details class="how"><summary>Why this matters in plain words (3 steps)</summary><ol class="steps"><li><b>Digital seal.</b> Every ask, approval, counter-offer, or order creates a unique SHA-256 fingerprint from the person, time, and exact discount %.</li><li><b>Linked blocks.</b> Each block's fingerprint includes the block before it. If someone changes an old 6% approval to 10%, that block's fingerprint changes and breaks every block after it.</li><li><b>Checked by Finance.</b> When an approval is sent to Every Rupee (Finance), the fingerprint travels with it so Finance knows the discount wasn't altered on the way.</li></ol></details>`;
   const cv = $('#cv'); if (cv) cv.scrollLeft = r && !r.ok ? Math.max(0, cv.querySelector('.blk.bad')?.offsetLeft - 20) : cv.scrollWidth;
 }
@@ -269,7 +273,7 @@ function managerDesk() {
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
         ${others.length ? `<p class="more">${others.length} other ask(s) waiting for ${others.map(a => esc(E.label(a.approver))).join(', ')}.</p>` : ''}
       </div>
-      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
+      <div class="card"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a> · <button type="button" class="btn link" data-chk="${a.id}">Check what was really approved</button>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
     </div>
     <div class="side">
       <div class="card" id="team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
@@ -385,6 +389,7 @@ function renderInner() {
 /* ---------- events ---------- */
 document.addEventListener('click', e => {
   const b = e.target.closest('button,[data-open]'); if (!b) return;
+  if (b.dataset.chk) { const d = E.sealedDecision(w, b.dataset.chk); result = d ? { text: `${b.dataset.chk} was sealed as: “${d.entry.text}” by ${E.label(d.entry.who)} at ${time(d.entry.at)}.`, sub: d.check.ok ? `✓ Unchanged since it was sealed${d.check.anchored ? ", and the record still ends at yesterday's anchor shared with finance" : ''}. A claim of any other figure is wrong.` : '✗ The record fails verification. Don\'t rely on any figure until it is restored.' } : { err: 'No sealed decision found for this approval.' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (b.dataset.actor) return switchTo(b.dataset.actor);
   if (b.dataset.q2c) {
     if (b.dataset.q2c === 'sim-rec') {
@@ -431,14 +436,16 @@ document.addEventListener('click', e => {
   if (b.dataset.do) return panelAction(b.dataset.do);
   if (b.dataset.dec) return decide(b.dataset.dec, b.dataset.id);
   if (b.dataset.go) { document.querySelector(b.dataset.go)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-  if (b.id === 'reset') { w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; sealEdit = 0; sealRes = null; save(); render(); toast('Sample reset.'); return; }
+  if (b.id === 'menu-go') { $('#drawer').hidden = false; return; }
+  if (b.id === 'menu-x') { $('#drawer').hidden = true; return; }
+  if (b.id === 'reset') { $('#drawer').hidden = true; w = E.sample(realToday); actor = 'Rahul'; result = null; panel = null; sealEdit = 0; sealRes = null; save(); render(); toast('Sample reset.'); return; }
   if (b.id === 'mv-ask') { const t = w.tasks.find(x => x.id === $('#mv-task').value); const to = $('#mv-to').value; const bk = E.bucketOf(w, t.customer); const fits = E.owns(to, bk);
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); return; }
   if (b.dataset.tool) { toolTab = b.dataset.tool; toolChosen = true; document.querySelectorAll('.ttabs button').forEach(x => { const on = x.dataset.tool === toolTab; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); document.querySelectorAll('.tbody .tool').forEach(x => { x.hidden = x.id !== toolTab; }); if (!b.closest('.ttabs')) $('.tools')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   if (b.dataset.seal) {
-    if (b.dataset.seal === 'verify') sealRes = E.verifyChain(w);
+    if (b.dataset.seal === 'verify') sealRes = E.verifyAnchored(w);
     if (b.dataset.seal === 'tamper') { const ap = [...w.chain].reverse().find(x => /^Approved/.test(x.text)) ?? w.chain.find(x => /%/.test(x.text)) ?? w.chain[0]; sealEdit = ap?.n ?? 0; sealRes = null; }
     if (b.dataset.seal === 'preset-inflate') {
       const ta = $('#db-text');
@@ -451,12 +458,14 @@ document.addEventListener('click', e => {
     if (b.dataset.seal === 'dbcancel') sealEdit = 0;
     if (b.dataset.seal === 'dbsave') {
       try {
+        if (!w.tampered) drillBackup = JSON.parse(JSON.stringify(w.chain));
         w = E.tamperEntry(w, Number($('#db-n').value), $('#db-text').value);
-        save(); sealEdit = 0; sealRes = E.verifyChain(w);
+        if ($('#db-rebuild')?.checked) w = E.rebuildChain(w);
+        save(); sealEdit = 0; sealRes = E.verifyAnchored(w);
         toast('Raw DB row modified & SHA-256 chain verified: mismatch caught.');
       } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; }
     }
-    if (b.dataset.seal === 'undo') { w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyChain(w); toast('Original database row restored & verified.'); }
+    if (b.dataset.seal === 'undo') { if (drillBackup) { w = { ...w, chain: drillBackup }; delete w.tampered; drillBackup = null; } else w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyAnchored(w); toast('Original database row restored & verified.'); }
     renderQ2CBridge();
     return renderSeal();
   }
@@ -504,11 +513,11 @@ render();
 const TOUR = [
   { who: 'Rahul', k: 'The rep', h: '100 open leads. 10 actions today.', p: 'Rahul has 17 open tasks: 12 are due now, and Today shows at most 10 of them, so the two over the cap are counted, not hidden. Ranked by rules he can read: days past target, money-blocking stage, then deal value as a tie-break.', run: () => { w = E.sample(realToday); }, at: () => $('#desk .card') },
   { who: 'Rahul', k: 'Scheme, no ask', h: 'A live scheme applies by itself', p: 'Aarav’s ₹4.8L order qualifies for the 3% volume slab. Pre-approved, so it applies at once: ₹14,400 off before GST, logged.', run: () => { w = E.applyScheme(w, 'T-101', 'Rahul', 'SCH-01'); }, open: 'T-101', at: () => $('#panel') },
-  { who: 'Rahul', k: 'Discount ask', h: 'He asks for 6% more. The task freezes.', p: 'The ask goes to Kavita, who is allowed to decide up to 10% within the margin floor. Rahul’s task leaves Today; the clock is now on her.', run: () => { w = E.askDiscount(w, 'T-101', 'Rahul', 6, 'Rival quoted 7% lower'); }, at: () => document.querySelectorAll('#desk .side .card')[0] },
+  { who: 'Rahul', k: 'Discount ask', h: 'He asks for 9% more. The task freezes.', p: 'The ask goes to Kavita, who is allowed to decide up to 10% within the margin floor. Rahul’s task leaves Today; the clock is now on her.', run: () => { w = E.askDiscount(w, 'T-101', 'Rahul', 9, 'Rival quoted 9% lower'); }, at: () => document.querySelectorAll('#desk .side .card')[0] },
   { who: 'Kavita', k: 'The approver', h: 'Three numbers to decide', p: 'Kavita sees the ask in rupees before GST, the margin floor and the dealer’s credit. She can approve, counter or send back. She can’t decide her own asks.', at: () => [...document.querySelectorAll('.ask')].find(x => x.textContent.includes('Aarav')) },
-  { who: 'Kavita', k: 'Decision', h: 'Approved with a cap and an expiry', p: 'Rahul’s task comes back as “send the revised quote”. The decision is sealed in the record above. “Send to finance” passes it, fingerprint included, to Every Rupee, which checks the short payment against this exact cap.', run: () => { const a = w.approvals.find(x => x.taskId === 'T-101' && x.status === 'pending'); w = E.approve(w, a.id, 'Kavita', 6, E.addDays(w.today, 14)); }, at: () => document.querySelector('a[href*="every-rupee"]')?.closest('.card') },
+  { who: 'Kavita', k: 'Decision', h: 'She approves 6%, not 9%, with an expiry', p: 'Rahul’s task comes back as “send the revised quote”. The decision is sealed in the record above. “Send to finance” passes it, fingerprint included, to Every Rupee, which checks the short payment against this exact cap.', run: () => { const a = w.approvals.find(x => x.taskId === 'T-101' && x.status === 'pending'); w = E.approve(w, a.id, 'Kavita', 6, E.addDays(w.today, 14)); }, at: () => document.querySelector('a[href*="every-rupee"]')?.closest('.card') },
   { who: 'Arjun', k: 'Controls', h: 'Nothing sits, nothing slips', p: 'An ask Kavita left for 2 days escalated to Arjun. A dealer past his credit days can only be approved with a written override, like a post-dated cheque.', at: () => $('#asks') },
-  { who: 'Arjun', k: 'Sealed record', h: 'Someone quietly edits an old approval', p: 'We changed an old approval straight in the database, bypassing the app, the way an insider might. Then we verified. Its fingerprint no longer matches, so the record shows exactly which entry was altered. Rahul can’t claim 10% was approved when 6% was.', run: () => { w = E.simulateTamper(w); sealOpen = true; sealRes = null; }, after: () => { sealRes = E.verifyChain(w); renderSeal(); }, at: () => $('#seal') },
+  { who: 'Arjun', k: 'Sealed record', h: 'Someone quietly edits an old approval', p: 'We changed an old approval straight in the database, bypassing the app, the way an insider might. Then we verified. Its fingerprint no longer matches, so the record shows exactly which entry was altered. Rahul can’t claim 10% was approved when 6% was.', run: () => { w = E.simulateTamper(w); sealOpen = true; sealRes = null; }, after: () => { sealRes = E.verifyAnchored(w); renderSeal(); }, at: () => $('#seal') },
 ];
 let tStep = -1, tTimer = null, tPaused = false; const STEP_MS = 9000;
 const tourEl = Object.assign(document.createElement('div'), { id: 'tour' }); tourEl.setAttribute('role', 'dialog'); tourEl.setAttribute('aria-label', 'Guided tour'); document.body.append(tourEl);
@@ -529,8 +538,9 @@ function tourShow(i) {
 function tourEnd(finished) {
   clearTimeout(tTimer); tStep = -1; tourEl.classList.remove('on'); document.querySelectorAll('.tour-hi').forEach(x => x.classList.remove('tour-hi'));
   try { $('#panel').open && $('#panel').close(); } catch { } panel = null;
+  const im = E.impact(w);
   w = E.escalate(E.sample(realToday)); actor = 'Rahul'; signedIn = true; sealRes = null; sealOpen = false; save();
-  result = null;
+  result = finished ? { text: `Outcome: ${inr(im.notGiven)} of discount asked was held back, every decision is sealed, and silent write-offs stay at ₹0.`, sub: "Your turn: the sample is fresh. Like what you see? Let's talk: rupakr2g@gmail.com" } : null;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 tourEl.addEventListener('click', e => {

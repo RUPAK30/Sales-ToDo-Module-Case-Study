@@ -233,3 +233,13 @@ test('auto-routing: overload is balanced within the bucket only', () => {
   let w = w0(); for (const m of s) w = E.rebalance(w, m.taskId, 'Kavita', m.to);
   assert.equal(E.workload(w).find(r => r.rep === 'Rahul').overCap, 0); assert.equal(E.suggestMoves(w).length, 0);
 });
+test('daily anchor: a full admin rewrite passes the chain check but fails the anchor', () => {
+  const w = w0(); assert.ok(E.verifyAnchored(w).anchored);
+  const edited = E.tamperEntry(w, 1, 'Asked 20% before GST');
+  assert.equal(E.verifyAnchored(edited).ok, false);
+  const rebuilt = E.rebuildChain(edited);
+  assert.ok(E.verifyChain(rebuilt).ok); const v = E.verifyAnchored(rebuilt);
+  assert.equal(v.ok, false); assert.ok(v.anchorFail);
+  let x = E.askDiscount(w, 'T-101', 'Rahul', 6, 'x'); x = E.approve(x, x.approvals.at(-1).id, 'Kavita', 6, E.addDays(D, 9));
+  const d = E.sealedDecision(x, x.approvals.at(-1).id); assert.match(d.entry.text, /^Approved 6%/); assert.ok(d.check.ok);
+});

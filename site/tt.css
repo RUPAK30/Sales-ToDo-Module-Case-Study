@@ -173,3 +173,13 @@ dialog{border:0;border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px))
 /* ---- mobile header: two rows, nav scrolls, nothing overlaps the wordmark ---- */
 @media(max-width:720px){.bar .in{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px}.bar .logo{order:1;justify-self:auto}.bar .hr{order:2;margin-left:auto;justify-self:auto}.bar nav{order:3;flex-basis:100%;justify-self:auto;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}.bar nav::-webkit-scrollbar{display:none}}
 
+
+.bar .menu{font-size:1.1rem;padding:6px 12px;justify-self:start}.bar .hr{display:flex;gap:6px}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:#fff;z-index:70;box-shadow:12px 0 40px rgba(0,0,0,.18);padding:16px;display:flex;flex-direction:column;gap:4px}
+.drawer a{padding:11px 8px;border-radius:9px;text-decoration:none;font-weight:600;color:var(--ink)}.drawer a:hover{background:#F5F2EE}.drawer .btn{margin-top:8px}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pubfacts{display:block!important;font-size:.8rem;color:var(--muted);margin:8px 0 0;max-width:720px;line-height:1.55}.pubfacts a{color:var(--tt-d)}
+.builder{font-size:.82rem;color:var(--muted);margin:10px 0 0;padding:8px 12px;border:1px dashed var(--tt-line);border-radius:10px;background:#fff}.builder a{color:var(--tt-d);font-weight:600}
+details.why{margin:14px 0 0;border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 14px}details.why>summary{cursor:pointer;font-weight:650;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center}
+details.why>summary::-webkit-details-marker{display:none}details.why>summary::after{content:'+';color:var(--tt);font-weight:700}details.why[open]>summary::after{content:'−'}details.why>summary span{font-weight:500;font-size:.8rem;color:var(--muted);margin-left:auto}
+details.why[open]{padding-bottom:14px}details.why>section{margin-top:12px}.decisions ol{margin:10px 0 0;padding-left:20px;display:grid;gap:6px;font-size:.9rem}.decisions{margin-bottom:24px}

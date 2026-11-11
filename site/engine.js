@@ -92,7 +92,10 @@ export function sample(today) {
   // A second ask has sat with Kavita for 2 days: it escalates to the sales head on load.
   seeded = askDiscount(seeded, 'T-202', 'Neha', 5, 'Hospital tender; rival bid 5% lower');
   seeded.approvals[1].askedOn = addDays(today, -2);
-  return escalate(seeded);
+  const out = escalate(seeded);
+  // Yesterday's close: the head fingerprint was shared outside the system (the 'digest', as in Microsoft's SQL Ledger).
+  out.anchor = { n: out.chain.length, hash: out.chain.at(-1).hash, at: `${addDays(today, -1)} 18:00`, to: 'Finance (Every Rupee)' };
+  return out;
 }
 
 const customerOf = (w, name) => w.customers[name] ?? { marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 };
@@ -703,4 +706,23 @@ export function suggestMoves(w) {
     }
   }
   return out;
+}
+
+/* Chain intact AND still ending where yesterday's shared anchor says. Catches a full admin rewrite too. */
+export function verifyAnchored(w) {
+  const v = verifyChain(w); if (!v.ok) return v;
+  const a = w.anchor; if (!a) return { ...v, anchored: false };
+  if (w.chain[a.n - 1]?.hash !== a.hash) return { ok: false, anchorFail: true, brokenAt: a.n, count: w.chain.length };
+  return { ...v, anchored: true };
+}
+/* Demo: an admin with full access edits a row AND recomputes every fingerprint after it. */
+export function rebuildChain(w0) {
+  const w = clone(w0); let prev = 'GENESIS';
+  for (const e of w.chain) { e.prev = prev; e.hash = entryHash(e); prev = e.hash; }
+  return w;
+}
+/* What was really approved: the sealed entry for an approval, plus whether the record still verifies. */
+export function sealedDecision(w, apvId) {
+  const e = [...w.chain].reverse().find(x => x.ref === apvId && /^(Approved|Accepted)/.test(x.text));
+  return e ? { entry: e, check: verifyAnchored(w) } : null;
 }

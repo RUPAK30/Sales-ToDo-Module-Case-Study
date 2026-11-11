@@ -12,10 +12,12 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tt.css?v=1794311500">
+<link rel="stylesheet" href="tt.css?v=1794377498">
 </head>
 <body>
-<header class="bar"><div class="in"><nav aria-label="Pages"><a href="./">Case study &amp; controls</a><a href="app.html" class="on">Live product</a><a href="https://everyrupee-o2c.vercel.app/" class="hide-s">Quote to cash ↗</a></nav><a class="logo" href="app.html" aria-label="Ten Today">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="hr"><button class="btn pri" id="tour-go" type="button">▶ <span class="hide-m">60-second </span>tour</button></div></div></header>
+<header class="bar"><div class="in"><button class="btn ghost menu" id="menu-go" type="button" aria-label="Menu" aria-controls="drawer">☰</button><a class="logo" href="app.html" aria-label="Ten Today">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="hr"><a class="btn ghost hide-m" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><button class="btn pri" id="tour-go" type="button">▶ <span class="hide-m">60-second </span>tour</button></div></div></header>
+<aside id="drawer" class="drawer" hidden aria-label="Menu"><div class="dhead"><b>Ten Today</b><button class="x" id="menu-x" type="button" aria-label="Close menu">×</button></div>
+<a href="./">Case study &amp; controls</a><a href="cockpit.html">Spec &amp; UAT (18 cases)</a><a href="./#sources">Sources</a><a href="https://everyrupee-o2c.vercel.app/">Quote to cash · Every Rupee ↗</a><a href="https://rupak-lemon.vercel.app" target="_blank" rel="noopener">Portfolio ↗</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk ✉</a><button type="button" class="btn ghost" id="reset">↺ Reset sample</button></aside>
 <div class="strip">Sample workspace · changes stay in this browser · no CRM connected</div>
 
 <main class="wrap">
@@ -23,11 +25,13 @@
     <div>
       <p class="eyebrow">B2B Sales Execution &amp; Discount Governance</p>
       <h1>Today desk</h1>
-      <p class="lede">In Indian B2B sales, reps drown in 100+ CRM rows, promise verbal discounts over WhatsApp, and blame Finance when bills are short-paid. <b>Ten Today</b> gives each rep their top 10 daily actions, routes discount asks to the right manager on a 24h clock, and locks every approval with SHA-256 so Finance (<a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>) knows exactly what was approved.</p>
+      <p class="lede"><b>Reps promise discounts nobody approved; finance finds out when the bill is short-paid.</b> Ten Today gives each rep 10 ranked actions, sends every discount ask to the one person allowed to decide it, and seals the decision so nobody can rewrite it later.</p>
+      <p class="pubfacts">Published data: sellers spend well under a third of their week actually selling (<a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener">Salesforce</a>) · 45% of companies lost a deal to a slow quote approval in six months (<a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener">Conga</a>) · since FY24 Indian auditors must report whether the audit trail "has not been tampered with" (<a href="https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities" target="_blank" rel="noopener">ICAI, Rule 11(g)</a>)</p>
     </div>
-    <button class="btn ghost" id="reset" type="button">↺ Reset sample</button>
   </div>
 
+  <p class="builder">Designed &amp; built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · 28 tests on the rules · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a> · <a href="https://rupak-lemon.vercel.app" target="_blank" rel="noopener">Portfolio</a></p>
+  <details class="why"><summary>How a deal moves, and why it matters <span>3 steps · public benchmarks</span></summary>
   <section class="story-strip" aria-label="How a real deal moves through Ten Today in 3 steps">
     <div class="story-step">
       <span class="st-num">STEP 1 · FIELD REP (RAHUL / NEHA)</span>
@@ -42,7 +46,7 @@
     <div class="story-step">
       <span class="st-num">STEP 3 · FINANCE HANDOFF (EVERY RUPEE)</span>
       <b>Sealed with SHA-256 &amp; checked at payment</b>
-      <p>Every approval gets a tamper-proof SHA-256 fingerprint and goes to Finance. If a shop short-pays a bill without approval, Finance sends it back here and blocks the rep's next discount.</p>
+      <p>Every approval gets a tamper-evident SHA-256 fingerprint and goes to Finance. If a shop short-pays a bill without approval, Finance sends it back here and blocks the rep's next discount.</p>
     </div>
   </section>
 
@@ -55,6 +59,7 @@
       <div><b>0 fake "on-time" KPIs</b><span>Stops Reschedule Gaming</span><small>Users reschedule up to 70 overdue tasks/day (<a href="https://www.macstories.net/news/todoist-launches-smart-schedule-an-ai-based-feature-to-reschedule-overdue-tasks/" target="_blank" rel="noopener">Todoist / MacStories</a>). Ten Today measures on-time against the <i>original</i> date and requires a blocker on the 2nd move.</small></div>
     </div>
   </section>
+  </details>
 
   <div class="actor" role="group" aria-label="Switch active role">
     <div class="actor-top"><span>Choose who you want to act as (1-click switch)</span><small id="actor-why"></small></div>
@@ -64,11 +69,19 @@
   <section id="seal" class="seal" aria-live="polite"></section>
   <section id="next" class="next" aria-live="polite"></section>
   <section id="desk"></section>
+  <details class="why decisions"><summary>Why I built it this way <span>6 decisions</span></summary><ol>
+    <li><b>Ten, not everything.</b> A list a rep can finish beats a list they ignore; the rest is counted, never hidden.</li>
+    <li><b>Value only breaks ties.</b> Ranking by deal size teaches cherry-picking; lateness and money-blocking stage come first.</li>
+    <li><b>Route by limit, not by hierarchy.</b> Kavita decides up to 10% within the margin floor; anything else goes to the head, and a day's silence escalates.</li>
+    <li><b>Buckets, like a bank MIS.</b> A task moves freely inside its bucket; a wrong-bucket move needs a reason and a second manager.</li>
+    <li><b>Tamper-evident, not blockchain.</b> One company keeps this record, so a hash chain with a daily anchor shared outside is enough. It's the model Microsoft's SQL Ledger uses, and it answers the auditor's Rule 11(g) question.</li>
+    <li><b>Validate before building more.</b> Next: shadow 3 field reps and 1 approver for a week to test the 10-cap and the 1-day escalation.</li>
+  </ol></details>
 </main>
 
 <dialog id="panel" aria-labelledby="p-title"><div id="panel-body"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 27 engine tests · <a href="cockpit.html?uat=1" style="color:inherit">18 UAT cases</a></span><span style="display:flex;gap:14px;flex-wrap:wrap"><a href="./">How it was designed →</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough">Hiring? Talk to me →</a></span></footer>
-<script type="module" src="app.js?v=1794311500"></script>
+<script type="module" src="app.js?v=1794377498"></script>
 </body>
 </html>

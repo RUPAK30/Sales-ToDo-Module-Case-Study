@@ -32,27 +32,33 @@
 <body>
 <header class="appbar tt-head">
   <div class="in">
-    <nav class="l" aria-label="Pages">
-      <a href="./" class="on">Case study &amp; controls</a>
-      <a href="cockpit.html">Spec &amp; UAT</a>
-      <a href="#sources" class="hide-s">Sources</a>
-      <a href="https://everyrupee-o2c.vercel.app/" class="hide-s">Quote to cash ↗</a>
-    </nav>
+    <nav class="l" aria-label="Pages"><button type="button" id="ix-menu" aria-label="Menu" style="border:1px solid #ECE7E1;background:#fff;border-radius:9px;padding:6px 12px;font-size:1.05rem;cursor:pointer">☰</button></nav>
     <a class="logo" href="./" aria-label="Ten Today home">
       <span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </a>
     <nav class="r" aria-label="Product">
-      <a href="app.html?tour=1" class="hide-s tour">▶ 60-sec tour</a>
-      <a href="app.html" class="pri">Live product ↗</a>
+      <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today" class="hide-s">Let's talk</a>
+      <a href="app.html?tour=1" class="pri">▶ 60-sec tour</a>
     </nav>
   </div>
 </header>
+<style>#ix-drawer[hidden]{display:none!important}</style><aside id="ix-drawer" hidden style="position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:#fff;z-index:90;box-shadow:12px 0 40px rgba(0,0,0,.18);padding:16px;display:flex;flex-direction:column;gap:2px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Ten Today</b><button type="button" id="ix-x" aria-label="Close menu" style="border:0;background:none;font-size:1.4rem;cursor:pointer">×</button></div>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="app.html">Live product</a>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="cockpit.html">Spec &amp; UAT</a>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="#sources">Sources</a>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="https://everyrupee-o2c.vercel.app/">Quote to cash · Every Rupee ↗</a>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="https://rupak-lemon.vercel.app" target="_blank" rel="noopener">Portfolio ↗</a>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#C2410C" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk ✉</a>
+</aside>
+<script>(function(){var d=document.getElementById('ix-drawer');document.getElementById('ix-menu').onclick=function(){d.hidden=false};document.getElementById('ix-x').onclick=function(){d.hidden=true};d.addEventListener('click',function(e){if(e.target.tagName==='A')d.hidden=true});})();</script>
 
 <header class="wrap hero">
   <div class="hero-grid">
     <div>
       <p class="eyebrow">Product &amp; BA Case Study · B2B Sales Execution &amp; Discount Governance · Rupak Ghanpathi, ex-HDFC Bank</p>
       <h1>100 open leads. 10 actions today.</h1>
+      <p style="margin:10px 0 0;font-size:.9rem;color:#6B6460">Designed &amp; built by <b style="color:#1C1917">Rupak Ghanpathi</b>, ex-HDFC Bank BA · 28 tests on the rules · <a href="app.html" style="color:#9A3412;font-weight:600">Try the live product →</a> · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today" style="color:#9A3412;font-weight:600">Let's talk</a></p>
       <p class="lede">A sales execution and discount-approval desk that tells a field rep what to act on now, freezes the task when a discount is asked, and seals every approval in a SHA-256 hash chain shared with Finance (<a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>).</p>
       <div style="background:#fff;border:1px solid #FED7AA;border-left:4px solid #C2410C;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.92rem;color:#1C1917">
         <b>In plain words (for non-sales readers):</b> In Indian B2B sales, a salesperson has 100+ shops to call, promises a shop an extra discount on a phone call to win an order, and weeks later the shop pays less than the bill. <b>Ten Today</b> solves both problems: it picks the rep's <b>top 10 actions for today</b>, and makes sure <b>every discount is approved by the right manager and locked with a digital seal</b> before Finance ever sees the bill.
