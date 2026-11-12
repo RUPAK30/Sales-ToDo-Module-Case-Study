@@ -96,7 +96,7 @@ function renderQ2CBridge() {
     </div>
   </div>`;
 }
-function switchTo(n) { tab = isRep(n) ? 'today' : 'approvals'; try { history.replaceState(null, '', '#' + tab); } catch { } actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function switchTo(n) { for (const k in segOn) delete segOn[k]; tab = isRep(n) ? 'today' : 'approvals'; try { history.replaceState(null, '', '#' + tab); } catch { } actor = n; signedIn = true; result = null; panel = null; sealRes = null; sealEdit = 0; try { $('#panel').close(); } catch { } save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 /* ---------- sealed record: visible on every screen ---------- */
 function renderSeal() {
@@ -215,7 +215,7 @@ function repDesk() {
   const row = (t, i) => `<li><button type="button" class="task ${i === 0 ? 'top' : ''} ${flashId === t.id ? 'flash' : ''}" data-open="${t.id}"><span class="rank">${i + 1}</span><span><span class="c">${esc(t.customer)}</span> ${tierChip(t)}<span class="chip p3">${esc(t.stage)}</span><div class="t">${esc(t.title)}</div><div class="why">${esc(E.explain(w, t))}</div></span><span class="val">${inr(t.value)}</span></button></li>`;
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
-  return `${coverCard()}${cnCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
+  return `${coverCard()}${cnCard()}${impactCard()}<div id="c-week" data-in="pulse">${misTable()}${snap}</div><div class="grid">
     <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
@@ -284,8 +284,7 @@ function cnCard() {
     const body = JSON.stringify(E.eInvoiceCrn(a), null, 2);
     return `<li class="cn ${tone}"><p class="cn-h"><b>${esc(a.customer)}</b> · ${a.cn.no} · ${inr(fx.disc)} + ${a.gst.rate}% GST = ${inr(fx.disc + fx.gst)} <span>${a.cn.settledAs ? 'Financial credit note' : 'GST credit note (s.34)'}</span></p><p class="cn-n">${next}</p>
       ${a.cn.settledAs ? '' : `<div class="cn-a">${mgr ? `<span class="cn-l">Buyer's IMS action, from the GST portal:</span><div class="seg" role="group" aria-label="IMS action for ${a.cn.no}">${['accepted', 'pending', 'rejected'].map(k => `<button type="button" data-ims="${k}" data-id="${a.id}" aria-pressed="${a.cn.ims === k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>${a.cn.ims === 'rejected' ? `<button class="btn" type="button" data-fin="${a.id}">Settle as financial credit note</button>` : `<input class="cn-r" data-rem="${a.id}" placeholder="Their remark, if rejecting" value="${esc(cnRemark[a.id] ?? '')}">`}` : `<span class="cn-l">Buyer's IMS action: <b>${a.cn.ims}</b> (finance records it)</span>`}</div>
-      <div class="cn-b"><button class="btn" type="button" data-copy="${esc(msg)}">Copy message for the buyer</button></div>
-      <details class="api"><summary>⇄ E-invoice for the credit note (CRN) <span>integration preview</span></summary><p class="api-n">NIC e-invoice schema, document type CRN, referring to the original sale. Needed where e-invoicing applies. GSTIN, HSN and invoice fields are placeholders. Sample payload, not sent to the IRP.</p><pre>${esc(body)}</pre><button class="btn" type="button" data-copy="${esc(body)}">Copy payload</button></details>`}</li>`;
+      <details class="api cn-more"><summary>Message for the buyer · e-invoice (CRN)</summary><button class="btn" type="button" data-copy="${esc(msg)}">Copy message for the buyer</button><p class="api-n">NIC e-invoice schema, document type CRN, referring to the original sale. Needed where e-invoicing applies. GSTIN, HSN and invoice fields are placeholders. Sample payload, not sent to the IRP.</p><pre>${esc(body)}</pre><button class="btn" type="button" data-copy="${esc(body)}">Copy payload</button></details>`}</li>`;
   };
   return `<section class="card cnc" id="gst-cn" data-in="approvals pulse"><p class="k">GST credit notes · rules in force from 1 Nov 2026</p><h2>${g.count ? `${inr(g.gst)} of GST relief doesn't hold yet` : 'Every GST cut you claimed holds'}</h2>
   <p class="hint">A post-sale discount cuts your GST only through a s.34 credit note, and only once the buyer reverses the same input tax credit by accepting it in IMS.${g.deadline ? ` Declare by <b>${fmtY(g.deadline)}</b> (${g.daysLeft} days), or the GST stays paid for good.` : ''}</p>
@@ -318,7 +317,7 @@ function managerDesk() {
     <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
   </div></section>`;
 
-  return `${coverCard()}${cnCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
+  return `${coverCard()}${cnCard()}${impactCard()}<div id="c-week" data-in="pulse">${misTable()}${snap}</div><div class="grid">
     <div class="side">
       <div class="card" id="asks" data-in="approvals"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
@@ -510,9 +509,31 @@ function autoInspect() {
   else id = E.decisionsFor(w, actor)[0]?.taskId ?? w.approvals.filter(a => a.status === 'approved').at(-1)?.taskId;
   if (id) openTask(id);
 }
+/* Sub-views inside a tab: one thing on screen at a time, nothing buried below. */
+const SEGS = {
+  approvals: [['wait', 'Waiting', '#asks, #c-myasks'], ['done', 'Decided', '#c-decided, #schemes'], ['cn', 'Credit notes', '#gst-cn'], ['rec', 'Record', '#seal, #q2c-wrap, #act']],
+  pulse: [['week', 'This week', '#c-week'], ['cn', 'GST', '#gst-cn'], ['worth', "What it's worth", '#impact, main.wrap>.decisions'], ['team', 'Team', '#eff, #turn, #data']],
+};
+const segOn = {};
+function segCount(t, k) {
+  if (t === 'approvals' && k === 'wait') return isRep(actor) ? w.approvals.filter(a => a.rep === actor && ['pending', 'countered'].includes(a.status)).length : E.decisionsFor(w, actor).length;
+  if (k === 'cn') { const g = E.gstAtRisk(w); return g.rejected + g.overdue; }
+  if (t === 'approvals' && k === 'rec') return E.verifyChain(w).ok ? 0 : 1;
+  return 0;
+}
+function applySegs() {
+  document.querySelectorAll('.segoff').forEach(x => x.classList.remove('segoff'));
+  const S = SEGS[tab], bar = $('#segbar'); if (!bar) return;
+  if (!S) { bar.innerHTML = ''; bar.hidden = true; return; }
+  const cur = segOn[tab] ?? S[0][0]; bar.hidden = false;
+  bar.innerHTML = S.map(([k, l]) => { const n = segCount(tab, k); return `<button type="button" role="tab" data-seg="${k}" aria-selected="${k === cur}">${l}${n ? `<span class="sg-n">${n}</span>` : ''}</button>`; }).join('');
+  for (const [k, , sel] of S) if (k !== cur) document.querySelectorAll(sel).forEach(x => x.classList.add('segoff'));
+  for (const box of document.querySelectorAll('#desk .side, #desk .grid')) if (![...box.children].some(c => c.getClientRects().length)) box.classList.add('segoff');
+}
 function renderInner() {
   renderTabs(); intro(); renderActors(); setTimeout(autoInspect, 0); renderQ2CBridge(); $('#seal').hidden = false; renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
+  applySegs();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
   if (!isRep(actor)) moveFit();
@@ -714,10 +735,11 @@ document.addEventListener('input', e => {
   const inp = document.querySelector(`#impact [data-model="${k}"]`); inp.focus(); try { inp.setSelectionRange(pos, pos); } catch { }
 });
 document.addEventListener('click', e => {
+  const sg = e.target.closest('[data-seg]'); if (sg) { segOn[tab] = sg.dataset.seg; applySegs(); return; }
   const ak = wide() && e.target.closest('#asks .ask'); if (ak && !e.target.closest('button,input,select,label')) { const a = w.approvals.find(x => `ask-${x.id}` === ak.id); if (a) { openTask(a.taskId); return; } }
   const cp = e.target.closest('[data-copy]'); if (cp) { const txt = cp.dataset.copy; (navigator.clipboard?.writeText(txt) ?? Promise.reject()).then(() => toast('Copied. Paste it in WhatsApp.'), () => toast('Select the text and copy it.')); return; }
   const nl = e.target.closest('a[href="#notes"]'); if (nl) { e.preventDefault(); $('#drawer').hidden = true; const d = document.querySelector('#notes details'); if (d) d.open = true; $('#notes').scrollIntoView({ behavior: 'smooth' }); return; }
-  const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
+  const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const S = SEGS[tab]; const hit = S?.find(([, , sel]) => sel.split(', ').includes('#' + jl.dataset.jump)); if (hit) { segOn[tab] = hit[0]; applySegs(); } const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
   const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }
   const hl = e.target.closest('a[href^="#"]'); if (hl && ALIAS[hl.getAttribute('href').slice(1)]) { e.preventDefault(); const id = hl.getAttribute('href').slice(1); setTab(ALIAS[id], { keepScroll: false }); document.getElementById(id)?.scrollIntoView({ block: 'start' }); return; }
   const b = e.target.closest('button,[data-open]'); if (!b) return;

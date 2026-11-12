@@ -492,7 +492,7 @@ main.wrap>*{min-width:0}
 .chip.st-warn{background:#FFFBEB;color:#92400E}
 @media (max-width:760px){.cn-h span{float:none;display:block}}
 #desk{display:flex;flex-direction:column}#desk>*{min-width:0}
-body[data-tab="approvals"] #gst-cn{order:3;margin-top:14px}
+body[data-tab="approvals"] #gst-cn{order:3;margin-top:0}
 /* ===== v4 structure: rail · work · deal thread ===== */
 .rail-k{margin:0 0 6px;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C}
 .rail-tests button{display:block;width:100%;text-align:left;font:inherit;font-size:.84rem;padding:8px 10px;margin:4px 0;border:1px solid #E7E5E4;border-radius:10px;background:#fff;cursor:pointer;transition:background-color .2s,transform .12s}
@@ -558,3 +558,18 @@ body[data-tab="approvals"] #gst-cn{order:3;margin-top:14px}
 .pay{margin:12px 0 0;padding:9px 12px;border-radius:10px;background:#F5F5F4;font-size:.88rem;line-height:1.45}.pay .w{color:#92400E;font-weight:600}
 .rail-tests .pay-b{border-color:#1C1917;font-weight:600}
 .bk-ban pre{max-height:180px;overflow:auto;background:#1C1917;color:#E7E5E4;border-radius:8px;padding:8px;font-size:.7rem;margin:6px 0 0}
+/* sub-views: one at a time */
+.segoff{display:none!important}
+.segbar{position:sticky;top:0;z-index:20;display:flex;gap:4px;padding:4px;margin:4px 0 12px;background:#F0EFED;border-radius:12px;overflow-x:auto;scrollbar-width:none}
+.segbar::-webkit-scrollbar{display:none}
+.segbar button{flex:1 0 auto;font:inherit;font-size:.86rem;font-weight:600;color:#57534E;background:none;border:0;border-radius:9px;padding:8px 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background-color .2s,color .2s}
+.segbar button[aria-selected="true"]{background:#fff;color:#1C1917;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sg-n{min-width:18px;height:18px;border-radius:9px;background:#DC2626;color:#fff;font-size:.68rem;line-height:18px;padding:0 5px}
+/* tighter credit-note cards, no overflow */
+.cnc,.cn{min-width:0;max-width:100%;box-sizing:border-box}.cn{overflow:hidden}
+.cn-n{font-size:.88rem}
+.cn-a{gap:6px}.cn-a .btn{padding:6px 10px;font-size:.82rem}
+.seg button{padding:6px 10px}
+.cn-more{margin-top:8px}.cn-more>summary{font-size:.82rem}.cn-more .btn{margin:6px 0}
+.mini li .api{display:inline-block;margin:4px 0 0}.mini li .api>summary{font-size:.8rem}
+@media (max-width:760px){.segbar{top:0}.segbar button{flex:0 0 auto;font-size:.82rem;padding:8px 11px}.cn-a{flex-wrap:wrap}.cn-r{flex-basis:100%}}
