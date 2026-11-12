@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794465119';
+import * as E from './engine.js?v=1794468812';
 
 const KEY = 'tentoday-product-v7';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -254,7 +254,7 @@ function askCard(a) {
 }
 function misTable() {
   return `<section class="mis" id="c-mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl2" type="button">⬇ CSV</button></div>
-    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b>${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b data-rip="mis-${esc(r.kpi).slice(0, 24)}">${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
     <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
 }
 
@@ -386,14 +386,16 @@ function decide(kind, id) {
   const card = $(`#ask-${CSS.escape(id)}`); const f = n => card.querySelector(`[data-f="${n}"]`).value;
   const a = w.approvals.find(x => x.id === id);
   const run = { approve: () => E.approve(w, id, actor, Number(f('cap')), f('exp'), f('why')), counter: () => E.counter(w, id, actor, Number(f('cap')), f('exp'), f('why')), back: () => E.sendBack(w, id, actor, f('why')) }[kind];
-  const text = { approve: `Approved ${f('cap')}% for ${a.customer}, valid to ${fmt(f('exp'))}.`, counter: `Offered ${f('cap')}% to ${a.rep} for ${a.customer}.`, back: `Sent ${a.customer}'s ask back to ${a.rep}.` }[kind];
+  const text = { approve: `Approved ${f('cap')}% for ${a.customer}: ₹${Math.round(a.value * f('cap') / 100).toLocaleString('en-IN')} off a ₹${a.value.toLocaleString('en-IN')} order${Number(f('cap')) < a.askPct ? `, ₹${Math.round(a.value * (a.askPct - f('cap')) / 100).toLocaleString('en-IN')} less than asked` : ''}. Valid to ${fmt(f('exp'))}.`, counter: `Offered ${f('cap')}% to ${a.rep} for ${a.customer}.`, back: `Sent ${a.customer}'s ask back to ${a.rep}.` }[kind];
   const sub = { approve: `${a.rep}'s task is unfrozen and back in Today as “send the revised quote”. Use “Send to finance” under Decided so Every Rupee checks payments against this cap.`, counter: `${a.rep} must accept or decline. Their task stays frozen until then.`, back: `${a.rep}'s task is back in Today with your note, so they can fix it and ask again.` }[kind];
   try { w = run(); save(); toast(text); const sealed = w.approvals.find(x => x.id === id)?.seal; sealRes = null; result = { text: text + (kind === 'approve' && sealed ? ` Sealed as ${sealed.slice(0, 12)}.` : ''), sub, switchTo: a.rep }; flashId = a.taskId; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   catch (e) { let el = card.querySelector('.err'); if (!el) { el = document.createElement('div'); el.className = 'err'; el.setAttribute('role', 'alert'); card.prepend(el); } el.textContent = e.message; }
 }
 
+const RIP = () => Object.fromEntries([...document.querySelectorAll('[data-rip]')].map(el => [el.dataset.rip, el.textContent]));
 function render() {
-  try { renderInner(); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
+  const before = RIP();
+  try { renderInner(); requestAnimationFrame(() => { const after = document.querySelectorAll('[data-rip]'); after.forEach(el => { if (el.dataset.rip in before && before[el.dataset.rip] !== el.textContent) { el.classList.remove('rip'); void el.offsetWidth; el.classList.add('rip'); } }); }); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
 function renderInner() {
   renderTabs(); intro(); renderActors(); renderQ2CBridge(); $('#seal').hidden = false; renderSeal(); renderNext();
@@ -426,7 +428,7 @@ function badgeCount() {
 function renderTabs() {
   document.body.dataset.tab = tab;
   const n = badgeCount();
-  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
+  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
 }
 const UH = {
   team: {
@@ -459,6 +461,33 @@ function why1(t) {
   const last = E.explain(w, t).split(' · ').slice(-1)[0];
   if (/^P\d/.test(last)) { const d = E.daysBetween(t.target, w.today); return d > 0 ? `${d} day${d === 1 ? '' : 's'} late` : 'due today'; }
   return last.replace(/^customer /, 'they ');
+}
+/* Try to break it: three guided attempts against the real rules. Nothing is faked; each calls the same engine the screens use. */
+let breakRes = null;
+function runBreak(kind) {
+  const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
+  if (kind === 'cover') {
+    let msg = ''; try { E.coverLeave(w, 'Kavita', 'Imran', 'Neha', w.today, E.addDays(w.today, 2)); } catch (e) { msg = e.message; }
+    const mine = w.tasks.filter(t => t.coverFor === 'Imran' && t.status === 'open'), c = E.activeCover(w, 'Imran');
+    breakRes = { k: 'cover', t: "Hand Imran's deals to Neha while he's on leave", bad: msg, good: c ? `What holds instead: ${c.to} has Imran's ${mine.length} open deal${mine.length === 1 ? '' : 's'} (${inr(mine.reduce((s, t) => s + (t.value || 0), 0))} of pipeline), and every rupee he closes is still credited to Imran.` : 'Arrange cover on Team & Cover to see the hand-over.', go: ['team', 'Open Team & Cover'] };
+  } else if (kind === 'self') {
+    const a = w.approvals.find(x => x.status === 'pending'); let msg = '';
+    if (a) try { E.approve(w, a.id, a.rep, a.askPct, E.addDays(w.today, 5), 'approving my own'); } catch (e) { msg = e.message; }
+    breakRes = { k: 'self', t: a ? `${a.rep} approves ${a.rep === 'Neha' ? 'her' : 'his'} own ${a.askPct}% for ${a.customer}` : 'Approve your own discount', bad: msg || 'No ask is waiting right now. Ask for a discount from any quote, then try again.', good: a ? `What holds instead: it waits for ${E.label(a.approver).split(' · ')[0]}. Undecided after a working day, it moves up on its own.` : '', go: ['approvals', 'Open Approvals'] };
+  } else {
+    const ap = [...w.chain].reverse().find(x => /^Approved \d/.test(x.text));
+    if (!ap) { breakRes = { k: 'seal', t: 'Edit a signed approval', bad: 'No signed approval yet.', good: '', go: ['approvals', 'Open Approvals'] }; return render(); }
+    const edited = ap.text.replace(/^Approved (\d+(?:\.\d+)?)%/, (m, p) => `Approved ${Number(p) + 4}%`);
+    if (!w.tampered) drillBackup = JSON.parse(JSON.stringify(w.chain));
+    w = E.tamperEntry(w, ap.n, edited); save(); sealRes = E.verifyAnchored ? E.verifyAnchored(w) : E.verifyChain(w);
+    breakRes = { k: 'seal', t: 'Edit a signed approval straight in the database', bad: `Caught. Entry #${ap.n} was signed as “${ap.text.split(' for ')[0]}” and now reads “${edited.split(' for ')[0]}”. The seal no longer matches, so finance stops trusting it.`, good: 'Nothing else is lost: put it back and the seal is green again.', go: ['approvals', 'See the record'], undo: true };
+  }
+  render();
+}
+function breakBar() {
+  let r = breakRes;
+  if (r?.k === 'seal' && r.undo && !w.tampered) r = breakRes = { ...r, bad: '', good: 'Put back. Every fingerprint matches again, and the seal is green.', undo: false };
+  return `<div class="bk"><div class="bk-h"><b>Try to break it</b><span>3 tests · 30 seconds · the real rules, nothing staged</span></div><div class="bk-b"><button class="btn" type="button" data-break="cover">Give Imran's deals to the wrong rep</button><button class="btn" type="button" data-break="self">Approve your own discount</button><button class="btn" type="button" data-break="seal">Edit a signed approval</button></div>${r ? `<div class="bk-r" role="status"><p class="bk-t">You tried: ${esc(r.t)}</p>${r.bad ? `<p class="bk-x">⛔ ${esc(r.bad)}</p>` : ''}${r.good ? `<p class="bk-ok">${esc(r.good)}</p>` : ''}<div class="bk-a">${r.undo && w.tampered ? '<button class="btn" type="button" data-seal="undo">Put it back</button>' : ''}<a class="btn link" href="#${r.go[0]}" data-tab="${r.go[0]}">${r.go[1]} →</a><button class="btn link" type="button" data-break="close">Close</button></div></div>` : ''}</div>`;
 }
 function intro() {
   const m = E.mis(w), judged = m.filter(x => x.ok !== null && x.target !== 'Tracked'), slipped = judged.filter(x => x.ok === false);
@@ -493,9 +522,9 @@ function intro() {
     pulse: { h: slipped.length ? `${slipped.length === 1 ? 'One thing' : `${slipped.length} things`} slipped this week.` : 'Everything held this week.', p: slipped.length ? slipped.map(x => x.kpi).join('; ') + '.' : 'No deal stuck waiting for a decision, and no order above what was approved.', a: `<button class="btn pri" id="mis-dl" type="button">Download for Monday</button>` },
   }[tab];
   const cards = tab === 'pulse' ? `<div class="pc3">
-    <div><b>${doneToday} done today</b><span>${q ? `${q.list.length} still on ${rep ? 'your' : 'the'} list` : 'across the team'}</span></div>
+    <div><b data-rip="p-done">${doneToday} done today</b><span>${q ? `${q.list.length} still on ${rep ? 'your' : 'the'} list` : 'across the team'}</span></div>
     <div><b>${late ? `${esc(late.customer)}, ${lateDays} day${lateDays === 1 ? '' : 's'} late` : 'Nothing late'}</b><span>${late ? `${esc(late.rep)} · ${esc(late.title)}` : 'Every task is on its date'}</span></div>
-    <div><b>${orphan ? `${orphan} deal${orphan === 1 ? '' : 's'} with nobody` : 'Every deal has an owner'}</b><span>${out.length ? `including ${out.map(p => p.name).join(', ')}'s, covered while away` : 'Nobody on leave'}</span></div></div>` : '';
+    <div><b data-rip="p-own">${orphan ? `${orphan} deal${orphan === 1 ? '' : 's'} with nobody` : 'Every deal has an owner'}</b><span>${out.length ? `including ${out.map(p => p.name).join(', ')}'s, covered while away` : 'Nobody on leave'}</span></div></div>` : '';
   const TL = {
     today: rep ? [['c-hold', 'Parked for later', 'Comes back on the date you set'], ['c-later', 'Not today', 'Future tasks wait off your list'], ['c-done', 'Done', 'On time means the first date, not a moved one']]
       : [['team', 'Who has room', 'Workload per rep, and what can move'], ...(pend.length ? [['asks', 'Waiting on you', `${pend.length} ask${pend.length === 1 ? '' : 's'} to decide`]] : [])],
@@ -512,7 +541,7 @@ function intro() {
   }[tab];
   const u0 = UH[tab], u = tab === 'approvals' ? { pm: [...u0.pm, UH.record.pm[0]], fin: [...u0.fin, UH.record.fin[0]], ba: [...u0.ba, UH.record.ba[0]] } : u0;
   const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}${tiles}
+  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}${tiles}${breakBar()}
   <details class="uh"><summary>How I built this <span>the problem, my call, and notes for product, finance and BA readers</span></summary><p class="hx-w"><b>The problem:</b> ${esc(WHY[0])} <b>My call:</b> ${esc(WHY[1])}</p><div class="uh-g">${sec('Product', u.pm)}${sec('Finance ops', u.fin)}${sec('Business analysis', u.ba)}</div></details>
   <p class="ti-b">Built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>`;
 }
@@ -577,6 +606,7 @@ document.addEventListener('click', e => {
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); return; }
+  if (b.dataset.break) { if (b.dataset.break === 'close') { breakRes = null; render(); } else runBreak(b.dataset.break); return; }
   if (b.dataset.cover === 'end') { const rep = b.dataset.rep; act(() => E.endCover(w, actor, rep), `${rep} is back. Their deals are handed back.`); return; }
   if (b.dataset.cover === 'start') { const rep = $('#cv-rep').value, to = $('#cv-to').value; act(() => E.coverLeave(w, actor, rep, to, $('#cv-from').value, $('#cv-end').value), `${rep}'s open deals are with ${to}, still credited to ${rep}.`); return; }
   if (b.dataset.tool) { toolTab = b.dataset.tool; toolChosen = true; document.querySelectorAll('.ttabs button').forEach(x => { const on = x.dataset.tool === toolTab; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); }); document.querySelectorAll('.tbody .tool').forEach(x => { x.hidden = x.id !== toolTab; }); if (!b.closest('.ttabs')) $('.tools')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
@@ -601,6 +631,7 @@ document.addEventListener('click', e => {
         toast('Raw DB row modified & SHA-256 chain verified: mismatch caught.');
       } catch (err) { $('#db-err').innerHTML = `<div class="err" style="margin-top:6px">${esc(err.message)}</div>`; return; }
     }
+    if (b.dataset.seal === 'undo' && breakRes?.k === 'seal') breakRes = null;
     if (b.dataset.seal === 'undo') { if (drillBackup) { w = { ...w, chain: drillBackup }; delete w.tampered; drillBackup = null; } else w = E.undoTamper(w); save(); sealEdit = 0; sealRes = E.verifyAnchored(w); toast('Original database row restored & verified.'); }
     renderQ2CBridge();
     return renderSeal();

@@ -384,3 +384,14 @@ body[data-tab="today"] .ti-b{display:block}
 main.wrap{display:flex;flex-direction:column}
 main.wrap>*{min-width:0}
 #seal,#q2c-wrap,main.wrap>.decisions,main.wrap>details.why{order:2}
+/* try to break it */
+.bk{margin-top:14px;border:1px dashed #D6D3D1;border-radius:14px;padding:12px;background:#FFFCF8}
+.bk-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:8px}.bk-h b{font-size:.95rem}.bk-h span{font-size:.78rem;color:#78716C}
+.bk-b{display:flex;flex-wrap:wrap;gap:8px}.bk-b .btn{font-size:.84rem}
+.bk-r{margin-top:10px;border-radius:12px;background:#fff;border:1px solid #E7E5E4;padding:12px;animation:sx-in .25s cubic-bezier(.2,.8,.2,1) both}
+.bk-t{margin:0;font-size:.8rem;color:#78716C}.bk-x{margin:4px 0 0;font-weight:600;color:#991B1B;line-height:1.4}.bk-ok{margin:6px 0 0;color:#166534;line-height:1.4}
+.bk-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+@media (max-width:760px){.bk-b{display:grid;grid-template-columns:1fr}.bk-b .btn{justify-content:flex-start;text-align:left}}
+/* ripple: a number that changed because of your action pulses once */
+@keyframes rip{0%{background:rgba(34,197,94,.28);box-shadow:0 0 0 0 rgba(34,197,94,.45)}100%{background:transparent;box-shadow:0 0 0 10px rgba(34,197,94,0)}}
+.rip{animation:rip .9s ease-out;border-radius:6px}

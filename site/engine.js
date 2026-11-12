@@ -29,6 +29,7 @@ const BLOCKING = ['Quote sent', 'Negotiation']; // money is waiting on these
 /* ---------- dates (ISO yyyy-mm-dd, local) ---------- */
 export const iso = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
 export const addDays = (day, n) => { const [y, m, d] = day.split('-').map(Number); return iso(new Date(y, m - 1, d + n)); };
+export const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 export const daysBetween = (a, b) => { const [y1, m1, d1] = a.split('-').map(Number); const [y2, m2, d2] = b.split('-').map(Number); return Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000); };
 const stamp = () => new Date().toISOString();
 const clone = w => JSON.parse(JSON.stringify(w));
@@ -244,7 +245,7 @@ export function askDiscount(w0, id, actor, pct, reason) {
 
 const mustDecide = (a, actor) => {
   if (a.status !== 'pending') fail('This ask is not waiting for a decision.');
-  if (actor === a.rep) fail(`${a.rep} asked for this, so ${a.rep} can't decide it.`);
+  if (actor === a.rep) fail(`${a.rep} asked for this, so ${a.rep} can't decide it. A ${inr(a.value * a.askPct / 100)} discount always needs a second person.`);
   const p = person(actor);
   if (!p?.approver) fail('Only a sales manager or the sales head can decide discounts.');
   if (a.approver === 'Arjun' && !p.senior) fail(`Only the sales head can decide this: ${a.routedBecause.join(', ')}.`);
@@ -258,7 +259,7 @@ export function approve(w0, apvId, actor, capPct, validTo, overrideNote) {
   if (hold && !(overrideNote && overrideNote.trim())) fail('This dealer is on credit hold. Write why you are overriding it (e.g. post-dated cheque received).');
   if (!(capPct > 0)) fail('Set the approved discount.');
   if (capPct > a.askPct) fail(`You can't approve more than was asked (${a.askPct}%).`);
-  if (!person(actor).senior && (capPct > MANAGER_LIMIT || capPct > a.marginFloorPct)) fail(`Above your limit. Max ${Math.min(MANAGER_LIMIT, a.marginFloorPct)}%, or send it to the sales head.`);
+  if (!person(actor).senior && (capPct > MANAGER_LIMIT || capPct > a.marginFloorPct)) { const mx = Math.min(MANAGER_LIMIT, a.marginFloorPct); fail(`${inr(a.value * (capPct - mx) / 100)} above your limit. ${capPct}% on this ${inr(a.value)} order gives away ${inr(a.value * capPct / 100)}; you can approve up to ${mx}% (${inr(a.value * mx / 100)}). Approve ${mx}%, or send it to the sales head.`); }
   if (!validTo || validTo <= w.today) fail('Set an expiry date after today. Approvals never stay open forever.');
   Object.assign(a, { status: 'approved', capPct, validTo, decidedBy: actor, decidedOn: w.today, amount: rupeesOff(a.value, capPct), override: hold ? overrideNote.trim() : null });
   a.log.push({ at: stamp(), who: actor, text: `Approved ${capPct}% before GST (₹${a.amount.toLocaleString('en-IN')}), valid to ${validTo}${hold ? `. Credit hold overridden: ${overrideNote.trim()}` : ''}` });
@@ -595,7 +596,7 @@ export function placeOrder(w0, id, actor, orderValue, discountPct) {
   const { approval, pct } = allowedPct(w, task);
   if (approval?.used) fail(`${approval.id} was already used on order ${approval.orderId}. One approval covers one order.`);
   if (approval && approval.validTo < w.today) fail(`${approval.id} expired on ${approval.validTo}. Ask again before booking the order.`);
-  if (discountPct > pct + 1e-9) fail(`You can give at most ${pct}% here (${approval ? `${approval.capPct}% approved` : 'nothing approved'}${task.scheme ? ` + ${task.scheme.pct}% scheme` : ''}). Book at ${pct}% or ask again.`);
+  if (discountPct > pct + 1e-9) fail(`${inr(orderValue * (discountPct - pct) / 100)} more than approved. You can give at most ${pct}% here (${approval ? `${approval.capPct}% approved` : 'nothing approved'}${task.scheme ? ` + ${task.scheme.pct}% scheme` : ''}). Book at ${pct}% or ask again.`);
   const ord = { id: `ORD-${++w.seq.ord}`, taskId: id, rep: actor, creditTo: task.coverFor ?? actor, customer: task.customer, value: orderValue, discountPct, discountAmt: rupeesOff(orderValue, discountPct), approvalId: approval?.id ?? null, scheme: task.scheme?.id ?? null, on: w.today };
   w.orders.push(ord);
   if (approval) { approval.used = true; approval.orderId = ord.id; }
