@@ -166,7 +166,7 @@ function collapseForMobile() {
   if (!matchMedia('(max-width:600px)').matches) return;
   document.querySelectorAll('#desk .card:not(.tool):not(.tools)').forEach((c, k) => {
     const h = c.querySelector('h2'); if (!h) return; const key = h.textContent.replace(/[\d·]+/g, '').trim();
-    if (k === 0 || c.id === 'asks' || (c.closest('[data-in]')?.dataset.in ?? 'today') !== 'today') return; // the main list, and every non-Today tab, stays open
+    if (k === 0 || c.querySelector('.task') || c.id === 'asks' || (c.closest('[data-in]')?.dataset.in ?? 'today') !== 'today') return; // the main list, and every non-Today tab, stays open
     c.classList.add('fold'); if (!openCards.has(key)) c.classList.add('cl');
     h.setAttribute('role', 'button'); h.tabIndex = 0;
     h.onclick = () => { c.classList.toggle('cl'); c.classList.contains('cl') ? openCards.delete(key) : openCards.add(key); };
@@ -322,7 +322,8 @@ function managerDesk() {
 }
 
 /* ---------- task panel ---------- */
-function openTask(id, tab) { panel = { id, tab: tab ?? null, err: '', done: null }; renderPanel(); const d = $('#panel'); if (!d.open) d.showModal(); }
+const wide = () => matchMedia('(min-width:1100px)').matches;
+function openTask(id, tab) { panel = { id, tab: tab ?? null, err: '', done: null }; renderPanel(); const d = $('#panel'); if (!d.open) { wide() ? d.show() : d.showModal(); } document.body.classList.toggle('insp', wide()); document.querySelectorAll('.task.sel').forEach(x => x.classList.remove('sel')); document.querySelector(`.task[data-open="${id}"]`)?.classList.add('sel'); }
 function renderPanel() {
   if (!panel) return;
   const t = w.tasks.find(x => x.id === panel.id); const a = apvOf(t);
@@ -469,25 +470,32 @@ function runBreak(kind) {
   if (kind === 'cover') {
     let msg = ''; try { E.coverLeave(w, 'Kavita', 'Imran', 'Neha', w.today, E.addDays(w.today, 2)); } catch (e) { msg = e.message; }
     const mine = w.tasks.filter(t => t.coverFor === 'Imran' && t.status === 'open'), c = E.activeCover(w, 'Imran');
-    breakRes = { k: 'cover', t: "Hand Imran's deals to Neha while he's on leave", bad: msg, good: c ? `What holds instead: ${c.to} has Imran's ${mine.length} open deal${mine.length === 1 ? '' : 's'} (${inr(mine.reduce((s, t) => s + (t.value || 0), 0))} of pipeline), and every rupee he closes is still credited to Imran.` : 'Arrange cover on Team & Cover to see the hand-over.', go: ['team', 'Open Team & Cover'] };
+    breakRes = { k: 'cover', code: 'Blocked · BR-07 · same dealers only', t: "Hand Imran's deals to Neha while he's on leave", bad: msg, good: c ? `What holds instead: ${c.to} has Imran's ${mine.length} open deal${mine.length === 1 ? '' : 's'} (${inr(mine.reduce((s, t) => s + (t.value || 0), 0))} of pipeline), and every rupee he closes is still credited to Imran.` : 'Arrange cover on Team & Cover to see the hand-over.', go: ['team', 'Open Team & Cover'] };
   } else if (kind === 'self') {
     const a = w.approvals.find(x => x.status === 'pending'); let msg = '';
     if (a) try { E.approve(w, a.id, a.rep, a.askPct, E.addDays(w.today, 5), 'approving my own'); } catch (e) { msg = e.message; }
-    breakRes = { k: 'self', t: a ? `${a.rep} approves ${a.rep === 'Neha' ? 'her' : 'his'} own ${a.askPct}% for ${a.customer}` : 'Approve your own discount', bad: msg || 'No ask is waiting right now. Ask for a discount from any quote, then try again.', good: a ? `What holds instead: it waits for ${E.label(a.approver).split(' · ')[0]}. Undecided after a working day, it moves up on its own.` : '', go: ['approvals', 'Open Approvals'] };
+    breakRes = { k: 'self', code: 'Blocked · maker-checker', t: a ? `${a.rep} approves ${a.rep === 'Neha' ? 'her' : 'his'} own ${a.askPct}% for ${a.customer}` : 'Approve your own discount', bad: msg || 'No ask is waiting right now. Ask for a discount from any quote, then try again.', good: a ? `What holds instead: it waits for ${E.label(a.approver).split(' · ')[0]}. Undecided after a working day, it moves up on its own.` : '', go: ['approvals', 'Open Approvals'] };
   } else {
     const ap = [...w.chain].reverse().find(x => /^Approved \d/.test(x.text));
     if (!ap) { breakRes = { k: 'seal', t: 'Edit a signed approval', bad: 'No signed approval yet.', good: '', go: ['approvals', 'Open Approvals'] }; return render(); }
     const edited = ap.text.replace(/^Approved (\d+(?:\.\d+)?)%/, (m, p) => `Approved ${Number(p) + 4}%`);
     if (!w.tampered) drillBackup = JSON.parse(JSON.stringify(w.chain));
     w = E.tamperEntry(w, ap.n, edited); save(); sealRes = E.verifyAnchored ? E.verifyAnchored(w) : E.verifyChain(w);
-    breakRes = { k: 'seal', t: 'Edit a signed approval straight in the database', bad: `Caught. Entry #${ap.n} was signed as “${ap.text.split(' for ')[0]}” and now reads “${edited.split(' for ')[0]}”. The seal no longer matches, so finance stops trusting it.`, good: 'Nothing else is lost: put it back and the seal is green again.', go: ['approvals', 'See the record'], undo: true };
+    breakRes = { k: 'seal', code: 'Caught · SHA-256 seal broken', t: 'Edit a signed approval straight in the database', bad: ` Entry #${ap.n} was signed as “${ap.text.split(' for ')[0]}” and now reads “${edited.split(' for ')[0]}”. The seal no longer matches, so finance stops trusting it.`, good: 'Nothing else is lost: put it back and the seal is green again.', go: ['approvals', 'See the record'], undo: true };
   }
   render();
+  const tgt = { cover: '#cover', self: '#asks, #c-myasks', seal: '#seal' }[kind]; const el = document.querySelector(tgt);
+  if (el && el.offsetParent) { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); }
 }
 function breakBar() {
-  let r = breakRes;
-  if (r?.k === 'seal' && r.undo && !w.tampered) r = breakRes = { ...r, bad: '', good: 'Put back. Every fingerprint matches again, and the seal is green.', undo: false };
-  return `<div class="bk"><div class="bk-h"><b>Try to break it</b><span>3 tests · 30 seconds · the real rules, nothing staged</span></div><div class="bk-b"><button class="btn" type="button" data-break="cover">Give Imran's deals to the wrong rep</button><button class="btn" type="button" data-break="self">Approve your own discount</button><button class="btn" type="button" data-break="seal">Edit a signed approval</button></div>${r ? `<div class="bk-r" role="status"><p class="bk-t">You tried: ${esc(r.t)}</p>${r.bad ? `<p class="bk-x">⛔ ${esc(r.bad)}</p>` : ''}${r.good ? `<p class="bk-ok">${esc(r.good)}</p>` : ''}<div class="bk-a">${r.undo && w.tampered ? '<button class="btn" type="button" data-seal="undo">Put it back</button>' : ''}<a class="btn link" href="#${r.go[0]}" data-tab="${r.go[0]}">${r.go[1]} →</a><button class="btn link" type="button" data-break="close">Close</button></div></div>` : ''}</div>`;
+  return `<div class="bk" role="group" aria-label="Test the rules"><span class="bk-l">Test the rules</span><button type="button" data-break="cover">Hand Imran's deals to the wrong rep</button><button type="button" data-break="self">Approve your own discount</button><button type="button" data-break="seal">Edit a signed approval</button></div>`;
+}
+function renderBanner() {
+  let r = breakRes; const el = $('#bk-ban'); if (!el) return;
+  if (r?.k === 'seal' && r.undo && !w.tampered) r = breakRes = { ...r, code: 'Restored', bad: '', good: 'Put back. Every fingerprint matches again, and the seal is green.', undo: false };
+  el.hidden = !r; if (!r) return;
+  el.className = `bk-ban ${r.bad ? 'no' : 'ok'}`;
+  el.innerHTML = `<div class="bk-c">${esc(r.code ?? 'Blocked')}</div><p class="bk-t">You tried: ${esc(r.t)}</p>${r.bad ? `<p class="bk-x">${esc(r.bad)}</p>` : ''}${r.good ? `<p class="bk-ok">${esc(r.good)}</p>` : ''}<div class="bk-a">${r.undo && w.tampered ? '<button class="btn" type="button" data-seal="undo">Put it back</button>' : ''}<a class="btn link" href="#${r.go[0]}" data-tab="${r.go[0]}">${r.go[1]} →</a><button class="bk-x2" type="button" data-break="close" aria-label="Close">×</button></div>`;
 }
 /* Pulse: what the rules would mean at a real company, from public numbers. Inputs are editable; the math is shown. */
 let model = { revenueCr: 500, tradePct: 8, abovePct: 5 };
@@ -555,9 +563,9 @@ function intro() {
   }[tab];
   const u0 = UH[tab], u = tab === 'approvals' ? { pm: [...u0.pm, UH.record.pm[0]], fin: [...u0.fin, UH.record.fin[0]], ba: [...u0.ba, UH.record.ba[0]] } : u0;
   const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}${tiles}${breakBar()}
-  <details class="uh"><summary>How I built this <span>the problem, my call, and notes for product, finance and BA readers</span></summary><p class="hx-w"><b>The problem:</b> ${esc(WHY[0])} <b>My call:</b> ${esc(WHY[1])}</p><div class="uh-g">${sec('Product', u.pm)}${sec('Finance ops', u.fin)}${sec('Business analysis', u.ba)}</div></details>
-  <p class="ti-b">Built by <b>Rupak Ghanpathi</b> · ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>`;
+  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}${tiles}${breakBar()}`;
+  $('#notes').innerHTML = `<details class="uh"><summary>How I built this screen <span>the problem, my call, and notes for product, finance and BA readers · Rupak Ghanpathi</span></summary><p class="hx-w"><b>The problem:</b> ${esc(WHY[0])} <b>My call:</b> ${esc(WHY[1])}</p><div class="uh-g">${sec('Product', u.pm)}${sec('Finance ops', u.fin)}${sec('Business analysis', u.ba)}</div></details>`;
+  renderBanner();
 }
 
 /* ---------- events ---------- */
@@ -571,6 +579,7 @@ document.addEventListener('input', e => {
   const inp = document.querySelector(`#impact [data-model="${k}"]`); inp.focus(); try { inp.setSelectionRange(pos, pos); } catch { }
 });
 document.addEventListener('click', e => {
+  const nl = e.target.closest('a[href="#notes"]'); if (nl) { e.preventDefault(); $('#drawer').hidden = true; const d = document.querySelector('#notes details'); if (d) d.open = true; $('#notes').scrollIntoView({ behavior: 'smooth' }); return; }
   const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
   const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }
   const hl = e.target.closest('a[href^="#"]'); if (hl && ALIAS[hl.getAttribute('href').slice(1)]) { e.preventDefault(); const id = hl.getAttribute('href').slice(1); setTab(ALIAS[id], { keepScroll: false }); document.getElementById(id)?.scrollIntoView({ block: 'start' }); return; }
@@ -629,6 +638,7 @@ document.addEventListener('click', e => {
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); return; }
+  if (b.dataset.break && b.closest('#drawer')) { $('#drawer').hidden = true; }
   if (b.dataset.break) { if (b.dataset.break === 'close') { breakRes = null; render(); } else runBreak(b.dataset.break); return; }
   if (b.dataset.cover === 'end') { const rep = b.dataset.rep; act(() => E.endCover(w, actor, rep), `${rep} is back. Their deals are handed back.`); return; }
   if (b.dataset.cover === 'start') { const rep = $('#cv-rep').value, to = $('#cv-to').value; act(() => E.coverLeave(w, actor, rep, to, $('#cv-from').value, $('#cv-end').value), `${rep}'s open deals are with ${to}, still credited to ${rep}.`); return; }
@@ -689,7 +699,7 @@ document.addEventListener('change', async e => {
   try { const r = e.target.id === 'imp-dealers' ? E.importDealers(w, text) : E.importTasks(w, text); w = r.w; save(); result = { text: `Imported ${r.count} ${e.target.id === 'imp-dealers' ? 'dealer(s)' : 'task(s)'}.`, sub: 'Credit checks and ranking now use your data.' }; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   catch (err) { out.innerHTML = `<div class="err" role="alert" style="margin-top:8px">${esc(err.message)}</div>`; e.target.value = ''; }
 });
-$('#panel').addEventListener('close', () => { panel = null; });
+$('#panel').addEventListener('close', () => { panel = null; document.body.classList.remove('insp'); document.querySelectorAll('.task.sel').forEach(x => x.classList.remove('sel')); });
 
 load(); w = E.escalate(E.wakeHolds(w)); tab = tabFromHash() ?? (isRep(actor) ? 'today' : 'approvals');
 window.addEventListener('popstate', () => { const t = tabFromHash() ?? 'today'; if (t !== tab) { scrollMem[tab] = window.scrollY; tab = t; render(); window.scrollTo(0, scrollMem[t] ?? 0); } });
