@@ -529,6 +529,36 @@ export const HOLIDAYS = ['2026-01-26', '2026-03-04', '2026-08-15', '2026-10-02',
 export const isWorkingDay = d => { const [y, m, dd] = d.split('-').map(Number); return new Date(y, m - 1, dd).getDay() !== 0 && !HOLIDAYS.includes(d); };
 export function workingDaysBetween(a, b) { let n = 0; for (let d = addDays(a, 1); d <= b; d = addDays(d, 1)) if (isWorkingDay(d)) n++; return n; }
 
+/* ---------- rep leave: a manager routes the rep's open work to a cover for set dates ---------- */
+export const activeCover = (w, rep) => (w.covers ?? []).find(c => c.rep === rep && c.start <= w.today && w.today <= c.end) ?? null;
+export function coverLeave(w0, actor, rep, to, start, end) {
+  const w = clone(w0);
+  if (!person(actor)?.manager) fail('Only a manager can arrange cover.');
+  if (!person(rep)?.rep || !person(to)?.rep) fail('Pick two reps.');
+  if (rep === to) fail('Pick someone else to cover.');
+  if (!start || !end || end < start) fail('Set a start and an end date.');
+  if (end < w.today) fail('The end date has passed.');
+  if (daysBetween(start, end) > 30) fail('Cover for 30 days at most; longer is a reassignment, not leave.');
+  if (activeCover(w, to)) fail(`${to} is on leave too. Pick someone who is in.`);
+  const gap = person(rep).buckets.filter(b => !person(to).buckets.includes(b));
+  if (gap.length) fail(`${to} doesn't handle ${gap.join(', ')} dealers. Cover goes to someone who knows these accounts.`);
+  w.covers = (w.covers ?? []).filter(c => c.rep !== rep);
+  w.covers.push({ rep, to, start, end, by: actor });
+  let moved = 0;
+  if (start <= w.today) for (const t of w.tasks) if (t.rep === rep && t.status === 'open') { t.rep = to; t.coverFor = rep; moved++; t.log.push({ at: stamp(), who: actor, text: `Covered by ${to} while ${rep} is on leave (credit stays with ${rep})` }); }
+  record(w, actor, `${rep} on leave ${start} to ${end}: ${moved} open task${moved === 1 ? '' : 's'} covered by ${to}`, null);
+  return { w, moved };
+}
+export function endCover(w0, actor, rep) {
+  const w = clone(w0);
+  if (!person(actor)?.manager) fail('Only a manager can end cover.');
+  if (!(w.covers ?? []).some(c => c.rep === rep)) fail(`${rep} has no cover to end.`);
+  let back = 0;
+  for (const t of w.tasks) if (t.coverFor === rep && t.status === 'open') { t.log.push({ at: stamp(), who: actor, text: `Handed back to ${rep} by ${t.rep}` }); t.rep = rep; delete t.coverFor; back++; }
+  w.covers = w.covers.filter(c => c.rep !== rep);
+  record(w, actor, `${rep} back: ${back} task${back === 1 ? '' : 's'} handed back`, null);
+  return { w, back };
+}
 /* ---------- leave and delegation ---------- */
 export function activeDelegate(w, name) { return (w.delegations ?? []).find(d => d.from === name && d.start <= w.today && w.today <= d.end) ?? null; }
 export function delegate(w0, actor, to, start, end) {
@@ -566,7 +596,7 @@ export function placeOrder(w0, id, actor, orderValue, discountPct) {
   if (approval?.used) fail(`${approval.id} was already used on order ${approval.orderId}. One approval covers one order.`);
   if (approval && approval.validTo < w.today) fail(`${approval.id} expired on ${approval.validTo}. Ask again before booking the order.`);
   if (discountPct > pct + 1e-9) fail(`You can give at most ${pct}% here (${approval ? `${approval.capPct}% approved` : 'nothing approved'}${task.scheme ? ` + ${task.scheme.pct}% scheme` : ''}). Book at ${pct}% or ask again.`);
-  const ord = { id: `ORD-${++w.seq.ord}`, taskId: id, rep: actor, customer: task.customer, value: orderValue, discountPct, discountAmt: rupeesOff(orderValue, discountPct), approvalId: approval?.id ?? null, scheme: task.scheme?.id ?? null, on: w.today };
+  const ord = { id: `ORD-${++w.seq.ord}`, taskId: id, rep: actor, creditTo: task.coverFor ?? actor, customer: task.customer, value: orderValue, discountPct, discountAmt: rupeesOff(orderValue, discountPct), approvalId: approval?.id ?? null, scheme: task.scheme?.id ?? null, on: w.today };
   w.orders.push(ord);
   if (approval) { approval.used = true; approval.orderId = ord.id; }
   task.status = 'done'; task.doneAt = w.today; task.outcome = `Order ${ord.id} placed at ${discountPct}%`; task.stage = 'Order placed';
@@ -662,11 +692,14 @@ export function withHistory(w0) {
   // Closed work from last week lives on its own tasks, so today's queue (and the 10-cap story) is untouched.
   const w1 = clone(w0);
   const mk = (n, rep, customer, stage, value, lateDays) => ({ id: `T-${n}`, rep, customer, stage, title: NEXT_STEP[stage] ?? 'Follow up', due: addDays(w1.today, -lateDays), target: addDays(w1.today, -lateDays), value, status: 'open', reschedules: [], hold: null, approvalId: null, log: [] });
+  w1.covers = [];
   w1.tasks.push(mk(901, 'Rahul', 'Royal Foods', 'Quote sent', 110000, 0), mk(902, 'Rahul', 'Kiran Agencies', 'Qualified', 90000, 0), mk(903, 'Neha', 'Green Leaf', 'New lead', 30000, 0), mk(904, 'Imran', 'Balaji Provisions', 'Qualified', 55000, 0), mk(905, 'Rahul', 'Ashok Bros', 'New lead', 35000, 2));
   let w = askDiscount(w1, 'T-901', 'Rahul', 7, 'Rival offered 7% on the repeat order');
   w = approve(w, w.approvals.at(-1).id, 'Kavita', 5, addDays(w.today, 7));
   w = placeOrder(w, 'T-901', 'Rahul', 110000, 5).w;
   for (const [id, who, out] of [['T-902', 'Rahul', 'Shared the price list; meeting fixed'], ['T-903', 'Neha', 'Intro call done; catalogue sent'], ['T-904', 'Imran', 'First visit done'], ['T-905', 'Rahul', 'Reached the owner after two days of follow-ups']]) w = complete(w, id, who, out).w;
+  // Imran is on leave this week; his open work is with Rahul, who handles the same FMCG dealers.
+  w = coverLeave(w, 'Kavita', 'Imran', 'Rahul', w.today, addDays(w.today, 3)).w;
   return w;
 }
 /* Weekly MIS: only KPIs that prove a control works. Each row: value, target, pass/fail. */

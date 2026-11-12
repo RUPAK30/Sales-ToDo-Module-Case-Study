@@ -260,3 +260,17 @@ test('demo history: MIS opens with real numbers and today\'s queue is unchanged'
   assert.ok(E.mis(w).filter(r => r.target !== 'Tracked').every(r => r.ok === true));
   assert.equal(E.verifyAnchored(w).ok, true);
 });
+
+test('leave cover: work moves to a rep who knows the accounts, credit stays, hand-back restores', () => {
+  let w = E.sample('2026-11-11');
+  const imranOpen = w.tasks.filter(t => t.rep === 'Imran' && t.status === 'open').map(t => t.id);
+  assert.throws(() => E.coverLeave(w, 'Rahul', 'Imran', 'Neha', w.today, w.today), /Only a manager/);
+  assert.throws(() => E.coverLeave(w, 'Kavita', 'Imran', 'Neha', w.today, w.today), /doesn't handle FMCG/);
+  const r = E.coverLeave(w, 'Kavita', 'Imran', 'Rahul', w.today, E.addDays(w.today, 3));
+  assert.equal(r.moved, imranOpen.length);
+  assert.ok(imranOpen.every(id => r.w.tasks.find(t => t.id === id).rep === 'Rahul'));
+  assert.equal(E.activeCover(r.w, 'Imran').to, 'Rahul');
+  const back = E.endCover(r.w, 'Kavita', 'Imran');
+  assert.ok(imranOpen.every(id => back.w.tasks.find(t => t.id === id).rep === 'Imran'));
+  assert.equal(E.verifyChain(back.w).ok, true);
+});
