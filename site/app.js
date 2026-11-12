@@ -1,6 +1,6 @@
-import * as E from './engine.js?v=1794471914';
+import * as E from './engine.js?v=1794473658';
 
-const KEY = 'tentoday-product-v7';
+const KEY = 'tentoday-product-v8';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -230,6 +230,12 @@ function repDesk() {
 }
 
 /* ---------- approver desk ---------- */
+function gstLine(a, pct, mode, rate) {
+  const g = E.gstEffect(a.value, pct, mode, rate, w.today), D = fmtY(g.deadline ?? w.today);
+  if (mode === 'invoice') return `<b>On the invoice:</b> the bill is simply ${inr(g.disc)} lower and GST is charged on the net price. Nothing to chase later.`;
+  if (mode === 'gstcn') return `<b>GST credit note:</b> your GST on this sale drops by ${inr(g.gst)}, but only if ${esc(a.customer)} reverses the same ${inr(g.gst)} of input tax credit. Declare it by ${D} (s.34(2)), or the ${inr(g.gst)} stays paid.`;
+  return `<b>Financial credit note:</b> ${inr(g.disc)} off, but your GST stays as billed (${inr(g.gst)} not reduced). The buyer keeps their input tax credit.`;
+}
 function askCard(a) {
   const lim = E.person(actor).senior ? a.askPct : Math.min(a.askPct, E.MANAGER_LIMIT, a.marginFloorPct);
   const exp = E.addDays(w.today, 14);
@@ -239,6 +245,8 @@ function askCard(a) {
     <div class="facts"><div><span>Deal value</span><b>${inr(a.value)}</b></div><div><span>Margin floor</span><b>max ${a.marginFloorPct}%</b></div><div class="${a.routedBecause.some(r => r.startsWith('credit hold')) ? 'bad' : ''}"><span>Dealer credit</span><b>${inr(a.outstanding)} of ${inr(a.creditLimit)}</b><span>oldest bill ${a.oldestBillDays}d · allowed ${a.creditDays}d</span></div></div>
     <p class="hint">Ask: ${a.askPct}% before GST = <b>${inr(a.amount)}</b> off ${inr(a.value)}.</p>
     ${a.routedBecause.length ? `<p class="route">Sent to the sales head because: ${esc(a.routedBecause.join(', '))}.</p>` : ''}
+    <div class="gstrow"><label>How is it given?<select data-f="gst">${Object.entries(E.GST_MODES).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label><label>GST rate (sample)<select data-f="rate">${E.GST_RATES.map(x => `<option${x === 18 ? ' selected' : ''}>${x}</option>`).join('')}</select></label></div>
+    <p class="gstc" data-gstc="${a.id}">${gstLine(a, lim, 'invoice', 18)}</p>
     <div class="row">
       <label>Approve up to (%)<input type="number" step="0.5" min="0.5" max="${a.askPct}" value="${lim}" data-f="cap" style="width:90px"></label>
       <label>Valid to<input type="date" min="${E.addDays(w.today, 1)}" value="${exp}" data-f="exp"></label>
@@ -291,7 +299,7 @@ function managerDesk() {
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
         ${others.length ? `<p class="more">${others.length} other ask(s) waiting for ${others.map(a => esc(E.label(a.approver))).join(', ')}.</p>` : ''}
       </div>
-      <div class="card" id="c-decided" data-in="approvals"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a> · <button type="button" class="btn link" data-chk="${a.id}">Check what was really approved</button>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
+      <div class="card" id="c-decided" data-in="approvals"><h2>Decided</h2>${decided.length ? `<ul class="mini">${decided.map(a => `<li><b>${esc(a.customer)}</b> · ${a.askPct}% asked by ${esc(a.rep)} · ${statusChip(a)}${a.gst ? ` · <span class="chip">${esc(E.GST_MODES[a.gst.mode])}</span>${payloadBox(a, a.customer)}` : ''} <small>by ${esc(a.decidedBy ?? '')}</small>${a.seal ? ` <span class="sealchip" title="Fingerprint in the sealed record">🔒 ${esc(a.seal.slice(0, 8))}</span>` : ''}${a.actingFor ? ` <small class="hint">acting for ${esc(a.actingFor)}</small>` : ''}${a.used ? ` <span class="chip st-ok">used on ${esc(a.orderId)}</span>` : ''}${a.status === 'approved' ? `<br><span class="hint">${a.capPct}% before GST = ${inr(a.amount)}${a.override ? ` · credit override: ${esc(a.override)}` : ''}</span><br><a class="btn link" href="${E.financeLink(w, a.id)}" target="_blank" rel="noopener">Send ${a.id} to finance in Every Rupee ↗</a> · <button type="button" class="btn link" data-chk="${a.id}">Check what was really approved</button>` : ''}</li>`).join('')}</ul>` : '<p class="empty">No decisions yet.</p>'}</div>
     </div>
     <div class="side">
       <div class="card" id="team" data-in="today team"><h2>Team workload</h2><p class="sub">Who has more than ${E.CAP} due. No productivity scores.</p>
@@ -357,7 +365,7 @@ function renderPanel() {
     ${t.scheme ? `<p class="hint">Scheme ${t.scheme.id} applied: ${t.scheme.pct}% before GST = ${inr(t.scheme.amount)}.</p>` : ''}
     ${(() => { const c = E.creditCheck(w, t.customer); return c.creditLimit ? `<p class="hint">Dealer credit: ${inr(c.outstanding)} of ${inr(c.creditLimit)} used · oldest bill ${c.oldestBillDays}d of ${c.creditDays}d allowed${c.ok ? '' : ` · <b style="color:var(--bad)">credit hold</b>`}</p>` : ''; })()}
     ${t.status === 'open' ? `<p class="hint">Why it's here: ${esc(E.explain(w, t))}</p>` : ''}
-    ${(() => { const ap = w.approvals.find(x => x.taskId === t.id && x.status === 'approved' && !x.used); if (!ap || !mine) return ''; const off = E.rupeesOff(ap.value, ap.capPct); return `<div class="done"><b>Approved: ${ap.capPct}% by ${esc(E.label(ap.decidedBy).split(' · ')[0])}.</b> The buyer can have exactly this, and Every Rupee will check payment against it.</div>` + waText(`Hi ${t.customer} team, confirmed: ${ap.capPct}% off your order of ${inr(ap.value)}, so ${inr(ap.value - off)} before GST. Valid till ${fmt(ap.validTo)}. Ref ${ap.id}${ap.seal ? ` · ${ap.seal.slice(0, 8)}` : ''}.`); })()}
+    ${(() => { const ap = w.approvals.find(x => x.taskId === t.id && x.status === 'approved' && !x.used); if (!ap || !mine) return ''; const off = E.rupeesOff(ap.value, ap.capPct); return `<div class="done"><b>Approved: ${ap.capPct}% by ${esc(E.label(ap.decidedBy).split(' · ')[0])}.</b> The buyer can have exactly this, and Every Rupee will check payment against it.</div>` + waText(`Hi ${t.customer} team, confirmed: ${ap.capPct}% off your order of ${inr(ap.value)}, so ${inr(ap.value - off)} before GST. Valid till ${fmt(ap.validTo)}. ${ap.gst?.mode === 'gstcn' ? `It comes as a GST credit note after delivery: please accept it in IMS and reverse ${inr(E.gstEffect(ap.value, ap.capPct, 'gstcn', ap.gst.rate, ap.decidedOn).gst)} of input tax credit that month. ` : ap.gst?.mode === 'fincn' ? 'It comes as a financial credit note; your GST input stays as billed. ' : 'It will show on the invoice itself. '}Ref ${ap.id}${ap.seal ? ` · ${ap.seal.slice(0, 8)}` : ''}.`) + payloadBox(ap, t.customer); })()}
     ${panel.done ? `<div class="done">${panel.done}</div>` : ''}
     ${state}
     ${panel.err ? `<div class="err" role="alert">${esc(panel.err)}</div>` : ''}
@@ -375,6 +383,31 @@ function routePreview() {
   <p class="cp-w"><b>${esc(who)} decides.</b> Not decided by the end of tomorrow, it ${r.approver === 'Arjun' ? 'stays top of his queue' : 'moves to Arjun on its own'}. Your task waits; you don't chase.</p>
   <p class="cp-f">*At a typical FMCG gross margin of ${E.FMCG_GROSS_MARGIN}% (HUL FY25). Your own margins will differ.</p>`;
 }
+function payloads(ap, cust) {
+  const g = E.gstEffect(ap.value, ap.capPct, ap.gst?.mode ?? 'invoice', ap.gst?.rate ?? 18, ap.decidedOn ?? w.today), half = Math.round(g.gst / 2 * 100) / 100;
+  if ((ap.gst?.mode ?? 'invoice') === 'invoice') {
+    const ass = ap.value - g.disc, tax = Math.round(ass * (ap.gst?.rate ?? 18)) / 100;
+    const j = { SlNo: '1', PrdDesc: `${cust} order (${ap.id})`, IsServc: 'N', HsnCd: 'sample', Qty: 1, Unit: 'OTH', UnitPrice: ap.value, TotAmt: ap.value, Discount: g.disc, AssAmt: ass, GstRt: ap.gst?.rate ?? 18, CgstAmt: tax / 2, SgstAmt: tax / 2, TotItemVal: ass + tax };
+    return { title: 'E-invoice item line', note: 'Field names from the NIC e-invoice schema (ItemList). The discount sits on the invoice, so GST is charged on AssAmt. Sample payload, not sent to the IRP.', body: JSON.stringify(j, null, 2) };
+  }
+  const gstcn = ap.gst.mode === 'gstcn', party = gstcn ? g.disc + g.gst : g.disc;
+  const le = (n, pos, amt) => `      <ALLLEDGERENTRIES.LIST><LEDGERNAME>${n}</LEDGERNAME><ISDEEMEDPOSITIVE>${pos}</ISDEEMEDPOSITIVE><AMOUNT>${amt}</AMOUNT></ALLLEDGERENTRIES.LIST>`;
+  const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>
+<BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME></REQUESTDESC><REQUESTDATA><TALLYMESSAGE>
+  <VOUCHER VCHTYPE="Credit Note" ACTION="Create">
+    <DATE>${(ap.decidedOn ?? w.today).replaceAll('-', '')}</DATE><VOUCHERTYPENAME>Credit Note</VOUCHERTYPENAME>
+    <PARTYLEDGERNAME>${cust}</PARTYLEDGERNAME>
+    <NARRATION>${ap.capPct}% discount, ${ap.id}${ap.seal ? `, seal ${ap.seal.slice(0, 12)}` : ''}${gstcn ? ', s.34 GST credit note' : ', financial credit note (no GST change)'}</NARRATION>
+${le('Trade Discount Allowed', 'Yes', -g.disc)}
+${gstcn ? `${le('Output CGST', 'Yes', -half)}
+${le('Output SGST', 'Yes', -half)}
+` : ''}${le(cust, 'No', party)}
+  </VOUCHER>
+</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+  return { title: `Tally credit note (${gstcn ? 'GST' : 'financial'})`, note: `Tally XML import format. Debits are negative in Tally; the entry balances to zero.${gstcn ? ` The buyer must reverse ${inr(g.gst)} of ITC (they accept the note in IMS).` : ''} Sample payload, not posted.`, body: xml };
+}
+const payloadBox = (ap, cust) => { const p = payloads(ap, cust); return `<details class="api"><summary>⇄ ${esc(p.title)} <span>integration preview</span></summary><p class="api-n">${esc(p.note)}</p><pre>${esc(p.body)}</pre><button class="btn" type="button" data-copy="${esc(p.body)}">Copy payload</button></details>`; };
+const fmtY = d => { const [y, m, dd] = d.split('-').map(Number); return `${dd} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1]} ${y}`; };
 const waText = s => `<div class="wa"><p class="wa-l">Message for the buyer · ready to send</p><p class="wa-t">${esc(s)}</p><button class="btn" type="button" data-copy="${esc(s)}">Copy for WhatsApp</button></div>`;
 function panelAction(kind) {
   const t = w.tasks.find(x => x.id === panel.id); const v = s => $(s)?.value ?? '';
@@ -393,7 +426,7 @@ function panelAction(kind) {
 function decide(kind, id) {
   const card = $(`#ask-${CSS.escape(id)}`); const f = n => card.querySelector(`[data-f="${n}"]`).value;
   const a = w.approvals.find(x => x.id === id);
-  const run = { approve: () => E.approve(w, id, actor, Number(f('cap')), f('exp'), f('why')), counter: () => E.counter(w, id, actor, Number(f('cap')), f('exp'), f('why')), back: () => E.sendBack(w, id, actor, f('why')) }[kind];
+  const run = { approve: () => E.approve(w, id, actor, Number(f('cap')), f('exp'), f('why'), { mode: f('gst') || 'invoice', rate: Number(f('rate') || 18) }), counter: () => E.counter(w, id, actor, Number(f('cap')), f('exp'), f('why')), back: () => E.sendBack(w, id, actor, f('why')) }[kind];
   const text = { approve: `Approved ${f('cap')}% for ${a.customer}: ₹${Math.round(a.value * f('cap') / 100).toLocaleString('en-IN')} off a ₹${a.value.toLocaleString('en-IN')} order${Number(f('cap')) < a.askPct ? `, ₹${Math.round(a.value * (a.askPct - f('cap')) / 100).toLocaleString('en-IN')} less than asked` : ''}. Valid to ${fmt(f('exp'))}.`, counter: `Offered ${f('cap')}% to ${a.rep} for ${a.customer}.`, back: `Sent ${a.customer}'s ask back to ${a.rep}.` }[kind];
   const sub = { approve: `${a.rep}'s task is unfrozen and back in Today as “send the revised quote”. Use “Send to finance” under Decided so Every Rupee checks payments against this cap.`, counter: `${a.rep} must accept or decline. Their task stays frozen until then.`, back: `${a.rep}'s task is back in Today with your note, so they can fix it and ask again.` }[kind];
   try { w = run(); save(); toast(text); const sealed = w.approvals.find(x => x.id === id)?.seal; sealRes = null; result = { text: text + (kind === 'approve' && sealed ? ` Sealed as ${sealed.slice(0, 12)}.` : ''), sub, switchTo: a.rep }; flashId = a.taskId; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -553,12 +586,13 @@ function intro() {
   const cards = tab === 'pulse' ? `<div class="pc3">
     <div><b data-rip="p-done">${doneToday} done today</b><span>${q ? `${q.list.length} still on ${rep ? 'your' : 'the'} list` : 'across the team'}</span></div>
     <div><b>${late ? `${esc(late.customer)}, ${lateDays} day${lateDays === 1 ? '' : 's'} late` : 'Nothing late'}</b><span>${late ? `${esc(late.rep)} · ${esc(late.title)}` : 'Every task is on its date'}</span></div>
+    ${(() => { const g = E.gstAtRisk(w); return `<div class="${g.count ? 'warn' : ''}"><b data-rip="p-gst">${g.count ? `${inr(g.gst)} GST relief to secure` : 'No GST credit notes open'}</b><span>${g.count ? `${g.count} discount${g.count === 1 ? '' : 's'} given as GST credit notes. Buyers must reverse the same ITC; declare by ${fmtY(g.deadline)} (${g.daysLeft} days left).` : 'Discounts given on the invoice need nothing later.'}</span></div>`; })()}
     <div><b data-rip="p-own">${orphan ? `${orphan} deal${orphan === 1 ? '' : 's'} with nobody` : 'Every deal has an owner'}</b><span>${out.length ? `including ${out.map(p => p.name).join(', ')}'s, covered while away` : 'Nobody on leave'}</span></div></div>` : '';
   const TL = {
     today: rep ? [['c-hold', 'Parked for later', 'Comes back on the date you set'], ['c-later', 'Not today', 'Future tasks wait off your list'], ['c-done', 'Done', 'On time means the first date, not a moved one']]
       : [['team', 'Who has room', 'Workload per rep, and what can move'], ...(pend.length ? [['asks', 'Waiting on you', `${pend.length} ask${pend.length === 1 ? '' : 's'} to decide`]] : [])],
     team: rep ? [] : [['cover', 'Someone on leave', 'Hand over their deals; credit stays theirs'], ['team', 'Move one task', 'Same dealers only, or a second manager signs'], ...(me.senior ? [] : [['leave', 'You on leave', 'A stand-in decides with your limits']])],
-    approvals: rep ? [] : [['asks', 'Your limit', me.senior ? 'Anything above 10%, or a credit hold' : 'Up to 10%, inside the margin floor'], ['asks', 'Credit hold', 'Over-limit dealers need a written reason'], ['seal', 'Signed record', 'Nothing changes after signing, or it shows']],
+    approvals: rep ? [] : [['asks', 'Your limit', me.senior ? 'Anything above 10%, or a credit hold' : 'Up to 10%, inside the margin floor'], ['asks', 'Credit hold', 'Over-limit dealers need a written reason'], ['seal', 'Signed record', 'Nothing changes after signing, or it shows'], ['asks', 'GST, decided here', 'On the invoice, GST or financial credit note']],
     pulse: [['c-mis', 'The full week', 'Every check with its target'], ...(rep ? [] : [['eff', 'Do discounts win?', 'Deals won with and without one'], ['turn', 'How fast we decide', 'Days per approver']])],
   }[tab];
   const tiles = TL.length ? `<div class="tls">${TL.map(([to, t, d]) => to === 'team' && tab !== 'team' ? `<a class="tl" href="#team" data-tab="team"><b>${t}</b><span>${d}</span></a>` : `<a class="tl" href="#${to}" data-jump="${to}"><b>${t}</b><span>${d}</span></a>`).join('')}</div>` : '';
@@ -576,6 +610,11 @@ function intro() {
 }
 
 /* ---------- events ---------- */
+document.addEventListener('change', e => {
+  const card = e.target.closest?.('.ask'); if (!card || !['gst', 'rate', 'cap'].includes(e.target.dataset.f)) return;
+  const id = card.id.slice(4), a = w.approvals.find(x => x.id === id); const g = k => card.querySelector(`[data-f="${k}"]`)?.value;
+  card.querySelector('.gstc').innerHTML = gstLine(a, Number(g('cap')), g('gst'), Number(g('rate')));
+});
 document.addEventListener('input', e => {
   const k = e.target.dataset?.model; if (!k) return;
   const v = Number(e.target.value); if (!(v >= 0)) return;

@@ -105,6 +105,22 @@ export function sample(today) {
 const customerOf = (w, name) => w.customers[name] ?? { marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 };
 export const rupeesOff = (value, pct) => Math.round(value * pct / 100); // discount stated before GST
 /* Dealer credit, the way distributor ERPs enforce it: a money ceiling and a days ceiling. */
+/* GST on discounts, from 1 Nov 2026 (Finance Act 2026, Notification 03/2026-CT): a post-sale discount reduces GST only through
+   a s.34 credit note, and only if the buyer reverses the matching ITC. s.34(2): declare it by 30 Nov after the financial year ends.
+   A financial credit note leaves GST unchanged (CBIC Circular 251/08/2025). Rates after GST 2.0: 5% and 18% are the main slabs. */
+export const GST_MODES = { invoice: 'On the invoice', gstcn: 'GST credit note after delivery', fincn: 'Financial credit note' };
+export const GST_RATES = [5, 18, 40];
+export const s34Deadline = day => { const [y, m] = day.split('-').map(Number); return `${m >= 4 ? y + 1 : y}-11-30`; };
+export function gstEffect(value, pct, mode, rate, day) {
+  const disc = rupeesOff(value, pct), gst = Math.round(disc * rate / 100);
+  return { disc, gst, deadline: mode === 'gstcn' ? s34Deadline(day) : null, buyerReverses: mode === 'gstcn' ? gst : 0, supplierSaves: mode === 'fincn' ? 0 : gst };
+}
+export function gstAtRisk(w) {
+  const open = w.approvals.filter(a => a.status === 'approved' && a.gst?.mode === 'gstcn');
+  const rows = open.map(a => ({ a, ...gstEffect(a.value, a.capPct, 'gstcn', a.gst.rate, a.decidedOn) }));
+  const next = rows.map(x => x.deadline).sort()[0] ?? null;
+  return { count: rows.length, gst: rows.reduce((t, x) => t + x.gst, 0), deadline: next, daysLeft: next ? daysBetween(w.today, next) : null };
+}
 export const dealerFloor = (w, name) => customerOf(w, name).marginFloorPct;
 export function creditCheck(w, customer) {
   const c = customerOf(w, customer); const why = [];
@@ -257,7 +273,7 @@ const mustDecide = (a, actor) => {
 function unfreeze(w, a, who, text) { const t = findTask(w, a.taskId); t.status = 'open'; t.target = w.today; note(w, t, who, text); return t; }
 
 /* Approve: a cap (≤ ask) and an expiry are required. The rep's task unfreezes with the next step. */
-export function approve(w0, apvId, actor, capPct, validTo, overrideNote) {
+export function approve(w0, apvId, actor, capPct, validTo, overrideNote, gst = { mode: 'invoice', rate: 18 }) {
   const w = clone(w0); const a = findApv(w, apvId); mustDecide(a, actor);
   const hold = a.routedBecause.some(r => r.startsWith('credit hold'));
   if (hold && !(overrideNote && overrideNote.trim())) fail('This dealer is on credit hold. Write why you are overriding it (e.g. post-dated cheque received).');
@@ -265,9 +281,11 @@ export function approve(w0, apvId, actor, capPct, validTo, overrideNote) {
   if (capPct > a.askPct) fail(`You can't approve more than was asked (${a.askPct}%).`);
   if (!person(actor).senior && (capPct > MANAGER_LIMIT || capPct > a.marginFloorPct)) { const mx = Math.min(MANAGER_LIMIT, a.marginFloorPct); fail(`${inr(a.value * (capPct - mx) / 100)} above your limit. ${capPct}% on this ${inr(a.value)} order gives away ${inr(a.value * capPct / 100)}; you can approve up to ${mx}% (${inr(a.value * mx / 100)}). At a typical FMCG gross margin of ${FMCG_GROSS_MARGIN}%, ${capPct}% off leaves ${marginAfter(capPct)}% on this order; ${mx}% leaves ${marginAfter(mx)}%. Approve ${mx}%, or send it to the sales head.`); }
   if (!validTo || validTo <= w.today) fail('Set an expiry date after today. Approvals never stay open forever.');
-  Object.assign(a, { status: 'approved', capPct, validTo, decidedBy: actor, decidedOn: w.today, amount: rupeesOff(a.value, capPct), override: hold ? overrideNote.trim() : null });
+  if (!GST_MODES[gst?.mode]) fail('Say how the discount is given: on the invoice, a GST credit note, or a financial credit note.');
+  if (!GST_RATES.includes(Number(gst.rate))) fail('Pick the GST rate on this product.');
+  Object.assign(a, { status: 'approved', capPct, validTo, decidedBy: actor, decidedOn: w.today, amount: rupeesOff(a.value, capPct), override: hold ? overrideNote.trim() : null, gst: { mode: gst.mode, rate: Number(gst.rate) } });
   a.log.push({ at: stamp(), who: actor, text: `Approved ${capPct}% before GST (₹${a.amount.toLocaleString('en-IN')}), valid to ${validTo}${hold ? `. Credit hold overridden: ${overrideNote.trim()}` : ''}` });
-  a.seal = record(w, actor, `Approved ${capPct}% before GST for ${a.customer}, valid to ${validTo}${a.actingFor ? `, acting for ${a.actingFor}` : ''}${hold ? `, credit override: ${overrideNote.trim()}` : ''}`, a.id);
+  a.seal = record(w, actor, `Approved ${capPct}% before GST for ${a.customer}, valid to ${validTo}, given as ${GST_MODES[gst.mode].toLowerCase()} at ${gst.rate}% GST${a.actingFor ? `, acting for ${a.actingFor}` : ''}${hold ? `, credit override: ${overrideNote.trim()}` : ''}`, a.id);
   const t = unfreeze(w, a, actor, `${a.id} approved: ${capPct}% before GST, valid to ${validTo}. Send the revised quote.`);
   t.title = `Send revised quote at ${capPct}% (${a.id})`;
   return w;
@@ -700,7 +718,7 @@ export function withHistory(w0) {
   w1.covers = [];
   w1.tasks.push(mk(901, 'Rahul', 'Royal Foods', 'Quote sent', 110000, 0), mk(902, 'Rahul', 'Kiran Agencies', 'Qualified', 90000, 0), mk(903, 'Neha', 'Green Leaf', 'New lead', 30000, 0), mk(904, 'Imran', 'Balaji Provisions', 'Qualified', 55000, 0), mk(905, 'Rahul', 'Ashok Bros', 'New lead', 35000, 2));
   let w = askDiscount(w1, 'T-901', 'Rahul', 7, 'Rival offered 7% on the repeat order');
-  w = approve(w, w.approvals.at(-1).id, 'Kavita', 5, addDays(w.today, 7));
+  w = approve(w, w.approvals.at(-1).id, 'Kavita', 5, addDays(w.today, 7), '', { mode: 'gstcn', rate: 18 });
   w = placeOrder(w, 'T-901', 'Rahul', 110000, 5).w;
   for (const [id, who, out] of [['T-902', 'Rahul', 'Shared the price list; meeting fixed'], ['T-903', 'Neha', 'Intro call done; catalogue sent'], ['T-904', 'Imran', 'First visit done'], ['T-905', 'Rahul', 'Reached the owner after two days of follow-ups']]) w = complete(w, id, who, out).w;
   // Imran is on leave this week; his open work is with Rahul, who handles the same FMCG dealers.

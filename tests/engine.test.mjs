@@ -284,3 +284,19 @@ test('impact model: transparent arithmetic on public benchmarks', () => {
   assert.equal(m.withinBainCeiling, true);
   assert.equal(E.marginAfter(10), 45.7);
 });
+
+test('GST on discounts (1 Nov 2026 rules): mode is decided at approval, sealed, and the s.34(2) clock is right', () => {
+  let w = E.sample('2026-11-12');
+  const a = w.approvals.find(x => x.status === 'pending' && x.approver === 'Kavita');
+  assert.throws(() => E.approve(w, a.id, 'Kavita', a.askPct, E.addDays(w.today, 5), '', { mode: 'cash', rate: 18 }), /how the discount is given/);
+  const w2 = E.approve(w, a.id, 'Kavita', a.askPct, E.addDays(w.today, 5), '', { mode: 'gstcn', rate: 18 });
+  const ap = w2.approvals.find(x => x.id === a.id);
+  assert.deepEqual(ap.gst, { mode: 'gstcn', rate: 18 });
+  const g = E.gstEffect(ap.value, ap.capPct, 'gstcn', 18, '2026-11-12');
+  assert.equal(g.deadline, '2027-11-30');
+  assert.equal(g.buyerReverses, Math.round(E.rupeesOff(ap.value, ap.capPct) * 0.18));
+  assert.equal(E.s34Deadline('2027-02-10'), '2027-11-30');
+  assert.equal(E.gstEffect(100000, 5, 'fincn', 18, '2026-11-12').supplierSaves, 0);
+  assert.ok(/given as gst credit note after delivery at 18% GST/.test(w2.chain.at(-1).text));
+  assert.equal(E.gstAtRisk(w2).count >= 1, true);
+});

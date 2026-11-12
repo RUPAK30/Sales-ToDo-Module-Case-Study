@@ -457,3 +457,26 @@ main.wrap>*{min-width:0}
 .wa{margin:10px 0;border:1px solid #BBF7D0;background:#F0FDF4;border-radius:12px;padding:10px 12px}
 .wa-l{margin:0;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#166534}.wa-t{margin:6px 0 8px;font-size:.92rem;line-height:1.45}
 @media (max-width:420px){.cp{grid-template-columns:1fr 1fr}.cp>div:first-child{grid-column:1/-1}}
+/* ---------- colour pass: one job per colour ---------- */
+:root{--muted:#57534E;--line:#E7E5E4}
+.strip{background:#F5F5F4;border-bottom-color:#E7E5E4;color:#44403C}
+.actor{background:#F5F5F4;border-color:#E7E5E4}
+.who .n,.who .b,.who span[class]{background:#1C1917!important;color:#fff!important}
+.who.on{background:#1C1917;color:#fff;border-color:#1C1917}
+.who.on .n,.who.on .b,.who.on span[class]{background:#fff!important;color:#1C1917!important}
+.tl b::after{color:#A8A29E}.tl:hover b::after{color:var(--tt)}
+.tl{background:#fff}
+.pc3{grid-template-columns:repeat(4,1fr)}
+.pc3>div.warn{border-color:#FCD34D;background:#FFFBEB}.pc3>div.warn b{color:#92400E}
+.bn a[aria-current="page"]{color:#1C1917}.bn a[aria-current="page"] svg{background:#F5F5F4;color:var(--tt)}
+.mis{border-color:#E7E5E4}.ti{border-color:#E7E5E4}
+.cov .cv-row{border-color:#FCD34D;background:#FFFBEB}
+/* GST + integration previews */
+.gstrow{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 4px}.gstrow label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600}.gstrow select{font:inherit;font-size:16px;padding:7px 9px;border:1px solid #D6D3D1;border-radius:9px;background:#fff}
+.gstc{margin:4px 0 8px;padding:10px 12px;border-radius:10px;background:#F5F5F4;font-size:.86rem;line-height:1.45}
+.api{margin:8px 0;border:1px solid #E7E5E4;border-radius:12px;background:#fff;padding:8px 12px}
+.api>summary{cursor:pointer;font-weight:600;font-size:.86rem;list-style:none}.api>summary::-webkit-details-marker{display:none}.api>summary span{font-weight:400;color:#78716C;font-size:.76rem;margin-left:6px}
+.api-n{margin:6px 0;font-size:.78rem;color:#57534E}
+.api pre{margin:0 0 8px;max-height:260px;overflow:auto;background:#1C1917;color:#E7E5E4;border-radius:10px;padding:10px 12px;font-size:.74rem;line-height:1.5;white-space:pre}
+.mini li .api{margin-top:6px}
+@media (max-width:1000px){.pc3{grid-template-columns:1fr 1fr}}@media (max-width:760px){.pc3{grid-template-columns:1fr}}
