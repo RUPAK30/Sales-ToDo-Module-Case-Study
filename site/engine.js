@@ -187,8 +187,8 @@ export function explain(w, task) {
 /* Today for one rep: actionable now, ranked by the four rules, capped at 10. */
 export function today(w, rep) {
   const live = w.tasks.filter(x => x.rep === rep && x.status === 'open' && x.target <= w.today);
-  const pinned = live.filter(x => x.callbackAt).sort((a, b) => a.callbackAt.localeCompare(b.callbackAt));
-  const rest = live.filter(x => !x.callbackAt).sort((a, b) =>
+  const pinned = [...live.filter(x => x.kind === 'cure'), ...live.filter(x => x.callbackAt && x.kind !== 'cure').sort((a, b) => a.callbackAt.localeCompare(b.callbackAt))];
+  const rest = live.filter(x => !x.callbackAt && x.kind !== 'cure').sort((a, b) =>
     tier(w, a) - tier(w, b) ||
     (BLOCKING.includes(b.stage) ? 1 : 0) - (BLOCKING.includes(a.stage) ? 1 : 0) ||
     daysOver(w, b) - daysOver(w, a) ||
@@ -659,6 +659,7 @@ export function placeOrder(w0, id, actor, orderValue, discountPct) {
   if (approval && approval.validTo < w.today) fail(`${approval.id} expired on ${approval.validTo}. Ask again before booking the order.`);
   if (discountPct > pct + 1e-9) fail(`${inr(orderValue * (discountPct - pct) / 100)} more than approved. You can give at most ${pct}% here (${approval ? `${approval.capPct}% approved` : 'nothing approved'}${task.scheme ? ` + ${task.scheme.pct}% scheme` : ''}). Book at ${pct}% or ask again.`);
   const ord = { id: `ORD-${++w.seq.ord}`, taskId: id, rep: actor, creditTo: task.coverFor ?? actor, customer: task.customer, value: orderValue, discountPct, discountAmt: rupeesOff(orderValue, discountPct), approvalId: approval?.id ?? null, scheme: task.scheme?.id ?? null, on: w.today };
+  ord.incentive = { state: 'hold', base: incentiveBase(ord, w.plan ?? PLAN) };
   w.orders.push(ord);
   if (approval) { approval.used = true; approval.orderId = ord.id; }
   task.status = 'done'; task.doneAt = w.today; task.outcome = `Order ${ord.id} placed at ${discountPct}%`; task.stage = 'Order placed';
@@ -764,6 +765,7 @@ export function withHistory(w0) {
   w = approve(w, w.approvals.at(-1).id, 'Kavita', 6, addDays(w.today, 7), '', { mode: 'gstcn', rate: 18 });
   w = placeOrder(w, 'T-906', 'Neha', 240000, 6).w;
   w = recordIms(w, w.approvals.at(-1).id, 'Kavita', 'rejected', 'Slab not met: 180 cases billed, slab starts at 200');
+  { const g = w.orders.find(o => o.customer === 'Green Leaf'); w = paymentMatched(w, { idempotency_key: 'utr_HDFCN52026110512345', order_id: g.id, actual_received: netOf(g), utr: 'HDFCN52026110512345' }).w; }
   for (const [id, who, out] of [['T-902', 'Rahul', 'Shared the price list; meeting fixed'], ['T-903', 'Neha', 'Intro call done; catalogue sent'], ['T-904', 'Imran', 'First visit done'], ['T-905', 'Rahul', 'Reached the owner after two days of follow-ups']]) w = complete(w, id, who, out).w;
   // Imran is on leave this week; his open work is with Rahul, who handles the same FMCG dealers.
   w = coverLeave(w, 'Kavita', 'Imran', 'Rahul', w.today, addDays(w.today, 3)).w;
@@ -872,4 +874,72 @@ export function impactModel({ revenueCr = 500, tradePct = 8, abovePct = 5 } = {}
   const R = revenueCr * 1e7, trade = R * tradePct / 100, blocked = trade * abovePct / 100;
   const priceGain = blocked / R * 100;
   return { trade, blocked, priceGain: Math.round(priceGain * 100) / 100, opProfitGain: Math.round(priceGain * 8 * 10) / 10, withinBainCeiling: priceGain <= 6, daysSaved: 2 };
+}
+
+/* ---------- Realised incentive: a rep earns on money that actually arrives, never on bookings ----------
+   Illustrative plan (each company sets its own): 2% of the net order value, earned when the cash lands.
+   A shortfall the rep didn't get approved holds only the incentive on that gap, for a cure window. If it's cured, it's earned;
+   if not, that part is simply never earned. Nothing is deducted from pay (deductions from wages are restricted by law).
+   The money maths is plain rules, never AI. */
+export const PLAN = { ratePct: 2, cureDays: 15 };
+export const netOf = o => o.value - o.discountAmt;
+export const incentiveBase = (o, plan = PLAN) => Math.round(netOf(o) * plan.ratePct / 100);
+/* Pure: the incentive effect of one payment. Used by the app and by the /api/payment-matched endpoint. */
+export function realise({ billed, received, ratePct = PLAN.ratePct, cureDays = PLAN.cureDays, today, gstMode = 'invoice', gstRate = 18, discount = 0 }) {
+  if (!(billed > 0) || !(received >= 0)) fail('billed_amount and actual_received are required.');
+  const base = Math.round(billed * ratePct / 100), gap = Math.max(0, billed - received);
+  const held = Math.round(gap * ratePct / 100), earned = base - held;
+  return { base, earned, held, gap, cureBy: gap ? addDays(today, cureDays) : null,
+    gstNotRecovered: gstMode === 'fincn' ? Math.round(discount * gstRate / 100) : 0,
+    say: gap ? `₹${earned.toLocaleString('en-IN')} earned, ₹${held.toLocaleString('en-IN')} on hold: ₹${gap.toLocaleString('en-IN')} arrived short of what was approved. Cure by ${addDays(today, cureDays)}.` : `₹${base.toLocaleString('en-IN')} earned in full: paid exactly as approved.` };
+}
+/* Receive a "payment matched" event from Every Rupee. Idempotent: the same key twice changes nothing. */
+export function paymentMatched(w0, ev) {
+  const w = clone(w0); w.events = w.events ?? {}; w.plan = w.plan ?? PLAN;
+  if (!ev?.idempotency_key) fail('idempotency_key is required.');
+  if (w.events[ev.idempotency_key]) return { w: w0, duplicate: true, result: w.events[ev.idempotency_key] };
+  const o = w.orders.find(x => x.id === ev.order_id) ?? fail(`No order ${ev.order_id}.`);
+  if (o.incentive?.state && o.incentive.state !== 'hold') fail(`${o.id} is already settled.`);
+  const ap = o.approvalId ? w.approvals.find(a => a.id === o.approvalId) : null;
+  const res = realise({ billed: netOf(o), received: Number(ev.actual_received), ratePct: w.plan.ratePct, cureDays: w.plan.cureDays, today: w.today, gstMode: ap?.gst?.mode, gstRate: ap?.gst?.rate, discount: o.discountAmt });
+  o.paid = { received: Number(ev.actual_received), on: w.today, key: ev.idempotency_key, ref: ev.utr ?? null };
+  o.incentive = { ...o.incentive, state: res.gap ? 'part' : 'earned', earned: res.earned, held: res.held, gap: res.gap, cureBy: res.cureBy };
+  if (res.gap) {
+    const id = `T-${++w.seq.task}`;
+    w.tasks.push({ id, rep: o.creditTo, customer: o.customer, stage: 'Recovery', kind: 'cure', source: o.id, title: `Clear the ₹${res.gap.toLocaleString('en-IN')} gap on ${o.id}: collect it, or get it approved. Unlocks ₹${res.held.toLocaleString('en-IN')} of your pay`, due: w.today, target: w.today, value: res.gap, status: 'open', reschedules: [], hold: null, approvalId: null, log: [{ at: stamp(), who: 'System', text: `Every Rupee: ${o.customer} paid ₹${Number(ev.actual_received).toLocaleString('en-IN')} against ₹${netOf(o).toLocaleString('en-IN')}. ${res.say}` }] });
+    o.incentive.cureTask = id;
+  }
+  record(w, 'System', `Payment matched for ${o.id}: ₹${Number(ev.actual_received).toLocaleString('en-IN')} of ₹${netOf(o).toLocaleString('en-IN')} (key ${ev.idempotency_key})`, o.approvalId);
+  w.events[ev.idempotency_key] = res;
+  return { w, duplicate: false, result: res };
+}
+/* Cure the gap: collected (with a UTR) or approved after the fact (with the approver's reference). */
+export function cureGap(w0, taskId, actor, how, ref) {
+  const w = clone(w0); const t = findTask(w, taskId);
+  if (t.kind !== 'cure' || t.status !== 'open') fail('Nothing to cure here.');
+  if (actor !== t.rep && !person(actor)?.manager) fail('The rep or a manager closes this.');
+  if (!['collected', 'approved'].includes(how)) fail('Say how it was cured: collected or approved.');
+  if (!ref || !ref.trim()) fail(how === 'collected' ? 'Enter the UTR or cheque number.' : 'Enter the approval or credit-note reference.');
+  const o = w.orders.find(x => x.id === t.source);
+  if (w.today > o.incentive.cureBy) fail(`The cure window closed on ${o.incentive.cureBy}.`);
+  o.incentive = { ...o.incentive, state: 'earned', earned: o.incentive.earned + o.incentive.held, held: 0, curedBy: { how, ref: ref.trim(), on: w.today } };
+  t.status = 'done'; t.doneAt = w.today; t.outcome = `${how === 'collected' ? 'Collected' : 'Approved'} (${ref.trim()})`;
+  note(w, t, actor, `Gap cured: ${t.outcome}. ₹${o.incentive.earned.toLocaleString('en-IN')} now earned in full.`);
+  record(w, actor, `${o.id} gap cured, ${how}: ${ref.trim()}`, o.approvalId);
+  return w;
+}
+/* Past the window: the held part is simply not earned. Nothing is deducted. */
+export function closeCures(w0) {
+  const w = clone(w0);
+  for (const o of w.orders) if (o.incentive?.state === 'part' && o.incentive.held && w.today > o.incentive.cureBy) {
+    o.incentive = { ...o.incentive, state: 'closed', notEarned: o.incentive.held, held: 0 };
+    const t = w.tasks.find(x => x.id === o.incentive.cureTask); if (t && t.status === 'open') { t.status = 'done'; t.doneAt = w.today; t.outcome = 'Cure window closed'; }
+  }
+  return w;
+}
+export function payFor(w, rep) {
+  const mine = w.orders.filter(o => o.creditTo === rep && o.incentive);
+  const sum = k => mine.reduce((s, o) => s + (o.incentive[k] ?? 0), 0);
+  const awaiting = mine.filter(o => o.incentive.state === 'hold').reduce((s, o) => s + o.incentive.base, 0);
+  return { earned: sum('earned'), held: sum('held'), notEarned: sum('notEarned'), awaiting, orders: mine };
 }

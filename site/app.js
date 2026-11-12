@@ -1,6 +1,6 @@
-import * as E from './engine.js?v=1794474919';
+import * as E from './engine.js?v=1794488317';
 
-const KEY = 'tentoday-product-v9';
+const KEY = 'tentoday-product-v10';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -395,14 +395,17 @@ function renderPanel() {
   const t = w.tasks.find(x => x.id === panel.id); const a = apvOf(t);
   const mine = t.rep === actor;
   const tabs = [];
-  if (mine && t.status === 'open') tabs.push(['done', '✓ Done'], ['move', 'Reschedule'], ['hold', 'On hold']);
+  if (t.kind === 'cure' && t.status === 'open' && (mine || !isRep(actor))) tabs.push(['cure', 'Clear the gap']);
+  else if (mine && t.status === 'open') tabs.push(['done', '✓ Done'], ['move', 'Reschedule'], ['hold', 'On hold']);
   const scheme = (w.schemes ?? []).find(x => x.status === 'active' && t.value >= x.minValue);
   if (mine && t.status === 'open' && ['Quote sent', 'Negotiation'].includes(t.stage)) { tabs.push(['order', 'Place order']); if (scheme && !t.scheme) tabs.push(['scheme', 'Apply scheme']); if (!(a && a.status === 'approved' && !a.used)) tabs.push(['ask', 'Ask discount']); tabs.push(['lost', 'Deal lost']); }
   const al = E.allowedPct(w, t);
   if (mine && a?.status === 'countered') tabs.unshift(['counter', 'Answer counter']);
   if (!panel.tab || !tabs.some(x => x[0] === panel.tab)) panel.tab = tabs[0]?.[0] ?? null;
   const tomorrow = E.addDays(w.today, 1);
+  const co = t.kind === 'cure' ? w.orders.find(o => o.id === t.source) : null;
   const forms = {
+    cure: co ? `<p class="hint" style="margin:0 0 8px">${esc(t.customer)} paid ${inr(co.paid.received)} against ${inr(E.netOf(co))}. Clear the ${inr(co.incentive.gap)} gap by ${fmtY(co.incentive.cureBy)} and the ${inr(co.incentive.held)} on hold becomes earned. Miss it, and that part is simply not earned. Nothing is ever deducted from pay.</p><div class="row"><label>How<select id="f-how"><option value="collected">Collected the balance</option><option value="approved">Approved after the fact</option></select></label><label style="flex:1">UTR, cheque or approval reference<input id="f-ref" maxlength="40" placeholder="e.g. HDFCN52026111212345"></label></div><button class="btn pri" data-do="cure" type="button">Clear the gap</button>` : '',
     done: `<label>What happened? (one line)<input id="f-out" maxlength="160" placeholder="e.g. Spoke to owner; sending the quote today"></label><label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="f-moved" ${t.stage === 'Negotiation' || t.kind === 'recovery' ? 'disabled' : ''}> The deal moved to the next stage${E.STAGES[E.STAGES.indexOf(t.stage) + 1] ? ` (${E.STAGES[E.STAGES.indexOf(t.stage) + 1]})` : ''}: create the next task</label><button class="btn pri" data-do="done" type="button">Mark done</button>`,
     move: `<div class="row"><label>New date<input type="date" id="f-date" min="${tomorrow}" value="${tomorrow}"></label><label style="flex:1">${t.reschedules.length ? 'What is blocking it? (required)' : 'Blocker (optional the first time)'}<input id="f-block" maxlength="120"></label></div><p class="hint">It keeps ageing from the original target (${fmt(t.due)}) wherever you move it.</p><button class="btn pri" data-do="move" type="button">Reschedule</button>`,
     hold: `<div class="row"><label style="flex:1">Why on hold?<input id="f-why" maxlength="120" placeholder="e.g. Customer budget frozen till month end"></label><label>Revisit on<input type="date" id="f-rev" min="${tomorrow}" value="${E.addDays(w.today, 7)}"></label></div><p class="hint">It comes back into Today by itself on the revisit date.</p><button class="btn pri" data-do="hold" type="button">Put on hold</button>`,
@@ -471,6 +474,7 @@ function panelAction(kind) {
   const t = w.tasks.find(x => x.id === panel.id); const v = s => $(s)?.value ?? '';
   panel.err = '';
   const ok = html => { panel.done = html; flashId = t.id; };
+  if (kind === 'cure') act(() => E.cureGap(w, t.id, actor, v('#f-how'), v('#f-ref')), 'Gap cleared.', () => ok(`✓ Cleared. ${esc(t.rep)}'s incentive on this order is earned in full.`));
   if (kind === 'done') act(() => E.complete(w, t.id, actor, v('#f-out'), $('#f-moved')?.checked), 'Marked done.', out => ok(out.next ? `✓ Done. The deal moved to <b>${esc(out.next.stage)}</b>, so the next task was created: ${esc(out.next.title)} (due ${fmt(out.next.due)}).<div class="row"><button class="btn" data-open="${out.next.id}" type="button">Open the new task</button><button class="btn pri" data-close type="button">Back to Today</button></div>` : `✓ Done and logged.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'move') act(() => E.reschedule(w, t.id, actor, v('#f-date'), v('#f-block')), 'Rescheduled.', () => ok(`✓ Moved to ${fmt(v('#f-date'))}. It's in “Coming up” and still ages from ${fmt(t.due)}.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'hold') act(() => E.putOnHold(w, t.id, actor, v('#f-why'), v('#f-rev')), 'On hold.', () => ok(`✓ On hold until ${fmt(v('#f-rev'))}. It returns to Today by itself then.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
@@ -573,7 +577,20 @@ function why1(t) {
 }
 /* Try to break it: three guided attempts against the real rules. Nothing is faked; each calls the same engine the screens use. */
 let breakRes = null;
+async function simulatePayment() {
+  const o = w.orders.find(x => x.incentive?.state === 'hold');
+  if (!o) { breakRes = { k: 'pay', code: 'Nothing to pay', t: 'Send a payment from Every Rupee', bad: '', good: 'Every order is already paid. Place an order from a quote first, then try again.', go: ['pulse', 'Open Pulse'] }; return render(); }
+  const ap = o.approvalId ? w.approvals.find(a => a.id === o.approvalId) : null, gap = Math.min(1770, Math.round(E.netOf(o) * 0.02));
+  const ev = { event: 'payment.matched', idempotency_key: `utr_DEMO${Date.now().toString().slice(-8)}_${o.id}`, order_id: o.id, rep: o.creditTo, billed_amount: E.netOf(o), approved_discount: o.discountAmt, actual_received: E.netOf(o) - gap, gst_mode: ap?.gst?.mode ?? 'invoice', gst_rate: ap?.gst?.rate ?? 18, matched_on: w.today, source: 'Every Rupee' };
+  let api = null, via = 'Ten Today API';
+  try { const rsp = await fetch('api/payment-matched', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(ev) }); if (!rsp.ok) throw 0; api = await rsp.json(); } catch { via = 'browser (API unreachable here; same rules)'; }
+  const out = E.paymentMatched(w, ev); w = out.w; save();
+  const res = out.result;
+  breakRes = { k: 'pay', code: `Payment matched · via ${via}`, t: `${o.customer} pays ${inr(ev.actual_received)} against ${inr(ev.billed_amount)}`, bad: '', good: `${res.say.replace(/\. Cure by .*/, '.')} A task to clear the gap is now #1 on ${o.creditTo}'s list, with the rupees it unlocks.`, go: ['today', `See ${o.creditTo}'s list`], req: JSON.stringify(ev, null, 2), rsp: JSON.stringify(api ?? { note: 'computed in the browser', ...res }, null, 2) };
+  render();
+}
 function runBreak(kind) {
+  if (kind === 'pay') { simulatePayment(); return; }
   const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
   if (kind === 'cover') {
     let msg = ''; try { E.coverLeave(w, 'Kavita', 'Imran', 'Neha', w.today, E.addDays(w.today, 2)); } catch (e) { msg = e.message; }
@@ -603,7 +620,7 @@ function renderBanner() {
   if (r?.k === 'seal' && r.undo && !w.tampered) r = breakRes = { ...r, code: 'Restored', bad: '', good: 'Put back. Every fingerprint matches again, and the seal is green.', undo: false };
   el.hidden = !r; if (!r) return;
   el.className = `bk-ban ${r.bad ? 'no' : 'ok'}`;
-  el.innerHTML = `<div class="bk-c">${esc(r.code ?? 'Blocked')}</div><p class="bk-t">You tried: ${esc(r.t)}</p>${r.bad ? `<p class="bk-x">${esc(r.bad)}</p>` : ''}${r.good ? `<p class="bk-ok">${esc(r.good)}</p>` : ''}<div class="bk-a">${r.undo && w.tampered ? '<button class="btn" type="button" data-seal="undo">Put it back</button>' : ''}<a class="btn link" href="#${r.go[0]}" data-tab="${r.go[0]}">${r.go[1]} →</a><button class="bk-x2" type="button" data-break="close" aria-label="Close">×</button></div>`;
+  el.innerHTML = `<div class="bk-c">${esc(r.code ?? 'Blocked')}</div>${r.req ? `<details class="api" style="margin:8px 0 0"><summary>⇄ The API call <span>request and response</span></summary><pre>POST /api/payment-matched\n${esc(r.req)}</pre><pre>${esc(r.rsp)}</pre></details>` : ''}<p class="bk-t">${r.k === 'pay' ? 'Every Rupee' : 'You tried'}: ${esc(r.t)}</p>${r.bad ? `<p class="bk-x">${esc(r.bad)}</p>` : ''}${r.good ? `<p class="bk-ok">${esc(r.good)}</p>` : ''}<div class="bk-a">${r.undo && w.tampered ? '<button class="btn" type="button" data-seal="undo">Put it back</button>' : ''}<a class="btn link" href="#${r.go[0]}" data-tab="${r.go[0]}">${r.go[1]} →</a><button class="bk-x2" type="button" data-break="close" aria-label="Close">×</button></div>`;
 }
 /* Pulse: what the rules would mean at a real company, from public numbers. Inputs are editable; the math is shown. */
 let model = { revenueCr: 500, tradePct: 8, abovePct: 5 };
@@ -672,7 +689,10 @@ function intro() {
   }[tab];
   const u0 = UH[tab], u = tab === 'approvals' ? { pm: [...u0.pm, UH.record.pm[0]], fin: [...u0.fin, UH.record.fin[0]], ba: [...u0.ba, UH.record.ba[0]] } : u0;
   const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}`;
+  const pay = E.payFor(w, rep ? actor : null), team = E.PEOPLE.filter(p => p.rep).map(p => E.payFor(w, p.name)), tsum = k => team.reduce((s, x) => s + x[k], 0);
+  const payLine = rep && ['today', 'pulse'].includes(tab) ? `<p class="pay" data-rip="pay">Your pay, on money that arrived: <b>${inr(pay.earned)} earned</b>${pay.held ? ` · <span class="w">${inr(pay.held)} on hold</span> until a gap is cleared` : ''}${pay.awaiting ? ` · ${inr(pay.awaiting)} waiting for payment` : ''}${pay.notEarned ? ` · ${inr(pay.notEarned)} not earned (window closed)` : ''}.</p>`
+    : !rep && tab === 'pulse' ? `<p class="pay" data-rip="pay">Team pay, earned only on cash that arrived: <b>${inr(tsum('earned'))} earned</b> · ${inr(tsum('held'))} on hold for gaps · ${inr(tsum('awaiting'))} waiting for payment. Nobody is paid on money that never came.</p>` : '';
+  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${payLine}${cards}`;
   $('#notes').innerHTML = `<details class="uh"><summary>How I built this screen <span>the problem, my call, and notes for product, finance and BA readers · Rupak Ghanpathi</span></summary><p class="hx-w"><b>The problem:</b> ${esc(WHY[0])} <b>My call:</b> ${esc(WHY[1])}</p><div class="uh-g">${sec('Product', u.pm)}${sec('Finance ops', u.fin)}${sec('Business analysis', u.ba)}</div></details>`;
   renderBanner();
 }

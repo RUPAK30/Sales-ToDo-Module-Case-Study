@@ -316,3 +316,23 @@ test('IMS follow-up: buyer action is recorded and sealed; a rejection needs the 
   assert.equal(E.verifyChain(w3).ok, true);
   const e = E.eInvoiceCrn(w.approvals.find(a => a.id === pend.id)); assert.equal(e.DocDtls.Typ, 'CRN'); assert.equal(e.ValDtls.TotInvVal, e.ValDtls.AssVal + e.ValDtls.CgstVal + e.ValDtls.SgstVal);
 });
+
+test('realised incentive: earned on cash, held only on the gap, idempotent, cured or simply not earned', () => {
+  let w = E.escalate(E.withHistory(E.sample('2026-11-12')));
+  const o = w.orders.find(x => x.customer === 'Royal Foods'), net = E.netOf(o);
+  assert.equal(o.incentive.state, 'hold');
+  const ev = { idempotency_key: 'utr_TEST_1', order_id: o.id, actual_received: net - 1770 };
+  const r1 = E.paymentMatched(w, ev); w = r1.w;
+  const oi = w.orders.find(x => x.id === o.id).incentive;
+  assert.equal(oi.held, Math.round(1770 * 0.02)); assert.equal(oi.earned + oi.held, E.incentiveBase(o));
+  assert.equal(E.today(w, o.creditTo).list[0].kind, 'cure');
+  const r2 = E.paymentMatched(w, ev); assert.equal(r2.duplicate, true); assert.equal(r2.w, w);
+  assert.throws(() => E.cureGap(w, oi.cureTask, o.creditTo, 'collected', ''), /UTR/);
+  const cured = E.cureGap(w, oi.cureTask, o.creditTo, 'collected', 'UTR123');
+  assert.equal(cured.orders.find(x => x.id === o.id).incentive.earned, E.incentiveBase(o));
+  const late = E.closeCures({ ...w, today: E.addDays(w.today, 16) });
+  const li = late.orders.find(x => x.id === o.id).incentive; assert.equal(li.state, 'closed'); assert.equal(li.notEarned, oi.held);
+  assert.equal(E.realise({ billed: 100000, received: 100000, today: '2026-11-12' }).held, 0);
+  assert.equal(E.realise({ billed: 100000, received: 100000, today: '2026-11-12', gstMode: 'fincn', discount: 5000, gstRate: 18 }).gstNotRecovered, 900);
+  assert.equal(E.verifyChain(w).ok, true);
+});

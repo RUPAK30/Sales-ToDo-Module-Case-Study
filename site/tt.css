@@ -555,3 +555,6 @@ body[data-tab="approvals"] #gst-cn{order:3;margin-top:14px}
   #asks .ask .hint::after{content:' · Open the thread →';color:var(--tt);font-weight:600}
   #asks>.sub{display:none}
 }
+.pay{margin:12px 0 0;padding:9px 12px;border-radius:10px;background:#F5F5F4;font-size:.88rem;line-height:1.45}.pay .w{color:#92400E;font-weight:600}
+.rail-tests .pay-b{border-color:#1C1917;font-weight:600}
+.bk-ban pre{max-height:180px;overflow:auto;background:#1C1917;color:#E7E5E4;border-radius:8px;padding:8px;font-size:.7rem;margin:6px 0 0}
