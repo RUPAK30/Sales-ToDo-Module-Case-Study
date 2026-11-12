@@ -248,16 +248,16 @@ test('weekly MIS: every proof KPI passes on the sample and the CSV has one row p
   const E = await import('../site/engine.js');
   const w = E.escalate(E.sample('2026-11-11'));
   const m = E.mis(w);
-  assert.equal(m.length, 8);
+  assert.equal(m.length, 9);
   assert.ok(m.every(r => r.kpi && r.value && r.target && r.proves));
-  assert.equal(E.misCsv(w).split('\n').length, 9);
+  assert.equal(E.misCsv(w).split('\n').length, 10);
 });
 
 test('demo history: MIS opens with real numbers and today\'s queue is unchanged', () => {
   const base = E.escalate(E.sample('2026-11-11')), w = E.escalate(E.withHistory(E.sample('2026-11-11')));
   const ids = x => x.tasks.filter(t => t.status === 'open').map(t => t.id).join();
   assert.equal(ids(w), ids(base));
-  assert.ok(E.mis(w).filter(r => r.target !== 'Tracked').every(r => r.ok === true));
+  assert.ok(E.mis(w).filter(r => r.target !== 'Tracked' && !/GST relief/.test(r.kpi)).every(r => r.ok === true));
   assert.equal(E.verifyAnchored(w).ok, true);
 });
 
@@ -299,4 +299,20 @@ test('GST on discounts (1 Nov 2026 rules): mode is decided at approval, sealed, 
   assert.equal(E.gstEffect(100000, 5, 'fincn', 18, '2026-11-12').supplierSaves, 0);
   assert.ok(/given as gst credit note after delivery at 18% GST/.test(w2.chain.at(-1).text));
   assert.equal(E.gstAtRisk(w2).count >= 1, true);
+});
+
+test('IMS follow-up: buyer action is recorded and sealed; a rejection needs the remark and can settle as financial', () => {
+  const w = E.escalate(E.withHistory(E.sample('2026-11-12')));
+  const rej = w.approvals.find(a => a.cn?.ims === 'rejected'), pend = w.approvals.find(a => a.cn?.ims === 'pending');
+  assert.ok(rej && pend);
+  const before = E.gstAtRisk(w); assert.equal(before.count, 2); assert.equal(before.rejected, 1);
+  assert.throws(() => E.recordIms(w, pend.id, 'Kavita', 'rejected'), /remark/);
+  assert.throws(() => E.recordIms(w, pend.id, 'Rahul', 'accepted'), /manager or finance/);
+  const w2 = E.recordIms(w, pend.id, 'Kavita', 'accepted');
+  assert.equal(E.gstAtRisk(w2).count, 1);
+  const w3 = E.settleFinancial(w2, rej.id, 'Kavita');
+  assert.equal(E.gstAtRisk(w3).count, 0);
+  assert.equal(E.gstr1Cdnr(w3).cdnr.length, 1);
+  assert.equal(E.verifyChain(w3).ok, true);
+  const e = E.eInvoiceCrn(w.approvals.find(a => a.id === pend.id)); assert.equal(e.DocDtls.Typ, 'CRN'); assert.equal(e.ValDtls.TotInvVal, e.ValDtls.AssVal + e.ValDtls.CgstVal + e.ValDtls.SgstVal);
 });

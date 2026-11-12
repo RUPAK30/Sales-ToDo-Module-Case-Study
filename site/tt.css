@@ -480,3 +480,16 @@ main.wrap>*{min-width:0}
 .api pre{margin:0 0 8px;max-height:260px;overflow:auto;background:#1C1917;color:#E7E5E4;border-radius:10px;padding:10px 12px;font-size:.74rem;line-height:1.5;white-space:pre}
 .mini li .api{margin-top:6px}
 @media (max-width:1000px){.pc3{grid-template-columns:1fr 1fr}}@media (max-width:760px){.pc3{grid-template-columns:1fr}}
+/* GST credit notes */
+.cnc .k{margin:0;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#57534E}.cnc h2{margin:4px 0 2px}
+.cnl{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:10px}
+.cn{border:1px solid #E7E5E4;border-radius:12px;padding:12px}.cn.ok{border-color:#BBF7D0;background:#F0FDF4}.cn.warn{border-color:#FCD34D;background:#FFFBEB}.cn.bad{border-color:#FECACA;background:#FEF2F2}.cn.none{background:#FAFAF9}
+.cn-h{margin:0;font-size:.9rem}.cn-h span{float:right;font-size:.74rem;color:#78716C}.cn-n{margin:4px 0 0;font-weight:600;font-size:.9rem;line-height:1.45}
+.cn-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.cn-l{font-size:.78rem;color:#57534E}
+.seg{display:inline-flex;border:1px solid #D6D3D1;border-radius:9px;overflow:hidden}.seg button{font:inherit;font-size:.8rem;font-weight:600;padding:7px 11px;border:0;background:#fff;cursor:pointer}.seg button[aria-pressed="true"]{background:#1C1917;color:#fff}
+.cn-r{flex:1 1 180px;min-width:0;font:inherit;font-size:16px;padding:7px 10px;border:1px solid #D6D3D1;border-radius:9px}
+.cn-b{margin-top:8px}.cn-f{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}.cn-f small{flex:1 1 300px;color:#78716C;font-size:.74rem}
+.chip.st-warn{background:#FFFBEB;color:#92400E}
+@media (max-width:760px){.cn-h span{float:none;display:block}}
+#desk{display:flex;flex-direction:column}#desk>*{min-width:0}
+body[data-tab="approvals"] #gst-cn{order:3;margin-top:14px}

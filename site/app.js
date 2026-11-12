@@ -1,6 +1,6 @@
-import * as E from './engine.js?v=1794473658';
+import * as E from './engine.js?v=1794474919';
 
-const KEY = 'tentoday-product-v8';
+const KEY = 'tentoday-product-v9';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -215,7 +215,7 @@ function repDesk() {
   const row = (t, i) => `<li><button type="button" class="task ${i === 0 ? 'top' : ''} ${flashId === t.id ? 'flash' : ''}" data-open="${t.id}"><span class="rank">${i + 1}</span><span><span class="c">${esc(t.customer)}</span> ${tierChip(t)}<span class="chip p3">${esc(t.stage)}</span><div class="t">${esc(t.title)}</div><div class="why">${esc(E.explain(w, t))}</div></span><span class="val">${inr(t.value)}</span></button></li>`;
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
-  return `${coverCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
+  return `${coverCard()}${cnCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
     <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
@@ -262,11 +262,36 @@ function askCard(a) {
 }
 function misTable() {
   return `<section class="mis" id="c-mis" aria-label="Weekly MIS"><div class="mis-h"><div><p class="k">Weekly MIS · computed live from this desk</p><h2>Is every control working?</h2></div><button class="btn" id="mis-dl2" type="button">⬇ CSV</button></div>
-    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b data-rip="mis-${esc(r.kpi).slice(0, 24)}">${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? '<span class="chip">No data yet</span>' : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="mis-w"><table><thead><tr><th>KPI</th><th>This week</th><th>Target</th><th>Status</th><th class="hide-m">What it proves</th></tr></thead><tbody>${E.mis(w).map(r => `<tr><td>${esc(r.kpi)}</td><td><b data-rip="mis-${esc(r.kpi).slice(0, 24)}">${esc(r.value)}</b></td><td>${esc(r.target)}</td><td>${r.ok == null ? (r.value === '–' ? '<span class="chip">No data yet</span>' : '<span class="chip st-warn">● Watching</span>') : `<span class="chip ${r.ok ? 'st-ok' : 'st-bad'}">${r.ok ? (r.target === 'Tracked' ? '● Tracked' : '✓ Pass') : '✗ Fail'}</span>`}</td><td class="hide-m">${esc(r.proves)}</td></tr>`).join('')}</tbody></table></div>
     <p class="mis-f">Built like the weekly MIS I ran at HDFC Bank: 15+ KPIs, prep cut from 8 hours to 3. Here it takes zero prep. <b>Try it:</b> decide or leave an ask, or book an order, and watch a row change.</p></section>`;
 }
 
 /* Team & Cover: who is in, who is out, who has their work. Credit for covered deals stays with the person on leave. */
+/* GST credit notes: what happens after a discount is given as a s.34 credit note (rules from 1 Nov 2026). */
+let cnRemark = {};
+function cnCard() {
+  const notes = w.approvals.filter(a => a.status === 'approved' && a.cn && (a.gst?.mode === 'gstcn' || a.cn.settledAs));
+  if (!notes.length) return '';
+  const g = E.gstAtRisk(w), mgr = !isRep(actor);
+  const row = a => {
+    const fx = E.gstEffect(a.value, a.capPct, 'gstcn', a.gst.rate, a.decidedOn), by = E.imsDecideBy(a.cn.issuedOn), late = a.cn.ims === 'pending' && w.today > by;
+    const tone = a.cn.settledAs ? 'none' : a.cn.ims === 'accepted' ? 'ok' : a.cn.ims === 'rejected' || late ? 'bad' : 'warn';
+    const next = a.cn.settledAs ? `Settled as a financial credit note: the ${inr(fx.disc)} discount stands, GST stays as billed. Nothing to file.`
+      : a.cn.ims === 'accepted' ? `Accepted in IMS. Your GST cut of ${inr(fx.gst)} holds.`
+      : a.cn.ims === 'rejected' ? `Rejected: “${esc(a.cn.remark)}”. The ${inr(fx.gst)} GST cut doesn't hold. Fix the note, or settle it as a financial credit note before ${fmtY(fx.deadline)}.`
+      : late ? `Pending past ${fmtY(by)}: the buyer has had a full tax period. Call them, or treat it as rejected.` : `Waiting for ${esc(a.customer)} to accept in IMS (by ${fmtY(by)}). Until then the ${inr(fx.gst)} cut doesn't hold.`;
+    const msg = `Hi ${a.customer} team, credit note ${a.cn.no} for ${inr(fx.disc + fx.gst)} (${a.capPct}% discount + ${a.gst.rate}% GST, ref ${a.id}) is issued. Please accept it in IMS and reverse ${inr(fx.gst)} of input tax credit this month.`;
+    const body = JSON.stringify(E.eInvoiceCrn(a), null, 2);
+    return `<li class="cn ${tone}"><p class="cn-h"><b>${esc(a.customer)}</b> · ${a.cn.no} · ${inr(fx.disc)} + ${a.gst.rate}% GST = ${inr(fx.disc + fx.gst)} <span>${a.cn.settledAs ? 'Financial credit note' : 'GST credit note (s.34)'}</span></p><p class="cn-n">${next}</p>
+      ${a.cn.settledAs ? '' : `<div class="cn-a">${mgr ? `<span class="cn-l">Buyer's IMS action, from the GST portal:</span><div class="seg" role="group" aria-label="IMS action for ${a.cn.no}">${['accepted', 'pending', 'rejected'].map(k => `<button type="button" data-ims="${k}" data-id="${a.id}" aria-pressed="${a.cn.ims === k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}</div>${a.cn.ims === 'rejected' ? `<button class="btn" type="button" data-fin="${a.id}">Settle as financial credit note</button>` : `<input class="cn-r" data-rem="${a.id}" placeholder="Their remark, if rejecting" value="${esc(cnRemark[a.id] ?? '')}">`}` : `<span class="cn-l">Buyer's IMS action: <b>${a.cn.ims}</b> (finance records it)</span>`}</div>
+      <div class="cn-b"><button class="btn" type="button" data-copy="${esc(msg)}">Copy message for the buyer</button></div>
+      <details class="api"><summary>⇄ E-invoice for the credit note (CRN) <span>integration preview</span></summary><p class="api-n">NIC e-invoice schema, document type CRN, referring to the original sale. Needed where e-invoicing applies. GSTIN, HSN and invoice fields are placeholders. Sample payload, not sent to the IRP.</p><pre>${esc(body)}</pre><button class="btn" type="button" data-copy="${esc(body)}">Copy payload</button></details>`}</li>`;
+  };
+  return `<section class="card cnc" id="gst-cn" data-in="approvals pulse"><p class="k">GST credit notes · rules in force from 1 Nov 2026</p><h2>${g.count ? `${inr(g.gst)} of GST relief doesn't hold yet` : 'Every GST cut you claimed holds'}</h2>
+  <p class="hint">A post-sale discount cuts your GST only through a s.34 credit note, and only once the buyer reverses the same input tax credit by accepting it in IMS.${g.deadline ? ` Declare by <b>${fmtY(g.deadline)}</b> (${g.daysLeft} days), or the GST stays paid for good.` : ''}</p>
+  <ul class="cnl">${notes.map(row).join('')}</ul>
+  <div class="cn-f"><button class="btn" type="button" id="gstr1-dl">⬇ GSTR-1 Table 9B (JSON)</button><small>Credit notes to registered buyers, in the GST offline-tool format. Financial credit notes are left out. Sources: Finance Act 2026 · Notification 03/2026-CT · CBIC Circular 251/08/2025 · GSTN IMS advisory. A workflow, not tax advice.</small></div></section>`;
+}
 function coverCard() {
   const reps = E.PEOPLE.filter(p => p.rep), out = reps.filter(p => E.activeCover(w, p.name));
   const orphan = w.tasks.filter(t => t.status === 'open' && E.activeCover(w, t.rep)).length;
@@ -293,7 +318,7 @@ function managerDesk() {
     <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
   </div></section>`;
 
-  return `${coverCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
+  return `${coverCard()}${cnCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
     <div class="side">
       <div class="card" id="asks" data-in="approvals"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
@@ -616,6 +641,7 @@ document.addEventListener('change', e => {
   card.querySelector('.gstc').innerHTML = gstLine(a, Number(g('cap')), g('gst'), Number(g('rate')));
 });
 document.addEventListener('input', e => {
+  if (e.target.dataset?.rem) { cnRemark[e.target.dataset.rem] = e.target.value; return; }
   const k = e.target.dataset?.model; if (!k) return;
   const v = Number(e.target.value); if (!(v >= 0)) return;
   model = { ...model, [k]: v };
@@ -685,6 +711,9 @@ document.addEventListener('click', e => {
     $('#mv-confirm').innerHTML = fits ? `<p class="hint" style="margin-bottom:6px">Move <b>${esc(t.customer)}</b> from ${esc(t.rep)} to ${esc(to)}, within the ${bk} bucket?</p><div class="row"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Yes, move it</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`
       : `<div class="err" style="margin-bottom:6px">${esc(to)} handles ${esc(E.person(to).buckets.join(', '))}; <b>${esc(t.customer)}</b> is ${bk === "FMCG" ? "an" : "a"} ${bk} dealer. This is a wrong-bucket move, so it needs a reason and a second manager's approval. It stays with ${esc(t.rep)} until then.</div><div class="row"><input id="mv-why" placeholder="Why should it move? (required)" maxlength="140" style="flex:1"><button type="button" class="btn pri" id="mv-yes" data-t="${t.id}" data-to="${to}">Send for approval</button><button type="button" class="btn" id="mv-no">Cancel</button></div>`; return; }
   if (b.id === 'mv-no') { $('#mv-confirm').innerHTML = '<button type="button" class="btn" id="mv-ask">Move…</button>'; moveFit(); return; }
+  if (b.dataset.ims) { const id = b.dataset.id, k = b.dataset.ims; act(() => E.recordIms(w, id, actor, k, cnRemark[id] ?? ''), `Recorded: buyer ${k} the credit note.`); return; }
+  if (b.dataset.fin) { act(() => E.settleFinancial(w, b.dataset.fin, actor), 'Settled as a financial credit note.'); return; }
+  if (b.id === 'gstr1-dl') { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([JSON.stringify(E.gstr1Cdnr(w), null, 2)], { type: 'application/json' })), download: `gstr1-9b-credit-notes-${w.today}.json` }); a.click(); return; }
   if (b.dataset.break && b.closest('#drawer')) { $('#drawer').hidden = true; }
   if (b.dataset.break) { if (b.dataset.break === 'close') { breakRes = null; render(); } else runBreak(b.dataset.break); return; }
   if (b.dataset.cover === 'end') { const rep = b.dataset.rep; act(() => E.endCover(w, actor, rep), `${rep} is back. Their deals are handed back.`); return; }

@@ -115,11 +115,49 @@ export function gstEffect(value, pct, mode, rate, day) {
   const disc = rupeesOff(value, pct), gst = Math.round(disc * rate / 100);
   return { disc, gst, deadline: mode === 'gstcn' ? s34Deadline(day) : null, buyerReverses: mode === 'gstcn' ? gst : 0, supplierSaves: mode === 'fincn' ? 0 : gst };
 }
+/* The buyer acts on a GST credit note in IMS: accept, reject with a remark, or keep it pending for one tax period (GSTN advisory).
+   Ten Today records that action from the GST portal and seals it; it does not call the portal. */
+export const imsDecideBy = day => { const [y, m] = day.split('-').map(Number); return iso(new Date(y, m + 1, 0)); };
+export function recordIms(w0, apvId, actor, ims, remark = '') {
+  const w = clone(w0); const a = w.approvals.find(x => x.id === apvId) ?? fail('No such approval.');
+  if (!person(actor)?.manager) fail('A manager or finance records the buyer\'s IMS action.');
+  if (a.gst?.mode !== 'gstcn' || !a.cn) fail('Only a GST credit note needs the buyer\'s IMS action.');
+  if (!['accepted', 'pending', 'rejected'].includes(ims)) fail('Pick accepted, pending or rejected.');
+  if (ims === 'rejected' && !remark.trim()) fail('Copy the buyer\'s rejection remark from IMS so the fix is clear.');
+  a.cn = { ...a.cn, ims, remark: ims === 'rejected' ? remark.trim() : null, recordedOn: w.today };
+  record(w, actor, `IMS: ${a.customer} ${ims} credit note ${a.cn.no}${ims === 'rejected' ? ` ("${remark.trim()}")` : ''}`, a.id);
+  return w;
+}
+export function settleFinancial(w0, apvId, actor) {
+  const w = clone(w0); const a = w.approvals.find(x => x.id === apvId) ?? fail('No such approval.');
+  if (!person(actor)?.manager) fail('A manager or finance settles credit notes.');
+  if (a.cn?.ims !== 'rejected') fail('Only a rejected GST credit note is switched to a financial credit note.');
+  a.gst = { ...a.gst, mode: 'fincn' }; a.cn = { ...a.cn, ims: 'na', settledAs: 'financial' };
+  record(w, actor, `${a.cn.no} settled as a financial credit note: the discount stands, the GST cut is given up`, a.id);
+  return w;
+}
 export function gstAtRisk(w) {
-  const open = w.approvals.filter(a => a.status === 'approved' && a.gst?.mode === 'gstcn');
+  const open = w.approvals.filter(a => a.status === 'approved' && a.gst?.mode === 'gstcn' && a.cn?.ims !== 'accepted');
   const rows = open.map(a => ({ a, ...gstEffect(a.value, a.capPct, 'gstcn', a.gst.rate, a.decidedOn) }));
   const next = rows.map(x => x.deadline).sort()[0] ?? null;
-  return { count: rows.length, gst: rows.reduce((t, x) => t + x.gst, 0), deadline: next, daysLeft: next ? daysBetween(w.today, next) : null };
+  const rejected = open.filter(a => a.cn?.ims === 'rejected').length, overdue = open.filter(a => a.cn?.ims === 'pending' && w.today > imsDecideBy(a.cn.issuedOn)).length;
+  return { count: rows.length, gst: rows.reduce((t, x) => t + x.gst, 0), deadline: next, daysLeft: next ? daysBetween(w.today, next) : null, rejected, overdue };
+}
+const dmy = d => d.split('-').reverse().join('/');
+const r2 = n => Math.round(n * 100) / 100;
+/* The credit note as an e-invoice (document type CRN, NIC schema), pointing back to the original sale. Placeholders for GSTIN/HSN. */
+export function eInvoiceCrn(a) {
+  const g = gstEffect(a.value, a.capPct, 'gstcn', a.gst.rate, a.decidedOn), half = r2(g.gst / 2);
+  return { Version: '1.1', TranDtls: { TaxSch: 'GST', SupTyp: 'B2B' }, DocDtls: { Typ: 'CRN', No: a.cn.no, Dt: dmy(a.cn.issuedOn) },
+    SellerDtls: { Gstin: '<your GSTIN>' }, BuyerDtls: { Gstin: '<buyer GSTIN>', LglNm: a.customer, Pos: '<state code>' },
+    RefDtls: { PrecDocDtls: [{ InvNo: `<invoice for ${a.orderId ?? a.id}>`, InvDt: '<invoice date>' }] },
+    ItemList: [{ SlNo: '1', PrdDesc: `Post-sale discount ${a.capPct}% (${a.id})`, IsServc: 'N', HsnCd: '<HSN>', Qty: 1, Unit: 'OTH', UnitPrice: g.disc, TotAmt: g.disc, AssAmt: g.disc, GstRt: a.gst.rate, CgstAmt: half, SgstAmt: half, TotItemVal: g.disc + g.gst }],
+    ValDtls: { AssVal: g.disc, CgstVal: half, SgstVal: half, TotInvVal: g.disc + g.gst } };
+}
+/* GSTR-1 Table 9B rows (credit notes to registered buyers, "cdnr"), offline-tool JSON shape. Financial notes are not reported. */
+export function gstr1Cdnr(w) {
+  return { cdnr: w.approvals.filter(a => a.status === 'approved' && a.gst?.mode === 'gstcn' && a.cn).map(a => { const g = gstEffect(a.value, a.capPct, 'gstcn', a.gst.rate, a.decidedOn);
+    return { ctin: '<buyer GSTIN>', nt: [{ ntty: 'C', nt_num: a.cn.no, nt_dt: dmy(a.cn.issuedOn).replaceAll('/', '-'), val: g.disc + g.gst, pos: '<state code>', rchrg: 'N', inv_typ: 'R', itms: [{ num: 1, itm_det: { rt: a.gst.rate, txval: g.disc, camt: r2(g.gst / 2), samt: r2(g.gst / 2), csamt: 0 } }] }] }; }) };
 }
 export const dealerFloor = (w, name) => customerOf(w, name).marginFloorPct;
 export function creditCheck(w, customer) {
@@ -284,6 +322,7 @@ export function approve(w0, apvId, actor, capPct, validTo, overrideNote, gst = {
   if (!GST_MODES[gst?.mode]) fail('Say how the discount is given: on the invoice, a GST credit note, or a financial credit note.');
   if (!GST_RATES.includes(Number(gst.rate))) fail('Pick the GST rate on this product.');
   Object.assign(a, { status: 'approved', capPct, validTo, decidedBy: actor, decidedOn: w.today, amount: rupeesOff(a.value, capPct), override: hold ? overrideNote.trim() : null, gst: { mode: gst.mode, rate: Number(gst.rate) } });
+  if (gst.mode !== 'invoice') a.cn = { no: `CN-${a.id.slice(4)}`, issuedOn: w.today, ims: gst.mode === 'gstcn' ? 'pending' : 'na' };
   a.log.push({ at: stamp(), who: actor, text: `Approved ${capPct}% before GST (₹${a.amount.toLocaleString('en-IN')}), valid to ${validTo}${hold ? `. Credit hold overridden: ${overrideNote.trim()}` : ''}` });
   a.seal = record(w, actor, `Approved ${capPct}% before GST for ${a.customer}, valid to ${validTo}, given as ${GST_MODES[gst.mode].toLowerCase()} at ${gst.rate}% GST${a.actingFor ? `, acting for ${a.actingFor}` : ''}${hold ? `, credit override: ${overrideNote.trim()}` : ''}`, a.id);
   const t = unfreeze(w, a, actor, `${a.id} approved: ${capPct}% before GST, valid to ${validTo}. Send the revised quote.`);
@@ -716,10 +755,15 @@ export function withHistory(w0) {
   const w1 = clone(w0);
   const mk = (n, rep, customer, stage, value, lateDays) => ({ id: `T-${n}`, rep, customer, stage, title: NEXT_STEP[stage] ?? 'Follow up', due: addDays(w1.today, -lateDays), target: addDays(w1.today, -lateDays), value, status: 'open', reschedules: [], hold: null, approvalId: null, log: [] });
   w1.covers = [];
-  w1.tasks.push(mk(901, 'Rahul', 'Royal Foods', 'Quote sent', 110000, 0), mk(902, 'Rahul', 'Kiran Agencies', 'Qualified', 90000, 0), mk(903, 'Neha', 'Green Leaf', 'New lead', 30000, 0), mk(904, 'Imran', 'Balaji Provisions', 'Qualified', 55000, 0), mk(905, 'Rahul', 'Ashok Bros', 'New lead', 35000, 2));
+  w1.tasks.push(mk(901, 'Rahul', 'Royal Foods', 'Quote sent', 110000, 0), mk(902, 'Rahul', 'Kiran Agencies', 'Qualified', 90000, 0), mk(903, 'Neha', 'Green Leaf', 'New lead', 30000, 0), mk(904, 'Imran', 'Balaji Provisions', 'Qualified', 55000, 0), mk(905, 'Rahul', 'Ashok Bros', 'New lead', 35000, 2), mk(906, 'Neha', 'Green Leaf', 'Negotiation', 240000, 0));
   let w = askDiscount(w1, 'T-901', 'Rahul', 7, 'Rival offered 7% on the repeat order');
   w = approve(w, w.approvals.at(-1).id, 'Kavita', 5, addDays(w.today, 7), '', { mode: 'gstcn', rate: 18 });
   w = placeOrder(w, 'T-901', 'Rahul', 110000, 5).w;
+  // A second GST credit note that the buyer rejected in IMS, so the follow-up has something real to show.
+  w = askDiscount(w, 'T-906', 'Neha', 6, 'Year-end volume slab');
+  w = approve(w, w.approvals.at(-1).id, 'Kavita', 6, addDays(w.today, 7), '', { mode: 'gstcn', rate: 18 });
+  w = placeOrder(w, 'T-906', 'Neha', 240000, 6).w;
+  w = recordIms(w, w.approvals.at(-1).id, 'Kavita', 'rejected', 'Slab not met: 180 cases billed, slab starts at 200');
   for (const [id, who, out] of [['T-902', 'Rahul', 'Shared the price list; meeting fixed'], ['T-903', 'Neha', 'Intro call done; catalogue sent'], ['T-904', 'Imran', 'First visit done'], ['T-905', 'Rahul', 'Reached the owner after two days of follow-ups']]) w = complete(w, id, who, out).w;
   // Imran is on leave this week; his open work is with Rahul, who handles the same FMCG dealers.
   w = coverLeave(w, 'Kavita', 'Imran', 'Rahul', w.today, addDays(w.today, 3)).w;
@@ -741,6 +785,7 @@ export function mis(w) {
     { kpi: 'Asks stopped by a credit hold', value: String(im.creditHolds), target: 'Tracked', ok: true, proves: 'Over-limit dealers are caught before the order' },
     { kpi: 'Tasks done on time vs the original date', value: m.pct == null ? '–' : `${m.onTime} of ${m.done} (${m.pct}%)`, target: '≥ 80%', ok: m.pct == null ? null : m.pct >= 80, proves: 'On-time is real, not rescheduled' },
     { kpi: 'Tasks rescheduled 3+ times', value: String(m.movedThrice), target: '0', ok: m.movedThrice === 0, proves: 'Date gaming is visible' },
+    (() => { const g = gstAtRisk(w), any = w.approvals.some(a => a.gst?.mode === 'gstcn'); return { kpi: 'GST relief at risk before 30 Nov (s.34(2))', value: !any ? '–' : g.count ? `₹${g.gst.toLocaleString('en-IN')} · ${g.count} note${g.count === 1 ? '' : 's'}${g.rejected ? `, ${g.rejected} rejected` : ''}` : '₹0', target: '₹0', ok: !any ? null : g.count === 0 ? true : g.rejected || g.overdue ? false : null, proves: 'The GST cut you claim actually holds' }; })(),
     { kpi: 'Approval record intact', value: ch.ok ? `✓ ${w.chain.length} sealed entries` : '✗ altered', target: 'Intact', ok: ch.ok, proves: 'Any rewrite gets caught' },
   ];
 }
