@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794469221';
+import * as E from './engine.js?v=1794471914';
 
 const KEY = 'tentoday-product-v7';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -357,6 +357,7 @@ function renderPanel() {
     ${t.scheme ? `<p class="hint">Scheme ${t.scheme.id} applied: ${t.scheme.pct}% before GST = ${inr(t.scheme.amount)}.</p>` : ''}
     ${(() => { const c = E.creditCheck(w, t.customer); return c.creditLimit ? `<p class="hint">Dealer credit: ${inr(c.outstanding)} of ${inr(c.creditLimit)} used · oldest bill ${c.oldestBillDays}d of ${c.creditDays}d allowed${c.ok ? '' : ` · <b style="color:var(--bad)">credit hold</b>`}</p>` : ''; })()}
     ${t.status === 'open' ? `<p class="hint">Why it's here: ${esc(E.explain(w, t))}</p>` : ''}
+    ${(() => { const ap = w.approvals.find(x => x.taskId === t.id && x.status === 'approved' && !x.used); if (!ap || !mine) return ''; const off = E.rupeesOff(ap.value, ap.capPct); return `<div class="done"><b>Approved: ${ap.capPct}% by ${esc(E.label(ap.decidedBy).split(' · ')[0])}.</b> The buyer can have exactly this, and Every Rupee will check payment against it.</div>` + waText(`Hi ${t.customer} team, confirmed: ${ap.capPct}% off your order of ${inr(ap.value)}, so ${inr(ap.value - off)} before GST. Valid till ${fmt(ap.validTo)}. Ref ${ap.id}${ap.seal ? ` · ${ap.seal.slice(0, 8)}` : ''}.`); })()}
     ${panel.done ? `<div class="done">${panel.done}</div>` : ''}
     ${state}
     ${panel.err ? `<div class="err" role="alert">${esc(panel.err)}</div>` : ''}
@@ -366,9 +367,15 @@ function renderPanel() {
 }
 function routePreview() {
   const t = w.tasks.find(x => x.id === panel.id); const pct = Number($('#f-pct')?.value || 0); const el = $('#f-route'); if (!el) return;
-  const r = E.approverFor(w, t.customer, pct);
-  el.textContent = `${pct}% before GST = ${inr(E.rupeesOff(t.value, pct))} off. Goes to ${E.label(r.approver)}${r.why.length ? ` because: ${r.why.join(', ')}` : ` (within ${E.MANAGER_LIMIT}% and the margin floor)`}.`;
+  const r = E.approverFor(w, t.customer, pct), floor = E.dealerFloor(w, t.customer), cr = E.creditCheck(w, t.customer);
+  const off = E.rupeesOff(t.value, pct), who = E.label(r.approver).split(' · ')[0];
+  const line = (ok, txt) => `<li class="${ok ? 'ok' : 'no'}">${ok ? '✓' : '!'} ${txt}</li>`;
+  el.innerHTML = `<div class="cp"><div><span>Customer pays, before GST</span><b>${inr(t.value - off)}</b></div><div><span>Discount</span><b>${inr(off)}</b></div><div><span>Margin left*</span><b>${E.marginAfter(pct)}%</b></div></div>
+  <ul class="cp-c">${line(pct <= floor, `${pct <= floor ? 'Within' : 'Below'} this dealer's margin floor (max ${floor}%)`)}${line(pct <= E.MANAGER_LIMIT, pct <= E.MANAGER_LIMIT ? `Within Kavita's ${E.MANAGER_LIMIT}% limit` : `Above Kavita's ${E.MANAGER_LIMIT}% limit`)}${line(cr.ok, cr.ok ? 'Dealer credit is clear' : `Credit hold: ${esc(cr.why.join(', '))}`)}</ul>
+  <p class="cp-w"><b>${esc(who)} decides.</b> Not decided by the end of tomorrow, it ${r.approver === 'Arjun' ? 'stays top of his queue' : 'moves to Arjun on its own'}. Your task waits; you don't chase.</p>
+  <p class="cp-f">*At a typical FMCG gross margin of ${E.FMCG_GROSS_MARGIN}% (HUL FY25). Your own margins will differ.</p>`;
 }
+const waText = s => `<div class="wa"><p class="wa-l">Message for the buyer · ready to send</p><p class="wa-t">${esc(s)}</p><button class="btn" type="button" data-copy="${esc(s)}">Copy for WhatsApp</button></div>`;
 function panelAction(kind) {
   const t = w.tasks.find(x => x.id === panel.id); const v = s => $(s)?.value ?? '';
   panel.err = '';
@@ -380,7 +387,7 @@ function panelAction(kind) {
   if (kind === 'order') act(() => E.placeOrder(w, t.id, actor, Number(v('#f-val')), Number(v('#f-disc'))), 'Order placed.', out => ok(`✓ ${out.order.id} placed: ${inr(out.order.value)} at ${out.order.discountPct}% before GST (${inr(out.order.discountAmt)} off). Sealed as <code>${esc(out.order.seal.slice(0, 12))}</code>.${out.order.approvalId ? ` ${esc(out.order.approvalId)} is now used and can't cover another order.` : ''}<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>`));
   if (kind === 'lost') act(() => E.markLost(w, t.id, actor, v('#f-lost')), 'Marked lost.', () => ok('✓ Marked lost. It counts in the discount-effectiveness view.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>'));
   if (kind === 'resume') act(() => E.resume(w, t.id, actor), 'Back in Today.', () => ok('✓ Back in Today.'));
-  if (kind === 'ask') act(() => E.askDiscount(w, t.id, actor, Number(v('#f-pct')), v('#f-reason')), 'Ask sent.', out => { const a = out.approvals.at(-1); ok(`✓ Sent ${a.id} to <b>${esc(E.label(a.approver))}</b>. This task is frozen until they decide, so it has left your Today.<div class="row"><button class="btn pri" data-actor="${a.approver}" type="button">Sign in as ${esc(a.approver)} →</button><button class="btn" data-close type="button">Back to Today</button></div>`); });
+  if (kind === 'ask') act(() => E.askDiscount(w, t.id, actor, Number(v('#f-pct')), v('#f-reason')), 'Ask sent.', out => { const a = out.approvals.at(-1); ok(waText(`Hi ${t.customer} team, I've taken your ${a.askPct}% request to my manager. You'll have a confirmed price from me by tomorrow evening.`) + `✓ Sent ${a.id} to <b>${esc(E.label(a.approver))}</b>. This task is frozen until they decide, so it has left your Today.<div class="row"><button class="btn pri" data-actor="${a.approver}" type="button">Sign in as ${esc(a.approver)} →</button><button class="btn" data-close type="button">Back to Today</button></div>`); });
   if (kind === 'accept' || kind === 'decline') { const a = apvOf(t); act(() => E.respondCounter(w, a.id, actor, kind === 'accept'), kind === 'accept' ? 'Counter accepted.' : 'Counter declined.', () => ok(kind === 'accept' ? `✓ Accepted ${a.capPct}%. The task is back in Today: send the revised quote.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>` : '✓ Declined. The task is back in Today to negotiate without a discount.<div class="row"><button class="btn pri" data-close type="button">Back to Today</button></div>')); }
 }
 function decide(kind, id) {
@@ -579,6 +586,7 @@ document.addEventListener('input', e => {
   const inp = document.querySelector(`#impact [data-model="${k}"]`); inp.focus(); try { inp.setSelectionRange(pos, pos); } catch { }
 });
 document.addEventListener('click', e => {
+  const cp = e.target.closest('[data-copy]'); if (cp) { const txt = cp.dataset.copy; (navigator.clipboard?.writeText(txt) ?? Promise.reject()).then(() => toast('Copied. Paste it in WhatsApp.'), () => toast('Select the text and copy it.')); return; }
   const nl = e.target.closest('a[href="#notes"]'); if (nl) { e.preventDefault(); $('#drawer').hidden = true; const d = document.querySelector('#notes details'); if (d) d.open = true; $('#notes').scrollIntoView({ behavior: 'smooth' }); return; }
   const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
   const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }

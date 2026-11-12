@@ -105,6 +105,7 @@ export function sample(today) {
 const customerOf = (w, name) => w.customers[name] ?? { marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 };
 export const rupeesOff = (value, pct) => Math.round(value * pct / 100); // discount stated before GST
 /* Dealer credit, the way distributor ERPs enforce it: a money ceiling and a days ceiling. */
+export const dealerFloor = (w, name) => customerOf(w, name).marginFloorPct;
 export function creditCheck(w, customer) {
   const c = customerOf(w, customer); const why = [];
   if (c.creditLimit && c.outstanding > c.creditLimit) why.push(`over credit limit (₹${c.outstanding.toLocaleString('en-IN')} of ₹${c.creditLimit.toLocaleString('en-IN')})`);
