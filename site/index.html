@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="tabs.css?v=1794418266">
+<link rel="stylesheet" href="tabs.css?v=1794476591">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -70,8 +70,8 @@
   <div class="hero-grid">
     <div>
       <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
-      <h1>100 open leads. 10 actions today.</h1>
-      <p class="x-prom"><b>Every discount decided in 1 working day. No order above what was approved. Any rewrite gets caught.</b></p>
+      <h1>The discount promised on WhatsApp, kept honest all the way to the payment.</h1>
+      <p class="x-prom">A sales workbench for Indian B2B distribution. Reps see 10 things a day. Every discount is decided in 1 working day, sealed, and checked again when the money arrives, including the GST rules from 1 Nov 2026.</p>
       <p class="x-cta"><a class="x-pri" href="app.html">Try the live product →</a><a class="x-sec" href="app.html?tour=1">▶ 60-sec tour</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
       <details class="x-more"><summary>In plain words, and who's who</summary>
       <div style="background:#fff;border:1px solid #FED7AA;border-left:4px solid #C2410C;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.92rem;color:#1C1917">
@@ -86,18 +86,29 @@
       </div>
       </details>
     </div>
-    <a class="mini-ph" href="app.html" aria-label="Open the live product">
-      <p class="ph-hi" style="margin:0 0 8px">Today desk · capped at 10</p>
-      <ul class="ph-list" style="padding:0">
-        <li class="tk"><div class="tk-h"><b>Callback · Royal Foods</b><span class="pp pp-pi">16:30</span></div><p>₹1.1L · customer's agreed time, pinned above tiers</p></li>
-        <li class="tk"><div class="tk-h"><b>Close order · Aarav Dist.</b><span class="pp pp-p1">P1</span></div><p>₹4.8L · 6d past target · Negotiation (money waiting)</p></li>
-        <li class="tk"><div class="tk-h"><b>Qualify · Sai Enterprises</b><span class="pp pp-p1">P1</span></div><p>₹40k · 7d past target · ranks above ₹5.2L P2 deal</p></li>
-        <li class="tk"><div class="tk-h"><b>Ask 8% · Delta Pharma</b><span class="pp pp-p2">Frozen</span></div><p>₹3.0L · waiting on Kavita · sealed in SHA-256 chain</p></li>
-      </ul>
-      <div class="foot2"><span class="pp pp-ok">28 / 28 engine tests · 18 UAT</span><span>Open live desk →</span></div>
-    </a>
+    <div class="story" aria-label="One discount, from the call to the payment">
+      <div class="st-h"><span class="av">DP</span><div><b>Delta Pharma</b><small>Neha's deal · ₹3,00,000</small></div></div>
+      <div class="st-b" id="story">
+        <div class="tb buyer"><p class="tb-w">Delta Pharma · 4:47 pm</p><div class="tb-m">“Competitor is 9% lower. Give us 8% or we go elsewhere.”</div></div>
+        <div class="tb me"><p class="tb-w">Neha</p><div class="tb-m">Asking Kavita for <b>8%</b> (₹24,000 off).</div></div>
+        <div class="ts ok"><span>✓ Within this dealer's floor · ✓ within Kavita's 10% · ✓ credit clear. Kavita decides by tomorrow, or it goes to Arjun.</span></div>
+        <div class="tb them"><p class="tb-w">Kavita · 5:20 pm</p><div class="tb-m">Approved <b>8%</b>, as a GST credit note.</div></div>
+        <div class="ts ok"><span>🔒 Sealed. ₹24,000 off ₹3,00,000. Nobody can book above this. Buyer must reverse ₹4,320 of ITC.</span></div>
+        <div class="tb me"><p class="tb-w">Neha → Delta Pharma</p><div class="tb-m">Confirmed: 8%, ₹2,76,000 before GST, valid till 26 Nov.</div></div>
+        <div class="td">3 weeks later</div>
+        <div class="ts ok"><span>₹2,76,000 received. Matched to the seal in Every Rupee. Nothing short.</span></div>
+        <div class="ts bad"><span>IMS: buyer rejected the credit note, “slab not met”. The ₹4,320 GST cut doesn't hold. Fix by 30 Nov 2027.</span></div>
+      </div>
+      <a class="st-cta" href="app.html">Play it yourself as Neha or Kavita →</a>
+    </div>
   </div>
 
+  <div class="proof3" aria-label="What holds">
+    <div><b>10</b><span>things a rep sees today, out of 100+</span></div>
+    <div><b>1 day</b><span>for any discount, or it moves up on its own</span></div>
+    <div><b>₹0</b><span>booked above what was approved: blocked, and checked again at payment</span></div>
+  </div>
+  <details class="x-more"><summary>The before and after, and the seal</summary>
   <div class="x-ba" aria-label="Before and after">
     <div><span>Rep's list</span><s>100+ rows</s><b>10 actions</b><em>Enforced</em></div>
     <div><span>Discount decision</span><s>days, ad hoc</s><b>≤ 1 day</b><em>Enforced</em></div>
@@ -106,6 +117,7 @@
   </div>
   <p class="x-seal">🔒 <b>Every approval is sealed (SHA-256) and anchored daily.</b> If anyone later changes a 6% approval to 10%, one click shows which entry was edited.</p>
   <div class="x-stats"><a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener"><b>45%</b> of firms lost a deal to slow approvals <i>Conga</i></a><a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener"><b>&lt;⅓</b> of a seller's week is spent selling <i>Salesforce</i></a><a href="https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities" target="_blank" rel="noopener"><b>FY24</b> auditors must report on whether the audit trail was tampered with <i>ICAI</i></a></div>
+  </details>
   <details class="x-more"><summary>Benchmarks in detail</summary>
   <div class="score-grid" aria-label="Measured business outcomes backed by public data">
     <div>
@@ -385,6 +397,9 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
     document.getElementById("sp-" + k).style.display = (k === sp ? "block" : "none");
   });
 });
+</script>
+<script>
+(function(){var b=document.getElementById('story');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var k=[].slice.call(b.children);k.forEach(function(x){x.style.opacity=0});var i=0;(function n(){if(i>=k.length)return;var x=k[i++];x.style.opacity='';x.classList.add('in');b.scrollTop=b.scrollHeight;setTimeout(n,i<3?700:1100)})();})();
 </script>
 <script src="tabs.js?v=1794414119"></script>
 </body>

@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tt.css?v=1794474919">
+<link rel="stylesheet" href="tt.css?v=1794476511">
 </head>
 <body>
 <header class="bar"><div class="in"><button class="btn ghost menu" id="menu-go" type="button" aria-label="Menu" aria-controls="drawer">☰</button><a class="logo" href="./" aria-label="Ten Today home">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="hr"><a class="btn ghost hide-m" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><button class="btn pri" id="tour-go" type="button">▶ <span class="hide-m">60-second </span>tour</button></div></div></header>
@@ -20,7 +20,16 @@
 <a href="./" class="home">⌂ Home · case study</a><a href="cockpit.html">Spec &amp; UAT (18 cases)</a><a href="./#sources">Sources</a><a href="https://everyrupee-o2c.vercel.app/">Quote to cash · Every Rupee ↗</a><a href="https://rupak-lemon.vercel.app" target="_blank" rel="noopener">Portfolio ↗</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk ✉</a><p class="dsec">Test the rules</p><button type="button" class="dbk" data-break="cover">Hand Imran's deals to the wrong rep</button><button type="button" class="dbk" data-break="self">Approve your own discount</button><button type="button" class="dbk" data-break="seal">Edit a signed approval</button><a href="#notes" class="dnotes">How I built this screen</a><button type="button" class="btn ghost" id="reset">↺ Reset sample</button></aside>
 <div class="strip">Know what needs doing today, who owns it, and who covers when someone's away. <span>Sample data: try anything, nothing breaks.</span></div>
 
-<nav class="bn" id="bn" aria-label="Sections"></nav>
+<div class="shell">
+<aside class="rail" aria-label="Workspace">
+  <nav class="bn" id="bn" aria-label="Sections"></nav>
+  <div class="actor rail-people" role="group" aria-label="Switch active role">
+    <div class="actor-top"><span>See the day as</span><small id="actor-why"></small></div>
+    <div id="actors"></div>
+  </div>
+  <div class="rail-tests" role="group" aria-label="Test the rules"><p class="rail-k">Test the rules</p><button type="button" data-break="cover">Hand Imran's deals to the wrong rep</button><button type="button" data-break="self">Approve your own discount</button><button type="button" data-break="seal">Edit a signed approval</button></div>
+  <p class="rail-by">Built by <b>Rupak Ghanpathi</b><br>ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><br><a href="#notes">How I built this</a></p>
+</aside>
 <main class="wrap">
   <div class="head" data-in="today">
     <div>
@@ -62,10 +71,6 @@
   </section>
   </details>
 
-  <div class="actor" role="group" aria-label="Switch active role">
-    <div class="actor-top"><span>See the day as</span><small id="actor-why"></small></div>
-    <div id="actors"></div>
-  </div>
   <section id="tabintro" class="ti" aria-live="polite"></section>
   <section id="seal" data-in="approvals" class="seal" aria-live="polite"></section>
   <details class="why" id="q2c-wrap" data-in="approvals"><summary>Connected to Every Rupee (finance) <span>2 live tests</span></summary><section id="q2c-bridge" class="q2c-bar" aria-live="polite"></section></details>
@@ -89,12 +94,13 @@
     <p style="margin:10px 0 0"><b>Week one with your team:</b> map your approval flow, write the rules, and run UAT with three users. No ramp-up needed for the BRD, the UAT or the KPI. <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk →</a></p>
   </details>
 </main>
+</div>
 
 <section id="notes" class="wrap notes"></section>
 <aside id="bk-ban" class="bk-ban" hidden role="status" aria-live="polite"></aside>
 <dialog id="panel" aria-labelledby="p-title"><div id="panel-body"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 34 engine tests · <a href="cockpit.html?uat=1" style="color:inherit">18 UAT cases</a></span><span style="display:flex;gap:14px;flex-wrap:wrap"><a href="./">How it was designed →</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough">Hiring? Talk to me →</a></span></footer>
-<script type="module" src="app.js?v=1794474919"></script>
+<script type="module" src="app.js?v=1794476639"></script>
 </body>
 </html>

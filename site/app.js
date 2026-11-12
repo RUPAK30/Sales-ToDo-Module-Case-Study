@@ -357,6 +357,39 @@ function managerDesk() {
 /* ---------- task panel ---------- */
 const wide = () => matchMedia('(min-width:1100px)').matches;
 function openTask(id, tab) { panel = { id, tab: tab ?? null, err: '', done: null }; renderPanel(); const d = $('#panel'); if (!d.open) { wide() ? d.show() : d.showModal(); } document.body.classList.toggle('insp', wide()); document.querySelectorAll('.task.sel').forEach(x => x.classList.remove('sel')); document.querySelector(`.task[data-open="${id}"]`)?.classList.add('sel'); }
+/* The deal as a thread: people's messages, with Ten Today speaking only when a rule applies. Built from the real history. */
+function threadHtml(t) {
+  const out = [], aps = w.approvals.filter(a => a.taskId === t.id), apv = id => aps.find(a => a.id === id);
+  const tm = at => { try { return new Date(at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }); } catch { return ''; } };
+  const msg = (who, text, at, side) => out.push(`<div class="tb ${side}"><p class="tb-w">${esc(who)}${at ? ` · ${tm(at)}` : ''}</p><div class="tb-m">${text}</div></div>`);
+  const sys = (tone, text) => out.push(`<div class="ts ${tone}"><span>${text}</span></div>`);
+  out.push(`<div class="td">${esc(t.stage)} · ${inr(t.value)} · owned by ${esc(t.rep)}${t.coverFor ? ` for ${esc(t.coverFor)} (on leave; credit stays his)` : ''}</div>`);
+  for (const l of t.log) {
+    const ask = /\((APV-[\d-]+)\)/.exec(l.text), a = ask && /^Asked/.test(l.text) ? apv(ask[1]) : null;
+    if (a) {
+      msg(`${a.customer}, as noted by ${a.rep}`, `“${esc(a.reason)}”`, null, 'buyer');
+      msg(a.rep, `Asking ${esc(E.label(a.approver).split(' · ')[0])} for <b>${a.askPct}%</b> (${inr(E.rupeesOff(a.value, a.askPct))} off).`, l.at, a.rep === actor ? 'me' : 'them');
+      const floor = E.dealerFloor(w, a.customer), cr = E.creditCheck(w, a.customer);
+      sys(a.routedBecause.length ? 'warn' : 'ok', `${a.askPct <= floor ? '✓ Within the margin floor' : `! Below the margin floor (max ${floor}%)`} · ${a.askPct <= E.MANAGER_LIMIT ? `✓ within Kavita's ${E.MANAGER_LIMIT}%` : `! above Kavita's ${E.MANAGER_LIMIT}%`} · ${cr.ok ? '✓ credit clear' : '! credit hold'}. ${esc(E.label(a.approver).split(' · ')[0])} decides; silence for a working day moves it up. The task waits.`);
+      continue;
+    }
+    const dec = /^(APV-[\d-]+) approved/.exec(l.text), d = dec ? apv(dec[1]) : null;
+    if (d) {
+      msg(d.decidedBy, `Approved <b>${d.capPct}%</b>${d.capPct < d.askPct ? ` (asked ${d.askPct}%)` : ''}${d.gst ? ` · ${esc(E.GST_MODES[d.gst.mode].toLowerCase())}` : ''}.`, l.at, d.decidedBy === actor ? 'me' : 'them');
+      const g = d.gst ? E.gstEffect(d.value, d.capPct, d.gst.mode, d.gst.rate, d.decidedOn) : null;
+      sys('ok', `🔒 Sealed${d.seal ? ` (${d.seal.slice(0, 8)})` : ''}: ${inr(g?.disc ?? d.amount)} off ${inr(d.value)}, valid to ${fmt(d.validTo)}.${g && d.gst.mode === 'gstcn' ? ` The buyer must reverse ${inr(g.gst)} of ITC.` : ''} Nobody can book above this.`);
+      continue;
+    }
+    msg(l.who === 'System' ? 'Ten Today' : l.who, esc(l.text), l.at, l.who === 'System' ? 'sysm' : l.who === actor ? 'me' : 'them');
+  }
+  for (const a of aps) {
+    if (a.status === 'pending') sys('warn', `⏳ Waiting on ${esc(E.label(a.approver).split(' · ')[0])}. ${E.waitingDays(w, a) >= 1 ? 'Past a working day: it moves up next.' : 'Decided by the end of tomorrow, or it moves up.'}`);
+    if (a.cn && a.gst?.mode === 'gstcn') { const g = E.gstEffect(a.value, a.capPct, 'gstcn', a.gst.rate, a.decidedOn); sys(a.cn.ims === 'accepted' ? 'ok' : a.cn.ims === 'rejected' ? 'bad' : 'warn', a.cn.ims === 'accepted' ? `IMS: ${esc(a.customer)} accepted credit note ${a.cn.no}. The ${inr(g.gst)} GST cut holds.` : a.cn.ims === 'rejected' ? `IMS: ${esc(a.customer)} rejected ${a.cn.no}: “${esc(a.cn.remark)}”. The ${inr(g.gst)} GST cut doesn't hold. Fix by ${fmtY(g.deadline)}.` : `IMS: credit note ${a.cn.no} is with ${esc(a.customer)} to accept (by ${fmtY(E.imsDecideBy(a.cn.issuedOn))}).`); }
+    if (a.cn?.settledAs) sys('none', `${a.cn.no} settled as a financial credit note: discount stands, GST stays as billed.`);
+  }
+  if (t.log.length === 0) sys('none', `Nothing on this deal yet. It's on today's list because it's ${esc(why1(t))}.`);
+  return `<div class="thread">${out.join('')}</div>`;
+}
 function renderPanel() {
   if (!panel) return;
   const t = w.tasks.find(x => x.id === panel.id); const a = apvOf(t);
@@ -381,21 +414,21 @@ function renderPanel() {
   };
   let state = '';
   if (t.status === 'frozen' && a?.status === 'pending') state = `<div class="wait">Frozen: waiting for <b>${esc(E.label(a.approver))}</b> to decide ${a.askPct}% (${a.id}).${a.routedBecause.length ? ` Sent to the sales head because ${esc(a.routedBecause.join(', '))}.` : ''} <button class="btn link" data-actor="${a.approver}" type="button">Sign in as ${esc(a.approver)} →</button></div>`;
+  if (a?.status === 'pending' && E.decisionsFor(w, actor).some(x => x.id === a.id)) state = `<div class="decide"><p class="rail-k">Your decision</p>${askCard(a)}</div>`;
   if (t.status === 'hold') state = `<div class="wait">On hold: ${esc(t.hold.reason)}. Back in Today on ${fmt(t.hold.revisit)}. ${mine ? '<button class="btn link" data-do="resume" type="button">Take it off hold now</button>' : ''}</div>`;
   if (t.status === 'done') state = `<div class="done">Done: ${esc(t.outcome)}</div>`;
   if (!mine && t.status === 'open') state = `<div class="wait">This is ${esc(E.label(t.rep))}'s task. <button class="btn link" data-actor="${t.rep}" type="button">Sign in as ${esc(t.rep)} →</button></div>`;
   $('#panel-body').innerHTML = `
-    <div class="ph"><div><h2 id="p-title" style="margin:0">${esc(t.customer)}</h2><p class="hint">${t.id} · ${esc(t.stage)} · ${inr(t.value)} · ${esc(E.label(t.rep))}</p></div><button class="x" data-close aria-label="Close" type="button">×</button></div>
-    <p style="margin:0"><b>${esc(t.title)}</b></p>
+    <div class="ph"><button class="back" data-close aria-label="Back" type="button">‹</button><span class="av" aria-hidden="true">${esc(t.customer.split(' ').map(x => x[0]).join('').slice(0, 2))}</span><div><h2 id="p-title" style="margin:0">${esc(t.customer)}</h2><p class="hint">${esc(t.title)}</p></div><button class="x" data-close aria-label="Close" type="button">×</button></div>
+    ${threadHtml(t)}
     ${t.scheme ? `<p class="hint">Scheme ${t.scheme.id} applied: ${t.scheme.pct}% before GST = ${inr(t.scheme.amount)}.</p>` : ''}
     ${(() => { const c = E.creditCheck(w, t.customer); return c.creditLimit ? `<p class="hint">Dealer credit: ${inr(c.outstanding)} of ${inr(c.creditLimit)} used · oldest bill ${c.oldestBillDays}d of ${c.creditDays}d allowed${c.ok ? '' : ` · <b style="color:var(--bad)">credit hold</b>`}</p>` : ''; })()}
-    ${t.status === 'open' ? `<p class="hint">Why it's here: ${esc(E.explain(w, t))}</p>` : ''}
     ${(() => { const ap = w.approvals.find(x => x.taskId === t.id && x.status === 'approved' && !x.used); if (!ap || !mine) return ''; const off = E.rupeesOff(ap.value, ap.capPct); return `<div class="done"><b>Approved: ${ap.capPct}% by ${esc(E.label(ap.decidedBy).split(' · ')[0])}.</b> The buyer can have exactly this, and Every Rupee will check payment against it.</div>` + waText(`Hi ${t.customer} team, confirmed: ${ap.capPct}% off your order of ${inr(ap.value)}, so ${inr(ap.value - off)} before GST. Valid till ${fmt(ap.validTo)}. ${ap.gst?.mode === 'gstcn' ? `It comes as a GST credit note after delivery: please accept it in IMS and reverse ${inr(E.gstEffect(ap.value, ap.capPct, 'gstcn', ap.gst.rate, ap.decidedOn).gst)} of input tax credit that month. ` : ap.gst?.mode === 'fincn' ? 'It comes as a financial credit note; your GST input stays as billed. ' : 'It will show on the invoice itself. '}Ref ${ap.id}${ap.seal ? ` · ${ap.seal.slice(0, 8)}` : ''}.`) + payloadBox(ap, t.customer); })()}
     ${panel.done ? `<div class="done">${panel.done}</div>` : ''}
     ${state}
     ${panel.err ? `<div class="err" role="alert">${esc(panel.err)}</div>` : ''}
     ${panel.tab && !panel.done ? `<div class="tabs">${tabs.map(([k, l]) => `<button type="button" class="${k === panel.tab ? 'on' : ''}" data-tab="${k}">${l}</button>`).join('')}</div><div class="box">${forms[panel.tab]}</div>` : ''}
-    <div><b style="font-size:.85rem">History</b>${t.log.length ? `<ul class="hist" style="margin-top:6px">${t.log.slice().reverse().map(l => `<li><small>${time(l.at)} · ${esc(E.label(l.who))}</small>${esc(l.text)}</li>`).join('')}</ul>` : '<p class="empty">No actions yet.</p>'}</div>`;
+    `;
   if (panel.tab === 'ask') routePreview();
 }
 function routePreview() {
@@ -463,8 +496,18 @@ function render() {
   const before = RIP();
   try { renderInner(); requestAnimationFrame(() => { const after = document.querySelectorAll('[data-rip]'); after.forEach(el => { if (el.dataset.rip in before && before[el.dataset.rip] !== el.textContent) { el.classList.remove('rip'); void el.offsetWidth; el.classList.add('rip'); } }); }); } catch (e) { console.error(e); try { localStorage.removeItem(KEY); } catch { } w = E.escalate(E.withHistory(E.sample(realToday))); actor = 'Rahul'; panel = null; result = { text: 'The saved session was from an older version, so a fresh sample was loaded.' }; renderInner(); }
 }
+function autoInspect() {
+  if (!wide()) return;
+  const d = $('#panel');
+  if (!['today', 'approvals'].includes(tab)) { if (d.open && !panel?.pinned) { d.close(); } return; }
+  if (panel) return;
+  let id = null;
+  if (isRep(actor)) id = E.today(w, actor).list[0]?.id ?? w.approvals.find(a => a.rep === actor)?.taskId;
+  else id = E.decisionsFor(w, actor)[0]?.taskId ?? w.approvals.filter(a => a.status === 'approved').at(-1)?.taskId;
+  if (id) openTask(id);
+}
 function renderInner() {
-  renderTabs(); intro(); renderActors(); renderQ2CBridge(); $('#seal').hidden = false; renderSeal(); renderNext();
+  renderTabs(); intro(); renderActors(); setTimeout(autoInspect, 0); renderQ2CBridge(); $('#seal').hidden = false; renderSeal(); renderNext();
   $('#desk').innerHTML = isRep(actor) ? repDesk() : managerDesk();
   if (panel && $('#panel').open) renderPanel();
   flashId = null;
@@ -629,7 +672,7 @@ function intro() {
   }[tab];
   const u0 = UH[tab], u = tab === 'approvals' ? { pm: [...u0.pm, UH.record.pm[0]], fin: [...u0.fin, UH.record.fin[0]], ba: [...u0.ba, UH.record.ba[0]] } : u0;
   const sec = (h, arr) => `<div><h4>${h}</h4><ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}${tiles}${breakBar()}`;
+  $('#tabintro').innerHTML = `<div class="hx"><div class="hx-t"><h2 class="hx-h">${H.h}</h2><p class="hx-c">${H.p}</p></div>${H.a ? `<div class="hx-a">${H.a}</div>` : ''}</div>${cards}`;
   $('#notes').innerHTML = `<details class="uh"><summary>How I built this screen <span>the problem, my call, and notes for product, finance and BA readers · Rupak Ghanpathi</span></summary><p class="hx-w"><b>The problem:</b> ${esc(WHY[0])} <b>My call:</b> ${esc(WHY[1])}</p><div class="uh-g">${sec('Product', u.pm)}${sec('Finance ops', u.fin)}${sec('Business analysis', u.ba)}</div></details>`;
   renderBanner();
 }
@@ -651,6 +694,7 @@ document.addEventListener('input', e => {
   const inp = document.querySelector(`#impact [data-model="${k}"]`); inp.focus(); try { inp.setSelectionRange(pos, pos); } catch { }
 });
 document.addEventListener('click', e => {
+  const ak = wide() && e.target.closest('#asks .ask'); if (ak && !e.target.closest('button,input,select,label')) { const a = w.approvals.find(x => `ask-${x.id}` === ak.id); if (a) { openTask(a.taskId); return; } }
   const cp = e.target.closest('[data-copy]'); if (cp) { const txt = cp.dataset.copy; (navigator.clipboard?.writeText(txt) ?? Promise.reject()).then(() => toast('Copied. Paste it in WhatsApp.'), () => toast('Select the text and copy it.')); return; }
   const nl = e.target.closest('a[href="#notes"]'); if (nl) { e.preventDefault(); $('#drawer').hidden = true; const d = document.querySelector('#notes details'); if (d) d.open = true; $('#notes').scrollIntoView({ behavior: 'smooth' }); return; }
   const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
