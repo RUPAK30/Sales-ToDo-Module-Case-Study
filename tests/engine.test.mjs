@@ -274,3 +274,13 @@ test('leave cover: work moves to a rep who knows the accounts, credit stays, han
   assert.ok(imranOpen.every(id => back.w.tasks.find(t => t.id === id).rep === 'Imran'));
   assert.equal(E.verifyChain(back.w).ok, true);
 });
+
+test('impact model: transparent arithmetic on public benchmarks', () => {
+  const m = E.impactModel({ revenueCr: 500, tradePct: 8, abovePct: 5 });
+  assert.equal(m.trade, 40e7);          // ₹40 Cr of trade incentives
+  assert.equal(m.blocked, 2e7);         // ₹2 Cr given above approval, now blocked
+  assert.equal(m.priceGain, 0.4);       // 0.4% better price realisation
+  assert.equal(m.opProfitGain, 3.2);    // ~8x leverage (McKinsey)
+  assert.equal(m.withinBainCeiling, true);
+  assert.equal(E.marginAfter(10), 45.7);
+});

@@ -1,4 +1,4 @@
-import * as E from './engine.js?v=1794468812';
+import * as E from './engine.js?v=1794469221';
 
 const KEY = 'tentoday-product-v7';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
@@ -215,7 +215,7 @@ function repDesk() {
   const row = (t, i) => `<li><button type="button" class="task ${i === 0 ? 'top' : ''} ${flashId === t.id ? 'flash' : ''}" data-open="${t.id}"><span class="rank">${i + 1}</span><span><span class="c">${esc(t.customer)}</span> ${tierChip(t)}<span class="chip p3">${esc(t.stage)}</span><div class="t">${esc(t.title)}</div><div class="why">${esc(E.explain(w, t))}</div></span><span class="val">${inr(t.value)}</span></button></li>`;
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
-  return `${coverCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
+  return `${coverCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
     <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2><p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
@@ -285,7 +285,7 @@ function managerDesk() {
     <div class="${im.intact ? 'good' : 'bad'}"><span>Approval record</span><b>${im.intact ? '✓ Intact' : '✗ Altered'}</b><small>${im.blocks} sealed blocks · <a href="#seal">verify</a></small></div>
   </div></section>`;
 
-  return `${coverCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
+  return `${coverCard()}${impactCard()}<div data-in="pulse">${misTable()}${snap}</div><div class="grid">
     <div class="side">
       <div class="card" id="asks" data-in="approvals"><h2>Discount asks for you · ${d.length}</h2><p class="sub">Each shows the three numbers you need: the ask, the margin floor and the dealer's credit.</p>
         ${d.length ? d.map(askCard).join('') : '<p class="empty">Nothing waiting for you.</p>'}
@@ -489,6 +489,20 @@ function breakBar() {
   if (r?.k === 'seal' && r.undo && !w.tampered) r = breakRes = { ...r, bad: '', good: 'Put back. Every fingerprint matches again, and the seal is green.', undo: false };
   return `<div class="bk"><div class="bk-h"><b>Try to break it</b><span>3 tests · 30 seconds · the real rules, nothing staged</span></div><div class="bk-b"><button class="btn" type="button" data-break="cover">Give Imran's deals to the wrong rep</button><button class="btn" type="button" data-break="self">Approve your own discount</button><button class="btn" type="button" data-break="seal">Edit a signed approval</button></div>${r ? `<div class="bk-r" role="status"><p class="bk-t">You tried: ${esc(r.t)}</p>${r.bad ? `<p class="bk-x">⛔ ${esc(r.bad)}</p>` : ''}${r.good ? `<p class="bk-ok">${esc(r.good)}</p>` : ''}<div class="bk-a">${r.undo && w.tampered ? '<button class="btn" type="button" data-seal="undo">Put it back</button>' : ''}<a class="btn link" href="#${r.go[0]}" data-tab="${r.go[0]}">${r.go[1]} →</a><button class="btn link" type="button" data-break="close">Close</button></div></div>` : ''}</div>`;
 }
+/* Pulse: what the rules would mean at a real company, from public numbers. Inputs are editable; the math is shown. */
+let model = { revenueCr: 500, tradePct: 8, abovePct: 5 };
+function impactCard() {
+  const m = E.impactModel(model), cr = n => `₹${(n / 1e7).toLocaleString('en-IN', { maximumFractionDigits: 2 })} Cr`;
+  const src = (t, u) => `<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
+  return `<section class="card imp" id="impact" data-in="pulse"><p class="k">Modelled on public numbers · not a measured result</p><h2>What these rules would be worth at a ${cr(model.revenueCr * 1e7)} FMCG company</h2>
+  <div class="imp-in"><label>Annual revenue (₹ Cr)<input type="number" min="10" step="10" data-model="revenueCr" value="${model.revenueCr}"></label><label>Trade incentives, % of revenue<input type="number" min="1" max="20" step="0.5" data-model="tradePct" value="${model.tradePct}"><small>McKinsey: 8–11%</small></label><label>Share given above what was approved<input type="number" min="0" max="50" step="1" data-model="abovePct" value="${model.abovePct}"><small>Your estimate. No public figure exists.</small></label></div>
+  <div class="imp-out">
+    <div><b data-rip="imp-b">${cr(m.blocked)}</b><span>a year in discounts given above approval, now blocked at the order. Every rupee of it is gross profit.</span></div>
+    <div><b data-rip="imp-p">+${m.opProfitGain}%</b><span>operating profit: ${m.priceGain}% better price realisation × ~8 (McKinsey: 1% price ≈ 8% operating profit).</span></div>
+    <div><b>2+ days</b><span>faster per pricing exception: 47% of teams take 3+ days (Everstage 2026); here it is decided or escalated within 1 working day.</span></div>
+  </div>
+  <p class="imp-f">How it's worked out: ${cr(model.revenueCr * 1e7)} × ${model.tradePct}% trade incentives = ${cr(m.trade)}; × ${model.abovePct}% above approval = ${cr(m.blocked)}. ${m.withinBainCeiling ? '' : '⚠ This is above the 6% leakage Bain measured, so it is likely too high. '}Margin per order uses a typical FMCG gross margin of ${E.FMCG_GROSS_MARGIN}% (HUL FY25): 8% off leaves ${E.marginAfter(8)}%, 12% off leaves ${E.marginAfter(12)}%.<br>Sources: ${src('McKinsey, trade spend', 'https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/reimagining-trade-spend-from-cost-center-to-growth-catalyst')} · ${src('McKinsey, the power of pricing', 'https://www.mckinsey.com/featured-insights/business-functions/the-power-of-pricing')} · ${src('Everstage approval queue report', 'https://www.everstage.com/approval-queue-report')} · ${src('Bain, off-invoice discounts', 'https://www.bain.com/insights/off-invoice-discounts/')} · ${src('HUL FY25 income statement', 'https://stockanalysis.com/quote/nse/HINDUNILVR/financials/income-statement/')} · ${src('Conga', 'https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle')}</p></section>`;
+}
 function intro() {
   const m = E.mis(w), judged = m.filter(x => x.ok !== null && x.target !== 'Tracked'), slipped = judged.filter(x => x.ok === false);
   const rep = isRep(actor), me = E.person(actor), q = rep ? E.today(w, actor) : null, top = rep && q.list[0];
@@ -547,6 +561,15 @@ function intro() {
 }
 
 /* ---------- events ---------- */
+document.addEventListener('input', e => {
+  const k = e.target.dataset?.model; if (!k) return;
+  const v = Number(e.target.value); if (!(v >= 0)) return;
+  model = { ...model, [k]: v };
+  const el = document.getElementById('impact'); const pos = e.target.selectionStart;
+  const before = RIP(); el.outerHTML = impactCard();
+  document.querySelectorAll('#impact [data-rip]').forEach(x => { if (before[x.dataset.rip] !== x.textContent) { x.classList.remove('rip'); void x.offsetWidth; x.classList.add('rip'); } });
+  const inp = document.querySelector(`#impact [data-model="${k}"]`); inp.focus(); try { inp.setSelectionRange(pos, pos); } catch { }
+});
 document.addEventListener('click', e => {
   const jl = e.target.closest('a[data-jump]'); if (jl) { e.preventDefault(); const el = document.getElementById(jl.dataset.jump); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (el?.tagName === 'DETAILS') el.open = true; el?.classList.remove('cl'); return; }
   const tl = e.target.closest('a[data-tab]'); if (tl) { e.preventDefault(); return setTab(tl.dataset.tab); }

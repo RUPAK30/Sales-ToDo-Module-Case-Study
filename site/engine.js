@@ -29,6 +29,9 @@ const BLOCKING = ['Quote sent', 'Negotiation']; // money is waiting on these
 /* ---------- dates (ISO yyyy-mm-dd, local) ---------- */
 export const iso = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
 export const addDays = (day, n) => { const [y, m, d] = day.split('-').map(Number); return iso(new Date(y, m - 1, d + n)); };
+/* Public benchmark: Hindustan Unilever FY25 gross margin 51.15% (StockAnalysis, income statement). Used only to translate a discount into its effect on margin. */
+export const FMCG_GROSS_MARGIN = 51.15;
+export const marginAfter = pct => Math.round(((1 - pct / 100) - (1 - FMCG_GROSS_MARGIN / 100)) / (1 - pct / 100) * 1000) / 10;
 export const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
 export const daysBetween = (a, b) => { const [y1, m1, d1] = a.split('-').map(Number); const [y2, m2, d2] = b.split('-').map(Number); return Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000); };
 const stamp = () => new Date().toISOString();
@@ -259,7 +262,7 @@ export function approve(w0, apvId, actor, capPct, validTo, overrideNote) {
   if (hold && !(overrideNote && overrideNote.trim())) fail('This dealer is on credit hold. Write why you are overriding it (e.g. post-dated cheque received).');
   if (!(capPct > 0)) fail('Set the approved discount.');
   if (capPct > a.askPct) fail(`You can't approve more than was asked (${a.askPct}%).`);
-  if (!person(actor).senior && (capPct > MANAGER_LIMIT || capPct > a.marginFloorPct)) { const mx = Math.min(MANAGER_LIMIT, a.marginFloorPct); fail(`${inr(a.value * (capPct - mx) / 100)} above your limit. ${capPct}% on this ${inr(a.value)} order gives away ${inr(a.value * capPct / 100)}; you can approve up to ${mx}% (${inr(a.value * mx / 100)}). Approve ${mx}%, or send it to the sales head.`); }
+  if (!person(actor).senior && (capPct > MANAGER_LIMIT || capPct > a.marginFloorPct)) { const mx = Math.min(MANAGER_LIMIT, a.marginFloorPct); fail(`${inr(a.value * (capPct - mx) / 100)} above your limit. ${capPct}% on this ${inr(a.value)} order gives away ${inr(a.value * capPct / 100)}; you can approve up to ${mx}% (${inr(a.value * mx / 100)}). At a typical FMCG gross margin of ${FMCG_GROSS_MARGIN}%, ${capPct}% off leaves ${marginAfter(capPct)}% on this order; ${mx}% leaves ${marginAfter(mx)}%. Approve ${mx}%, or send it to the sales head.`); }
   if (!validTo || validTo <= w.today) fail('Set an expiry date after today. Approvals never stay open forever.');
   Object.assign(a, { status: 'approved', capPct, validTo, decidedBy: actor, decidedOn: w.today, amount: rupeesOff(a.value, capPct), override: hold ? overrideNote.trim() : null });
   a.log.push({ at: stamp(), who: actor, text: `Approved ${capPct}% before GST (₹${a.amount.toLocaleString('en-IN')}), valid to ${validTo}${hold ? `. Credit hold overridden: ${overrideNote.trim()}` : ''}` });
@@ -795,4 +798,14 @@ export function rebuildChain(w0) {
 export function sealedDecision(w, apvId) {
   const e = [...w.chain].reverse().find(x => x.ref === apvId && /^(Approved|Accepted)/.test(x.text));
   return e ? { entry: e, check: verifyAnchored(w) } : null;
+}
+
+/* Impact model: public benchmarks in, Ten Today's rules applied, a modelled estimate out. Never a measured result.
+   Sources: trade incentives 8-11% of revenue (McKinsey, Reimagining trade spend); 1% better price ~ 8% more operating profit
+   (McKinsey, The power of pricing); 47% of teams take 3+ days to clear a pricing exception (Everstage, 2026, n=195);
+   off-invoice leakage over 6% of revenue (Bain & Pricefx, industrial) used only as a ceiling. */
+export function impactModel({ revenueCr = 500, tradePct = 8, abovePct = 5 } = {}) {
+  const R = revenueCr * 1e7, trade = R * tradePct / 100, blocked = trade * abovePct / 100;
+  const priceGain = blocked / R * 100;
+  return { trade, blocked, priceGain: Math.round(priceGain * 100) / 100, opProfitGain: Math.round(priceGain * 8 * 10) / 10, withinBainCeiling: priceGain <= 6, daysSaved: 2 };
 }
