@@ -236,3 +236,23 @@ header.appbar.tt-head .in{display:grid!important;grid-template-columns:minmax(0,
 @media (max-width:560px){.hero{padding-top:14px!important}.hx-grid .hx2 h1{font-size:1.45rem;line-height:1.15}.hx-grid .x-prom{margin-top:8px}.hook{margin-top:12px}.strip3>div{flex-basis:64%;padding:9px 11px}.strip3 span{font-size:.72rem}.hx-by{margin-top:10px}}
 @media (prefers-reduced-motion:reduce){.hook-a b::after{animation:none}}
 .hook:not(.open) .hook-a small{display:none}
+/* ---------- phones: say less, show more. Desktop keeps everything. ---------- */
+.mny-g i{font-style:normal}.mny-g i.mb{display:none}
+@media (max-width:640px){
+ .mny-g i.dk{display:none}.mny-g i.mb{display:inline}
+ .hx-grid .x-prom{display:none}
+ .hx-by{font-size:.78rem!important;margin-top:8px!important}
+ .strip3{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;overflow:visible!important;margin-right:0!important;padding-right:0!important}
+ .strip3>div{display:flex!important;flex-direction:column;align-items:flex-start;gap:4px;padding:8px 10px!important}
+ .strip3>div>span{display:none}.strip3 b{font-size:.86rem}.strip3 svg{width:18px;height:18px}
+ .mny-h{font-size:.82rem}.mny-g{grid-template-columns:1fr 1fr!important}.mny-g>a,.mny-g>div{padding:8px 10px!important}.mny-f{display:none}
+ .wk-leg span:not(#w-o3l){display:none}.wk-f{display:none}.wk-sl{grid-template-columns:1fr 1fr!important}.wk-sl label span{font-size:.74rem}
+ #demo .dm-cap{display:none}#demo .dm-side{display:none}#demo .dm-top h2{font-size:1rem}#demo .dm-end a:not(.x-pri){display:none}
+ .ck li div>span{display:none}.ck li{grid-template-columns:30px minmax(0,1fr) auto!important;padding:9px 10px}.ck a{grid-column:auto!important;justify-self:end!important;font-size:.72rem;padding:4px 9px}.ck b{font-size:.86rem}
+ .c7 h2,.wk h2,.dl h2{font-size:1rem!important}
+ .dl li{font-size:.86rem}.dl li b{display:block}.dl li{color:transparent;line-height:0}.dl li b{color:#1C1917;line-height:1.45;font-size:.9rem}
+ .dl ol{gap:6px}
+ [data-sec~="overview"]>div[style*="border-radius:16px"] p:nth-child(2){display:none}
+ p[data-sec="overview"]{display:none}
+}
+@media (max-width:640px){.ck li{grid-template-columns:30px minmax(0,1fr)!important;row-gap:5px}.ck a{grid-column:2!important;justify-self:start!important}.c7,.wk,.dl{margin-top:22px!important}}
