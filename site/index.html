@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script src="palette.js?v=1794600080"></script>
+<script src="palette.js?v=1794600090"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ten Today — post-sale discount controls</title>
 <meta name="description" content="Product and BA case study by Rupak Ghanpathi: every post-sale discount through seven controls under the GST rules in force from 1 Nov 2026. Break-even before approval, GST recovery through IMS, cash match, and a sealed audit pack.">
@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="tabs.css?v=1794600080">
+<link rel="stylesheet" href="tabs.css?v=1794600090">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -97,23 +97,18 @@
     </div>
   </div>
 
-  <section id="worth" class="wk" aria-label="What it's worth at your scale">
+  <section id="worth" class="wk" aria-label="What it could be worth">
     <p class="eyebrow">What it could be worth</p>
-    <h2>What could this mean for a company? Change the numbers; every assumption is visible.</h2>
-    <div class="wk-g">
-      <div class="wk-in">
-        <label>Company's yearly sales, ₹ crore<input type="number" id="w-rev" value="500" min="10" step="10"></label>
-        <label>Spent on discounts to shops, % of sales<input type="number" id="w-trade" value="8" min="1" max="30" step="0.5"><small>McKinsey puts trade promotion at 8–11% of revenue for consumer goods makers.</small></label>
-        <label>Discounts that don't pay for themselves, %<input type="number" id="w-bad" value="0" min="0" max="100" step="1"><small id="w-bad-s">Default is the sample's own figure. McKinsey found 72% of US trade promotions lose money.</small></label>
-        <label>Given after the sale with a tax credit note, %<input type="number" id="w-post" value="30" min="0" max="100" step="5"><small>Your assumption. Only these depend on the buyer accepting in IMS.</small></label>
-      </div>
-      <div class="wk-out">
-        <div><span>Spent on discounts a year</span><b id="w-o1">—</b></div>
-        <div class="hot"><span>Not paying for itself: worth checking before anyone says yes</span><b id="w-o2">—</b></div>
-        <div><span>Tax savings waiting on buyers to approve (18% GST)</span><b id="w-o3">—</b></div>
-        <p>An estimate to size the problem, not a promise of savings. Ten Today doesn't stop a discount; it shows the break-even before someone approves it, and tracks the GST cut until it's safe.</p>
-      </div>
+    <p class="wk-ans" id="w-ans">—</p>
+    <div class="wk-bar" aria-hidden="true"><i class="ok" id="w-b1"></i><i class="bad" id="w-b2"></i></div>
+    <div class="wk-leg"><span><i class="ok"></i>pays for itself</span><span><i class="bad"></i>doesn't: worth checking before anyone says yes</span><span id="w-o3l">tax savings waiting on buyers: <b id="w-o3">—</b></span></div>
+    <div class="wk-sl">
+      <label><span>Yearly sales <b id="w-rev-v"></b></span><input type="range" id="w-rev" min="50" max="5000" step="50" value="500"></label>
+      <label><span>Spent on discounts <b id="w-trade-v"></b></span><input type="range" id="w-trade" min="1" max="20" step="0.5" value="8"></label>
+      <label><span>Don't pay for themselves <b id="w-bad-v"></b></span><input type="range" id="w-bad" min="0" max="100" step="1" value="40"></label>
+      <label><span>Given after the sale with a tax credit note <b id="w-post-v"></b></span><input type="range" id="w-post" min="0" max="100" step="5" value="30"></label>
     </div>
+    <p class="wk-f" id="w-f">Defaults: 8% discount spend (McKinsey's 8–11% for consumer goods), 40% not paying back (this sample; McKinsey found 72% of US trade promotions lose money), 18% GST. An estimate to size the problem, not a promise of savings.</p>
   </section>
 
   <section id="demo" class="dm" aria-label="One discount, end to end">
@@ -136,19 +131,10 @@
     <p class="dm-end"><a class="x-pri" href="app.html#controls/walk">Replay it step by step in the app →</a><a href="app.html#controls/D-102">See a real rejection still open (D-102) →</a></p>
   </section>
 
-  <section id="controls" class="c7" aria-label="The seven controls">
-    <p class="eyebrow">The seven controls</p>
-    <h2>The seven checks, in plain words. Click any one to see it fail in the app.</h2>
-    <div class="c7-g">
-      <a id="c1" href="app.html#controls/D-102/C1"><b>C1 · Is it worth it?</b><span>Before anyone says yes, the app shows how much extra the buyer must buy to make up for the discount.</span><em>See one that lost ₹64,000 →</em></a>
-      <a id="c2" href="app.html#controls/D-108/C2"><b>C2 · Is the right person saying yes?</b><span>Nobody can approve their own request, or more than their limit.</span><em>See 12% approved on an 8% limit →</em></a>
-      <a id="c3" href="app.html#controls/D-104/C3"><b>C3 · Is it really a discount?</b><span>If the money was really for a service, like shelf display, it is taxed differently. The tax team decides and writes down why.</span><em>See one held for the tax team →</em></a>
-      <a id="c4" href="app.html#controls/D-103/C4"><b>C4 · Is the paperwork right and on time?</b><span>The tax credit note must be the right kind, issued before the deadline, under the rule that applied that day.</span><em>See one issued under the old rule →</em></a>
-      <a id="c5" href="app.html#controls/D-102/C5"><b>C5 · Did the buyer accept it?</b><span>The buyer approves the credit note on the government GST site. If they reject it, the tax saving is lost.</span><em>See one the buyer rejected →</em></a>
-      <a id="c6" href="app.html#controls/D-106/C6"><b>C6 · Did the right money arrive?</b><span>The amount the buyer paid must match what was approved.</span><em>See one paid ₹63,000 short →</em></a>
-      <a id="c7" href="app.html#controls/D-101/C7"><b>C7 · Can anyone change the record?</b><span>Every step is digitally fingerprinted. If anyone edits it later, the app shows exactly where.</span><em>Try editing one →</em></a>
-      <a href="app.html#controls/sweep" class="c7-hot"><b>Last chance: 30 Nov 2026</b><span>Discounts on last year\'s bills whose tax saving isn\'t safe yet, biggest first, with the days left.</span><em>Open the list →</em></a>
-    </div>
+  <section id="controls" class="c7" aria-label="The seven checks">
+    <p class="eyebrow">The seven checks</p>
+    <h2>Every discount answers seven questions. Tap an example to see one fail.</h2>
+    <ol class="ck"><li id="c1"><span class="ck-n">C1</span><div><b>Is it worth it?</b><span>Shows how much extra the buyer must buy before anyone says yes.</span></div><a href="app.html#controls/D-102/C1">Lost ₹64,000 →</a></li><li id="c2"><span class="ck-n">C2</span><div><b>Is the right person saying yes?</b><span>No approving your own request, or above your limit.</span></div><a href="app.html#controls/D-108/C2">12% on an 8% limit →</a></li><li id="c3"><span class="ck-n">C3</span><div><b>Is it really a discount?</b><span>Money for a shelf display is a service, taxed differently. The tax team decides.</span></div><a href="app.html#controls/D-104/C3">Held for tax team →</a></li><li id="c4"><span class="ck-n">C4</span><div><b>Is the paperwork right and on time?</b><span>Right credit note, before the deadline, under the rule of that day.</span></div><a href="app.html#controls/D-103/C4">Issued under old rule →</a></li><li id="c5"><span class="ck-n">C5</span><div><b>Did the buyer accept it?</b><span>The buyer approves on the GST portal. Rejected means the tax saving is lost.</span></div><a href="app.html#controls/D-102/C5">Buyer rejected →</a></li><li id="c6"><span class="ck-n">C6</span><div><b>Did the right money arrive?</b><span>What the buyer paid must match what was approved.</span></div><a href="app.html#controls/D-106/C6">₹63,000 short →</a></li><li id="c7"><span class="ck-n">C7</span><div><b>Can anyone change the record?</b><span>Every step is fingerprinted; a later edit shows exactly where.</span></div><a href="app.html#controls/D-101/C7">Try editing one →</a></li><li class="ck-hot"><span class="ck-n">!</span><div><b>Last chance: 30 Nov 2026</b><span>Last year's bills whose tax saving isn't safe yet, biggest first.</span></div><a href="app.html#controls/sweep">Open the list →</a></li></ol>
   </section>
 
   <section class="dl" aria-label="What I didn't build">
@@ -431,7 +417,7 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
 <script>
 (function(){var b=document.getElementById('story');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var k=[].slice.call(b.children);k.forEach(function(x){x.style.opacity=0});var i=0;(function n(){if(i>=k.length)return;var x=k[i++];x.style.opacity='';x.classList.add('in');b.scrollTop=b.scrollHeight;setTimeout(n,i<3?700:1100)})();})();
 </script>
-<script src="tabs.js?v=1794600080"></script>
-<script type="module" src="demo.js?v=1794600080"></script>
+<script src="tabs.js?v=1794600090"></script>
+<script type="module" src="demo.js?v=1794600090"></script>
 </body>
 </html>

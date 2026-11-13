@@ -17,11 +17,13 @@ set('#m-spent', lakh(K.spent)); set('#m-stake', lakh(lostAmt + K.gstAtRisk + K.s
 set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
 
 // what it's worth at your scale
-{ const bad = $('#w-bad'); if (bad) { bad.value = badShare; $('#w-bad-s').textContent = `Default ${badShare}% is the sample's own figure (share of discount ₹ that didn't pay back). McKinsey found 72% of US trade promotions lose money.`; }
-  const cr = n => '₹' + (n >= 1 ? n.toLocaleString('en-IN', { maximumFractionDigits: 1 }) + ' crore' : (n * 100).toLocaleString('en-IN', { maximumFractionDigits: 1 }) + ' lakh');
-  const calc = () => { const v = id => Math.max(0, +$(id).value || 0); const spend = v('#w-rev') * v('#w-trade') / 100;
-    set('#w-o1', cr(spend)); set('#w-o2', cr(spend * v('#w-bad') / 100)); set('#w-o3', cr(spend * v('#w-post') / 100 * 0.18)); };
-  document.querySelectorAll('.wk-in input').forEach(i => i.addEventListener('input', calc)); if ($('#w-rev')) calc(); }
+{ const bad = $('#w-bad'); if (bad) bad.value = badShare;
+  const cr = n => '₹' + (n >= 1 ? n.toLocaleString('en-IN', { maximumFractionDigits: 1 }) + ' crore' : Math.round(n * 100).toLocaleString('en-IN') + ' lakh');
+  const calc = () => { const v = id => +$(id).value || 0, rev = v('#w-rev'), tr = v('#w-trade'), b = v('#w-bad'), po = v('#w-post'), spend = rev * tr / 100;
+    set('#w-rev-v', cr(rev)); set('#w-trade-v', tr + '% of sales'); set('#w-bad-v', b + '%'); set('#w-post-v', po + '%');
+    $('#w-ans').innerHTML = `A <b>${cr(rev)}</b> company spends about <b>${cr(spend)}</b> a year on discounts. Roughly <b class="bad">${cr(spend * b / 100)}</b> of it doesn't pay for itself.`;
+    $('#w-b1').style.width = (100 - b) + '%'; $('#w-b2').style.width = b + '%'; set('#w-o3', cr(spend * po / 100 * 0.18)); };
+  document.querySelectorAll('.wk-sl input').forEach(i => i.addEventListener('input', calc)); if ($('#w-rev')) calc(); }
 
 const root = $('#demo');
 if (root) {
