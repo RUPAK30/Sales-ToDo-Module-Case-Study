@@ -219,3 +219,20 @@ a.cta:active,.x-cta a:active,button:active{transform:scale(.97)}
  .strip3::-webkit-scrollbar{display:none}.strip3>div{flex:0 0 72%;scroll-snap-align:start}
  .hx-grid .x-prom{font-size:.98rem}.hook-q{font-size:.92rem}}
 .strip3 b span{display:inline;font-size:inherit;color:inherit;margin:0;grid-column:auto}
+/* header v2: logo centred on every screen, calm frosted bar */
+header.appbar.tt-head .in{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;gap:8px!important;padding:10px 16px!important;max-width:1120px;margin:0 auto}
+.tt-head .in>.l{grid-column:1!important;grid-row:1!important;justify-self:start;order:0!important;margin:0!important;width:auto!important;flex:none!important}
+.tt-head .in>.logo{grid-column:2!important;grid-row:1!important;justify-self:center!important;order:0!important;margin:0!important}
+.tt-head .in>.r{grid-column:3!important;grid-row:1!important;justify-self:end;order:0!important;display:flex;align-items:center;gap:10px}
+.tt-head .logo .tt-wm{font-size:1.3rem;letter-spacing:-.04em}
+.tt-head #ix-menu{width:40px;height:40px;padding:0!important;border-radius:12px!important;border:1px solid rgba(0,0,0,.08)!important;background:rgba(255,255,255,.7)!important;display:flex;align-items:center;justify-content:center}
+.tt-head nav.r a.pri{border-radius:999px!important;padding:8px 14px!important;font-size:.85rem!important;background:var(--acc,#3F6B4F)!important;color:#fff!important;box-shadow:0 4px 14px var(--acc-glow,rgba(0,0,0,.1))}
+@media (max-width:560px){.tt-head .in{padding:8px 12px!important}.tt-head .logo .tt-wm{font-size:1.18rem}.tt-head nav.r a.pri{padding:7px 12px!important;font-size:.8rem!important}}
+/* hero: tighter, calmer */
+.hook{padding:12px 14px;gap:8px}.hook-a{min-height:0}
+.hook-a b{display:inline-flex;align-items:center;gap:6px}
+.hook:not(.open) .hook-a b::after{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:hk-pulse 1.6s ease-in-out infinite}
+@keyframes hk-pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@media (max-width:560px){.hero{padding-top:14px!important}.hx-grid .hx2 h1{font-size:1.45rem;line-height:1.15}.hx-grid .x-prom{margin-top:8px}.hook{margin-top:12px}.strip3>div{flex-basis:64%;padding:9px 11px}.strip3 span{font-size:.72rem}.hx-by{margin-top:10px}}
+@media (prefers-reduced-motion:reduce){.hook-a b::after{animation:none}}
+.hook:not(.open) .hook-a small{display:none}
