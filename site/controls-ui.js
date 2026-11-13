@@ -82,7 +82,7 @@ function ticketCard(tk, prev) {
   return `<div class="tk"><div class="tk-top"><b>⇄ Exception ticket for ${tk.control}</b><div class="cr-tg"><button type="button" data-view="servicenow" aria-pressed="${!jira}">ServiceNow</button><button type="button" data-view="jira" aria-pressed="${jira}">JIRA</button></div></div>
     <div class="tk-card">${body}<div class="tk-d"><span>Description</span><p>${esc(tk.text)}</p></div>
     <div class="tk-a"><span>Activity</span><p><b>Ten Today</b> opened this when ${esc(tk.control)} failed on ${fmt(tk.opened)}. Due in ${tk.owner.tat} working day${tk.owner.tat === 1 ? '' : 's'}${tk.breached ? ' · <b class="bad">past due</b>' : ''}. Closes itself when the control passes.</p></div></div>
-    <p class="cr-fn">Preview of the ticket as it would appear in ${jira ? 'JIRA' : 'ServiceNow'}. Not sent. <details class="tk-j"><summary>API payload (${jira ? 'POST /rest/api/3/issue' : 'POST /api/now/table/incident'})</summary><pre>${esc(JSON.stringify(prev, null, 2))}</pre></details></p></div>`;
+    <p class="cr-fn">Preview of the ticket as it would appear in ${jira ? 'JIRA' : 'ServiceNow'}. Not sent. <button type="button" class="btn link" data-copy="1">Copy the API call (${jira ? 'POST /rest/api/3/issue' : 'POST /api/now/table/incident'})</button></p></div>`;
 }
 
 function walkHtml() {
@@ -153,6 +153,7 @@ document.addEventListener('click', e => {
   const root = $('#ctrl-room'); if (!root || !root.contains(e.target)) return;
   const sel = e.target.closest('[data-sel]'); if (sel) { S.sel = sel.dataset.sel; S.err = ''; S.note = ''; save(); render(); root.querySelector('.cr-d')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
   const v = e.target.closest('[data-view]'); if (v) { S.view = v.dataset.view; save(); render(); root.querySelector('.tk')?.scrollIntoView({ block: 'nearest' }); return; }
+  const cpy = e.target.closest('[data-copy]'); if (cpy) { const r = C.evaluate(cur(), ctx()), tk = r.tickets[0]; if (tk) navigator.clipboard?.writeText(JSON.stringify(S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk), null, 2)).then(() => { cpy.textContent = 'Copied ✓'; }); return; }
   const b = e.target.closest('[data-a]'); if (b) act(b.dataset.a, b);
 });
 document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); } });
