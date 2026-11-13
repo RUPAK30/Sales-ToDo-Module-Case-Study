@@ -267,13 +267,13 @@ export const OPENED = { 'D-102-C5': '2026-11-09', 'D-103-C4': '2026-11-02', 'D-1
 export function walkthrough(today) {
   const b = base('D-201', 'Navkar Traders', 'INV-2603-301', '2026-03-12', 1000000, 860000, 6);
   const S = [];
-  let d = request(b, today, 'Neha'); S.push({ d, t: 'Request', s: `Neha asks for 6% (${inr(discountOf(d))}) on a ₹10 lakh March invoice. Before anyone can approve, the desk works out the break-even: +${breakEven(6, 51.15)}% extra volume at a 51.15% margin.` });
+  let d = request(b, today, 'Neha'); S.push({ d, t: 'Request', s: `Neha asks to give Navkar 6% (${inr(discountOf(d))}) back on a ₹10 lakh March bill. Before anyone can say yes, Ten Today works out how much extra Navkar must buy to make it worth it: ${breakEven(6, 51.15)}% more than usual.` });
   try { approve(d, today, 'Neha', 8); } catch (e) { S.push({ d, t: 'Self-approval refused', s: e.message }); }
-  d = approve(d, today, 'Vikram', 8); S.push({ d, t: 'Approved', s: 'Vikram approves within his 8% limit. The economics entry sits before the approval in the chain, so C1 and C2 pass.' });
-  d = chooseRoute(d, today, 'Farah', 'gst', 'Registered buyer, monthly filer'); d = issueNote(d, today, 'Farah', 'CN-26-041'); S.push({ d, t: 'GST credit note', s: `Farah issues CN-26-041 under PSD v2 (in force from 1 Nov 2026), so no prior agreement is needed. The March invoice means the deadline is 30 Nov 2026.` });
-  d = recordIms(d, today, 'Asha', 'rejected', 'Wrong invoice reference'); S.push({ d, t: 'Buyer rejects in IMS', s: `${inr(gstOf(d))} of tax goes back on the supplier's liability. C5 fails and opens an exception for Asha, due in 2 working days, with a ServiceNow or JIRA ticket preview.` });
-  d = issueNote(d, today, 'Farah', 'CN-26-042'); d = recordIms(d, today, 'Asha', 'accepted'); S.push({ d, t: 'Fixed and accepted', s: 'Farah reissues with the right invoice reference; the buyer accepts. The GST cut holds and the exception closes.' });
-  d = recordPayment(d, today, 'Asha', 940000, 'UTR HDFCN26317001'); S.push({ d, t: 'Cash matched', s: `₹9,40,000 received against the approved net: C6 passes.` });
-  S.push({ d, t: 'Audit pack', s: `All 7 controls pass. The pack holds ${d.events.length} sealed entries; change any one and C7 names it.`, pack: true });
+  d = approve(d, today, 'Vikram', 8); S.push({ d, t: 'Approved', s: 'Vikram from finance approves. He can approve up to 8%, and the "is it worth it" check was done first, so checks 1 and 2 pass.' });
+  d = chooseRoute(d, today, 'Farah', 'gst', 'Registered buyer, monthly filer'); d = issueNote(d, today, 'Farah', 'CN-26-041'); S.push({ d, t: 'GST credit note', s: `Farah from the tax team sends a tax credit note, a "minus bill" that lowers the GST on the sale. Under the rules since 1 Nov 2026 this is allowed, and for a March bill it must be done by 30 Nov 2026.` });
+  d = recordIms(d, today, 'Asha', 'rejected', 'Wrong invoice reference'); S.push({ d, t: 'Buyer rejects in IMS', s: `Navkar rejects it on the government GST site, so the ${inr(gstOf(d))} tax saving is lost for now. Check 5 fails and a task opens for Asha with a 2-day deadline, like a ServiceNow or JIRA ticket.` });
+  d = issueNote(d, today, 'Farah', 'CN-26-042'); d = recordIms(d, today, 'Asha', 'accepted'); S.push({ d, t: 'Fixed and accepted', s: 'Farah sends a corrected note and Navkar accepts it. The tax saving is safe and the task closes.' });
+  d = recordPayment(d, today, 'Asha', 940000, 'UTR HDFCN26317001'); S.push({ d, t: 'Cash matched', s: `Navkar pays ₹9,40,000, exactly what was agreed. Check 6 passes.` });
+  S.push({ d, t: 'Audit pack', s: `All 7 checks pass. The audit pack holds ${d.events.length} recorded steps; if anyone changed one later, check 7 would show which.`, pack: true });
   return S;
 }
