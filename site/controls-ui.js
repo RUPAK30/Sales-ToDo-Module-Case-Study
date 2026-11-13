@@ -65,8 +65,24 @@ function detail(d, k) {
     <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)}</small></li>`).join('')}</ol>
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}${S.note ? `<p class="cr-note" role="status">${esc(S.note)}</p>` : ''}
     ${actions(d, r)}
-    ${prev ? `<details class="cr-pv"><summary>⇄ Exception ticket for ${tk.control}, as a ${S.view === 'jira' ? 'JIRA issue' : 'ServiceNow incident'} <span>integration preview</span></summary><div class="cr-tg"><button type="button" data-view="servicenow" aria-pressed="${S.view !== 'jira'}">ServiceNow</button><button type="button" data-view="jira" aria-pressed="${S.view === 'jira'}">JIRA</button></div><pre>${esc(JSON.stringify(prev, null, 2))}</pre></details>` : ''}
+    ${prev ? ticketCard(tk, prev) : ''}
   </div>`;
+}
+
+function ticketCard(tk, prev) {
+  const jira = S.view === 'jira', f = (k, v, cls = '') => `<div class="tk-f ${cls}"><span>${k}</span><b>${v}</b></div>`;
+  const pri = tk.rupees >= 10000 ? 'High' : 'Medium', num = jira ? `FINCTRL-${tk.discount.replace(/\D/g, '')}${tk.control.slice(1)}` : `INC00${tk.discount.replace(/\D/g, '')}${tk.control.slice(1)}`;
+  const body = jira
+    ? `<div class="tk-h jira"><span class="tk-logo">◆ FINCTRL</span><span class="tk-num">${num}</span><span class="tk-st">To Do</span></div>
+       <h4>${esc(tk.control)} ${esc(tk.name)} failed · ${esc(tk.discount)} · ${esc(tk.buyer)}</h4>
+       <div class="tk-g">${f('Assignee', `${esc(tk.owner.who)} <small>${esc(tk.owner.role)}</small>`)}${f('Priority', `<i class="tk-pr ${pri}"></i>${pri}`)}${f('Due date', fmt(tk.due), tk.breached ? 'bad' : '')}${f('Labels', `<em>ten-today</em> <em>${tk.control}</em>`)}${f('Rupees at risk', tk.rupees ? inr(tk.rupees) : '—')}${f('Reporter', 'Ten Today (automation)')}</div>`
+    : `<div class="tk-h sn"><span class="tk-logo">now</span><span class="tk-num">Incident ${num}</span><span class="tk-st">New</span></div>
+       <h4>${esc(tk.control)} ${esc(tk.name)} failed · ${esc(tk.discount)} · ${esc(tk.buyer)}</h4>
+       <div class="tk-g">${f('Assignment group', esc(tk.owner.role))}${f('Assigned to', esc(tk.owner.who))}${f('Urgency', tk.rupees >= 10000 ? '1 – High' : '2 – Medium')}${f('Impact', '2 – Medium')}${f('Category', 'Finance control')}${f('Due by', fmt(tk.due), tk.breached ? 'bad' : '')}${f('Correlation ID', esc(tk.key))}${f('Rupees at risk', tk.rupees ? inr(tk.rupees) : '—')}</div>`;
+  return `<div class="tk"><div class="tk-top"><b>⇄ Exception ticket for ${tk.control}</b><div class="cr-tg"><button type="button" data-view="servicenow" aria-pressed="${!jira}">ServiceNow</button><button type="button" data-view="jira" aria-pressed="${jira}">JIRA</button></div></div>
+    <div class="tk-card">${body}<div class="tk-d"><span>Description</span><p>${esc(tk.text)}</p></div>
+    <div class="tk-a"><span>Activity</span><p><b>Ten Today</b> opened this when ${esc(tk.control)} failed on ${fmt(tk.opened)}. Due in ${tk.owner.tat} working day${tk.owner.tat === 1 ? '' : 's'}${tk.breached ? ' · <b class="bad">past due</b>' : ''}. Closes itself when the control passes.</p></div></div>
+    <p class="cr-fn">Preview of the ticket as it would appear in ${jira ? 'JIRA' : 'ServiceNow'}. Not sent. <details class="tk-j"><summary>API payload (${jira ? 'POST /rest/api/3/issue' : 'POST /api/now/table/incident'})</summary><pre>${esc(JSON.stringify(prev, null, 2))}</pre></details></p></div>`;
 }
 
 function walkHtml() {
@@ -136,7 +152,7 @@ function act(a, el) {
 document.addEventListener('click', e => {
   const root = $('#ctrl-room'); if (!root || !root.contains(e.target)) return;
   const sel = e.target.closest('[data-sel]'); if (sel) { S.sel = sel.dataset.sel; S.err = ''; S.note = ''; save(); render(); root.querySelector('.cr-d')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
-  const v = e.target.closest('[data-view]'); if (v) { S.view = v.dataset.view; save(); render(); root.querySelector('.cr-pv')?.setAttribute('open', ''); return; }
+  const v = e.target.closest('[data-view]'); if (v) { S.view = v.dataset.view; save(); render(); root.querySelector('.tk')?.scrollIntoView({ block: 'nearest' }); return; }
   const b = e.target.closest('[data-a]'); if (b) act(b.dataset.a, b);
 });
 document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); } });
