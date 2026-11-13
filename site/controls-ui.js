@@ -62,7 +62,7 @@ function detail(d, k) {
       <p class="cr-s">Needs <b>+${e.breakEvenPct}%</b> extra volume to break even · got <b>+${e.upliftPct}%</b> on the usual ${inr(d.baseline)} · ${e.paidBack ? `<span class="ok">paid back, ${e.multiple}× the discount in extra margin</span>` : `<span class="bad">lost ${inr(-e.net)}</span>`}<br>
       ${br.recoveryPct === null ? 'No credit notes with this buyer yet.' : `This buyer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes in IMS: expect ${br.recoveryPct}% of the ${inr(r.gst)} GST cut to hold.`} Deadline ${fmt(r.deadline.date)} (${esc(r.deadline.why)}).</p></div>
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
-    <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)}</small></li>`).join('')}</ol>
+    <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this control →</a></small></li>`).join('')}</ol>
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}${S.note ? `<p class="cr-note" role="status">${esc(S.note)}</p>` : ''}
     ${actions(d, r)}
     ${prev ? ticketCard(tk, prev) : ''}
@@ -151,10 +151,22 @@ function act(a, el) {
 
 document.addEventListener('click', e => {
   const root = $('#ctrl-room'); if (!root || !root.contains(e.target)) return;
-  const sel = e.target.closest('[data-sel]'); if (sel) { S.sel = sel.dataset.sel; S.err = ''; S.note = ''; save(); render(); root.querySelector('.cr-d')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+  const sel = e.target.closest('[data-sel]'); if (sel) { S.focus = null; S.sel = sel.dataset.sel; S.err = ''; S.note = ''; save(); render(); root.querySelector('.cr-d')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
   const v = e.target.closest('[data-view]'); if (v) { S.view = v.dataset.view; save(); render(); root.querySelector('.tk')?.scrollIntoView({ block: 'nearest' }); return; }
   const cpy = e.target.closest('[data-copy]'); if (cpy) { const r = C.evaluate(cur(), ctx()), tk = r.tickets[0]; if (tk) navigator.clipboard?.writeText(JSON.stringify(S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk), null, 2)).then(() => { cpy.textContent = 'Copied ✓'; }); return; }
   const b = e.target.closest('[data-a]'); if (b) act(b.dataset.a, b);
 });
 document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); } });
+
+/* Deep links: app.html#controls/D-102/C5 · #controls/sweep · #controls/walk */
+function deepLink() {
+  const p = location.hash.slice(1).split('/'); if (p[0] !== 'controls' || p.length < 2) return;
+  if (p[1] === 'sweep') S.sweep = true;
+  else if (p[1] === 'walk') S.walk = { steps: C.walkthrough(C.todayIso()), i: 0 };
+  else if (S.list.some(d => d.id === p[1])) { S.sel = p[1]; S.focus = p[2] ?? null; }
+  render();
+  setTimeout(() => (document.querySelector(p[1] === 'sweep' ? '.cr-sw' : S.focus ? `#cr-${S.focus}` : p[1] === 'walk' ? '#ctrl-room .cr-w' : '#ctrl-room .cr-d'))?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
+}
+window.addEventListener('hashchange', deepLink);
 render();
+deepLink();

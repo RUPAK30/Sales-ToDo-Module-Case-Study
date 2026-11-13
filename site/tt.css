@@ -641,3 +641,4 @@ body[data-tab="controls"] .rail-people,body[data-tab="controls"] .rail-tests,bod
 .tk-d,.tk-a{padding:0 14px 12px}.tk-d p,.tk-a p{margin:0;font-size:.85rem}.tk-a{border-top:1px solid var(--line);padding-top:10px;background:#FBFAF7}.tk-a b.bad{color:var(--bad)}
 .tk-j{margin-top:6px}.tk-j summary{cursor:pointer;font-weight:600;color:var(--muted)}.tk-j pre{background:#F8F6F3;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:.72rem;overflow:auto;max-height:240px;margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .tk-g{background:#fff;gap:0}.tk-f{box-shadow:0 0 0 .5px var(--line)}
+.cr-c li.focus{box-shadow:0 0 0 3px rgba(194,65,12,.25);border-color:var(--tt)}.cr-c li small a{color:var(--tt-d);font-weight:600}

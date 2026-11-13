@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ten Today — 100 open leads. 10 actions today.</title>
-<meta name="description" content="Product and business analysis case study by Rupak Ghanpathi: a B2B sales execution & discount governance module that turns 100+ open leads into 10 rule-ranked actions and a SHA-256 sealed approval record.">
-<meta property="og:title" content="Ten Today — 100 open leads. 10 actions today.">
-<meta property="og:description" content="One discount ask: who decides it, what the clock does, and why the approval record can't be edited quietly. Try it as a rep, a manager and the sales head.">
+<title>Ten Today — post-sale discount controls</title>
+<meta name="description" content="Product and BA case study by Rupak Ghanpathi: every post-sale discount through seven controls under the GST rules in force from 1 Nov 2026. Break-even before approval, GST recovery through IMS, cash match, and a sealed audit pack.">
+<meta property="og:title" content="Ten Today — post-sale discount controls">
+<meta property="og:description" content="Watch one discount go from request to audit pack: break-even, approval, credit note, IMS rejection, fix, cash, seal.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tentoday.vercel.app/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="tabs.css?v=1794476591">
+<link rel="stylesheet" href="tabs.css?v=1794600010">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -51,13 +51,13 @@
     </a>
     <nav class="r" aria-label="Product">
       <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today" class="hide-s">Let's talk</a>
-      <a href="app.html?tour=1" class="pri">▶ 60-sec tour</a>
+      <a href="#demo" class="pri">▶ Watch it</a>
     </nav>
   </div>
 </header>
 <style>#ix-drawer[hidden]{display:none!important}</style><aside id="ix-drawer" hidden style="position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);background:#fff;z-index:90;box-shadow:12px 0 40px rgba(0,0,0,.18);padding:16px;display:flex;flex-direction:column;gap:2px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Ten Today</b><button type="button" id="ix-x" aria-label="Close menu" style="border:0;background:none;font-size:1.4rem;cursor:pointer">×</button></div>
-  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="app.html">Live product</a>
+  <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="app.html#controls">Control room</a>
   <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="cockpit.html">Spec &amp; UAT</a>
   <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="#sources">Sources</a>
   <a style="padding:11px 8px;font-weight:600;text-decoration:none;color:#1C1917" href="https://everyrupee-o2c.vercel.app/">Quote to cash · Every Rupee ↗</a>
@@ -67,85 +67,52 @@
 <script>(function(){var d=document.getElementById('ix-drawer');document.getElementById('ix-menu').onclick=function(){d.hidden=false};document.getElementById('ix-x').onclick=function(){d.hidden=true};d.addEventListener('click',function(e){if(e.target.tagName==='A')d.hidden=true});})();</script>
 
 <header class="wrap hero" data-sec="overview">
-  <div class="hero-grid">
-    <div>
-      <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
-      <h1>The discount promised on WhatsApp, kept honest all the way to the payment.</h1>
-      <p class="x-prom">A sales workbench for Indian B2B distribution. Reps see 10 things a day. Every discount is decided in 1 working day, sealed, and checked again when the money arrives. Reps are paid only on cash that actually lands.</p>
-      <p class="x-cta"><a class="x-pri" href="app.html">Try the live product →</a><a class="x-sec" href="app.html?tour=1">▶ 60-sec tour</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
-      <details class="x-more"><summary>In plain words, and who's who</summary>
-      <div style="background:#fff;border:1px solid #FED7AA;border-left:4px solid #C2410C;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.92rem;color:#1C1917">
-        <b>In plain words (for non-sales readers):</b> In Indian B2B sales, a salesperson has 100+ shops to call, promises a shop an extra discount on a phone call to win an order, and weeks later the shop pays less than the bill. <b>Ten Today</b> solves both problems: it picks the rep's <b>top 10 actions for today</b>, and makes sure <b>every discount is approved by the right manager and locked with a digital seal</b> before Finance ever sees the bill.
-      </div>
-      <p class="ground"><b>Why each person exists in the product:</b></p>
-      <div class="cast">
-        <span class="r"><b>Rahul · FMCG Sales Rep</b> (sees max 10 tasks/day · his task freezes when he asks for a discount)</span>
-        <span class="r"><b>Neha · Pharma Sales Rep</b> (handles Pharma shops only · FMCG tasks can't be dumped on her solo)</span>
-        <span class="m"><b>Kavita · Sales Manager</b> (approves/counters discounts up to 10% · needs Arjun to co-sign schemes)</span>
-        <span class="m"><b>Arjun · Sales Head</b> (decides &gt;10% discounts, credit-hold overrides &amp; asks Kavita leaves &gt;1 day)</span>
-      </div>
-      </details>
-    </div>
-    <div class="story" aria-label="One discount, from the call to the payment">
-      <div class="st-h"><span class="av">DP</span><div><b>Delta Pharma</b><small>Neha's deal · ₹3,00,000</small></div></div>
-      <div class="st-b" id="story">
-        <div class="tb buyer"><p class="tb-w">Delta Pharma · 4:47 pm</p><div class="tb-m">“Competitor is 9% lower. Give us 8% or we go elsewhere.”</div></div>
-        <div class="tb me"><p class="tb-w">Neha</p><div class="tb-m">Asking Kavita for <b>8%</b> (₹24,000 off).</div></div>
-        <div class="ts ok"><span>✓ Within this dealer's floor · ✓ within Kavita's 10% · ✓ credit clear. Kavita decides by tomorrow, or it goes to Arjun.</span></div>
-        <div class="tb them"><p class="tb-w">Kavita · 5:20 pm</p><div class="tb-m">Approved <b>8%</b>, as a GST credit note.</div></div>
-        <div class="ts ok"><span>🔒 Sealed. ₹24,000 off ₹3,00,000. Nobody can book above this. Buyer must reverse ₹4,320 of ITC.</span></div>
-        <div class="tb me"><p class="tb-w">Neha → Delta Pharma</p><div class="tb-m">Confirmed: 8%, ₹2,76,000 before GST, valid till 26 Nov.</div></div>
-        <div class="td">3 weeks later</div>
-        <div class="ts ok"><span>₹2,76,000 received. Matched to the seal in Every Rupee. Neha's incentive on it, ₹5,520, is now earned: paid on cash that arrived, not on the booking.</span></div>
-        <div class="ts bad"><span>IMS: buyer rejected the credit note, “slab not met”. The ₹4,320 GST cut doesn't hold. Fix by 30 Nov 2027.</span></div>
-      </div>
-      <a class="st-cta" href="app.html">Play it yourself as Neha or Kavita →</a>
+  <div class="hx2">
+    <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
+    <h1>Since 1 Nov 2026, a discount after the sale is easy to give and hard to defend.</h1>
+    <p class="x-prom">Ten Today checks whether the discount pays back, recovers the GST through the buyer's IMS action, and seals every step for the auditor. Seven controls; a failed one becomes a ticket with an owner and a due date.</p>
+    <p class="x-cta"><a class="x-pri" href="app.html#controls">Open the control room →</a><a class="x-sec" href="#demo">▶ Watch one discount</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
+    <div class="proof3" aria-label="At a glance">
+      <div><b>7</b><span>controls on every discount, each with an owner</span></div>
+      <div><b>53</b><span>engine tests on the rules, all passing</span></div>
+      <div><b id="cd-days">—</b><span id="cd-text">days left to issue GST credit notes on FY 2025-26 invoices</span></div>
     </div>
   </div>
 
-  <div class="proof3" aria-label="What holds">
-    <div><b>10</b><span>things a rep sees today, out of 100+</span></div>
-    <div><b>1 day</b><span>for any discount, or it moves up on its own</span></div>
-    <div><b>₹0</b><span>of incentive paid on money that never arrived. Pay follows the cash.</span></div>
-  </div>
-  <details class="x-more"><summary>The before and after, and the seal</summary>
-  <div class="x-ba" aria-label="Before and after">
-    <div><span>Rep's list</span><s>100+ rows</s><b>10 actions</b><em>Enforced</em></div>
-    <div><span>Discount decision</span><s>days, ad hoc</s><b>≤ 1 day</b><em>Enforced</em></div>
-    <div><span>Orders above approval</span><s>verbal promises</s><b>0</b><em>Enforced</em></div>
-    <div><span>"Who approved this?"</span><s>weeks of email</s><b>1 click</b><em>Enforced</em></div>
-  </div>
-  <p class="x-seal">🔒 <b>Every approval is sealed (SHA-256) and anchored daily.</b> If anyone later changes a 6% approval to 10%, one click shows which entry was edited.</p>
-  <div class="x-stats"><a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener"><b>45%</b> of firms lost a deal to slow approvals <i>Conga</i></a><a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener"><b>&lt;⅓</b> of a seller's week is spent selling <i>Salesforce</i></a><a href="https://cajournal.icai.org/article-details/audit-trail-requirements-responsibilities" target="_blank" rel="noopener"><b>FY24</b> auditors must report on whether the audit trail was tampered with <i>ICAI</i></a></div>
-  </details>
-  <details class="x-more"><summary>Benchmarks in detail</summary>
-  <div class="score-grid" aria-label="Measured business outcomes backed by public data">
-    <div>
-      <b>100+ → 10 / day</b>
-      <span>Rep Daily Triage Cap</span>
-      <small>Salesforce's State of Sales has repeatedly put time actually spent selling at well under a third of the week (<a href="https://www.salesforce.com/resources/research-reports/state-of-sales/" target="_blank" rel="noopener">Salesforce State of Sales</a>). Capping Today at 10 rule-ranked actions, after the <a href="https://www.todoist.com/productivity-methods/1-3-5-method" target="_blank" rel="noopener">1-3-5 rule</a>, removes cherry-picking.</small>
+  <section id="demo" class="dm" aria-label="One discount, end to end">
+    <div class="dm-top"><div><p class="eyebrow">One discount, end to end</p><h2>What happens on the left, what Ten Today does on the right</h2></div>
+      <div class="dm-nav"><button type="button" data-dm="prev" aria-label="Previous step">←</button><span id="dm-n">1 / 9</span><button type="button" data-dm="next" aria-label="Next step">→</button><button type="button" data-dm="play" id="dm-play">❚❚ Pause</button></div></div>
+    <div class="dm-bar"><i id="dm-prog"></i></div>
+    <p class="dm-cap" id="dm-cap" aria-live="polite"></p>
+    <div class="dm-g">
+      <div class="dm-chat"><div class="st-h"><span class="av dm-av">NT</span><div><b>Navkar Traders</b><small>Invoice INV-2603-301 · 12 Mar 2026 · ₹10,00,000</small></div></div><div class="dm-msgs" id="dm-msgs"></div></div>
+      <div class="dm-side">
+        <p class="dm-k">Controls</p><ol class="dm-c" id="dm-c"></ol>
+        <p class="dm-k">Money</p><div class="dm-m" id="dm-m"></div>
+        <div id="dm-tk"></div>
+      </div>
     </div>
-    <div>
-      <b>45% stall risk → 1d SLA</b>
-      <span>Discount Approval Escalation</span>
-      <small>45% of companies have lost a deal in the past six months to slow quote approval (<a href="https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle" target="_blank" rel="noopener">Conga research</a>). Asking freezes the rep's task and auto-escalates from Kavita to Arjun after 1 working day.</small>
+    <p class="dm-end"><a class="x-pri" href="app.html#controls/walk">Replay it step by step in the app →</a><a href="app.html#controls/D-102">See a real rejection still open (D-102) →</a></p>
+  </section>
+
+  <section id="controls" class="c7" aria-label="The seven controls">
+    <p class="eyebrow">The seven controls</p>
+    <h2>What each one stops, the rule behind it, and where to see it fail</h2>
+    <div class="c7-g">
+      <a id="c1" href="app.html#controls/D-102/C1"><b>C1 Economics</b><span>A discount that never pays back. Break-even (d ÷ (m − d)) is sealed before anyone can approve.</span><em>See D-102: approved, lost ₹64,000 →</em></a>
+      <a id="c2" href="app.html#controls/D-108/C2"><b>C2 Authority</b><span>Self-approval and approving above your limit. Maker-checker, limits by person.</span><em>See D-108: 12% on an 8% limit →</em></a>
+      <a id="c3" href="app.html#controls/D-104/C3"><b>C3 Classification</b><span>A payment for display or promotion passed off as a discount. Tax desk decides, with a written reason. <small>CBIC Circular 251/08/2025</small></span><em>See D-104: held for tax review →</em></a>
+      <a id="c4" href="app.html#controls/D-103/C4"><b>C4 Tax route</b><span>A credit note that's late or invalid under the rule in force on its date. <small>s.34(2) · Notification 03/2026-CT</small></span><em>See D-103: issued 28 Oct under the old rule →</em></a>
+      <a id="c5" href="app.html#controls/D-102/C5"><b>C5 Recovery</b><span>The buyer rejects in IMS and the tax comes back. Pending past one tax period counts as accepted. <small>GSTN IMS · Rule 67B</small></span><em>See D-102: rejected, ₹11,520 back →</em></a>
+      <a id="c6" href="app.html#controls/D-106/C6"><b>C6 Cash</b><span>Paying out on money that never arrived. Payment is matched to the approved net.</span><em>See D-106: ₹63,000 short →</em></a>
+      <a id="c7" href="app.html#controls/D-101/C7"><b>C7 Evidence</b><span>Records edited after approval. Every discount's entries are hash-chained; one edit and C7 names the entry.</span><em>See D-101 and try editing it →</em></a>
+      <a href="app.html#controls/sweep" class="c7-hot"><b>Last chance: FY 2025-26</b><span>Every discount on last year's invoices whose GST cut isn't safe yet, largest first, with the days left.</span><em>Open the list →</em></a>
     </div>
-    <div>
-      <b>2-person scheme &amp; cap lock</b>
-      <span>Margin &amp; Scheme Governance</span>
-      <small>Trade-scheme leakage is the quiet one: a rate agreed on a call, applied after the invoice, with nobody's second signature. Ten Today enforces role caps (≤10% Manager / &gt;10% Head) and needs two approvers to activate a slab scheme, so one person can't create one retroactively. Design choice, not a cited statistic.</small>
-    </div>
-    <div>
-      <b>70-task slip → 0 fake "on-time"</b>
-      <span>Anti-Gaming &amp; Every Rupee R7</span>
-      <small>Todoist found users reschedule up to 70 overdue tasks day after day (<a href="https://www.macstories.net/news/todoist-launches-smart-schedule-an-ai-based-feature-to-reschedule-overdue-tasks/" target="_blank" rel="noopener">MacStories</a>). Ten Today measures on-time against the <i>original</i> target and blocks reps with &gt;15d open <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a> claims.</small>
-    </div>
-  </div>
-  </details>
+  </section>
 </header>
 
 <section class="wrap" id="proof" data-sec="try" style="padding-top:28px">
-  <h2>Make-or-Break Controls · Test Rahul (Field Rep) &amp; Kavita (Sales Manager)</h2>
+  <h2>Where it started: the approval desk rules</h2><p style="color:#57534E;margin:-4px 0 12px;font-size:.9rem">Before the GST controls, Ten Today began as an approval desk. These rules still run underneath every discount. <a href="app.html#controls" style="color:#9A3412;font-weight:600">The control room is here →</a></p>
   <p style="max-width:740px;color:var(--muted);margin-bottom:14px">Instead of a static "18/18 UAT passed" table, pick a seat below and <b>try to break a control</b>—or verify all 6 controls against the rule engine right here.</p>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
@@ -288,11 +255,11 @@
 <section class="wrap" data-sec="overview try spec sources" style="padding-top:12px">
   <div style="border:1px solid #ECE7E1;border-radius:16px;padding:18px 20px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
     <div style="max-width:620px">
-      <p style="margin:0 0 4px;font-weight:700;font-size:1.02rem">Hiring for product in sales-tech or finance ops?</p>
-      <p style="margin:0;color:#57534E;font-size:.9rem">This case study is the job in miniature: a messy complaint, one written rule, a test that can fail (35 engine tests + 18 UAT), a screen a rep can use, and a number that can't be gamed.</p>
+      <p style="margin:0 0 4px;font-weight:700;font-size:1.02rem">Hiring a BA or product person for finance ops or fintech?</p>
+      <p style="margin:0;color:#57534E;font-size:.9rem">This case study is the job in miniature: a GST rule that took effect on 1 Nov 2026, seven written controls, tests that can fail (53 engine tests + 18 UAT), a ticket for every failure, and an audit pack nobody can quietly edit.</p>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <a class="cta" href="app.html" style="padding:10px 16px;border-radius:10px;background:#C2410C;color:#fff;font-weight:600;text-decoration:none">Open Live Product ↗</a>
+      <a class="cta" href="app.html#controls" style="padding:10px 16px;border-radius:10px;background:#C2410C;color:#fff;font-weight:600;text-decoration:none">Open Live Product ↗</a>
       <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough" style="font-weight:600;font-size:.9rem">Ask for the 12-min walkthrough →</a>
     </div>
   </div>
@@ -401,6 +368,7 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
 <script>
 (function(){var b=document.getElementById('story');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var k=[].slice.call(b.children);k.forEach(function(x){x.style.opacity=0});var i=0;(function n(){if(i>=k.length)return;var x=k[i++];x.style.opacity='';x.classList.add('in');b.scrollTop=b.scrollHeight;setTimeout(n,i<3?700:1100)})();})();
 </script>
-<script src="tabs.js?v=1794414119"></script>
+<script src="tabs.js?v=1794600010"></script>
+<script type="module" src="demo.js?v=1794600010"></script>
 </body>
 </html>
