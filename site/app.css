@@ -27,7 +27,7 @@
 .sheet.on{transform:none}.sheet label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}.sheet select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:10px}
 .sh-o{display:flex;gap:6px}.sh-o button,.sh-go,.sh-x{font:inherit;font-size:.82rem;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
 .sh-go{background:#111827;color:#fff;border-color:#111827}.sh-x{border:0;color:var(--muted)}
-tr.flag td{background:#EFF6F5}
+tr.flag td{background:var(--acc-soft,#EEF4EC)}
 .kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.kp div{background:#F9FAFB;border-radius:10px;padding:10px}
 .kp span{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}.kp b{font-family:var(--mono);font-size:1.25rem;font-weight:500}
 #log{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto;font-size:.8rem}#log li{padding:6px 0;border-bottom:1px solid var(--line)}
@@ -35,16 +35,16 @@ tr.flag td{background:#EFF6F5}
 .empty{color:var(--muted);font-size:.85rem;padding:10px}
 /* Ten Today identity: morning sunrise, coral energy. */
 .hero::before,.appbar+.dk::before{background:radial-gradient(40% 60% at 80% 20%,rgba(255,120,80,.32),transparent 70%),radial-gradient(38% 55% at 98% 2%,rgba(255,190,90,.38),transparent 70%),radial-gradient(45% 60% at 50% -10%,rgba(255,226,180,.55),transparent 70%),radial-gradient(35% 50% at 12% 6%,rgba(255,200,170,.3),transparent 70%)!important}
-.eyebrow,.kicker,.step{color:#174A47!important}
-.cta,.btn.primary,.appbar nav a.pri{background:linear-gradient(135deg,#1F5F5B,#2E7D75)!important;border-color:#1F5F5B!important;color:#fff!important}
-.cta:hover,.btn.primary:hover,.appbar nav a.pri:hover{background:linear-gradient(135deg,#174A47,#256B64)!important}
-.ph-tabs button.on,.tk-a button:first-child,.sh-go{background:#1F5F5B;border-color:#1F5F5B}
+.eyebrow,.kicker,.step{color:var(--acc-d,#2F5240)!important}
+.cta,.btn.primary,.appbar nav a.pri{background:linear-gradient(135deg,var(--acc,#3F6B4F),var(--acc,#3F6B4F))!important;border-color:var(--acc,#3F6B4F)!important;color:#fff!important}
+.cta:hover,.btn.primary:hover,.appbar nav a.pri:hover{background:linear-gradient(135deg,var(--acc-d,#2F5240),var(--acc-d,#2F5240))!important}
+.ph-tabs button.on,.tk-a button:first-child,.sh-go{background:var(--acc,#3F6B4F);border-color:var(--acc,#3F6B4F)}
 .phone,.mini-ph{border-color:#1F1A17}
 .flow{display:grid;gap:8px;margin:22px 0 4px}@media(min-width:860px){.flow{grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch}}
 .flow>div{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 .flow b{display:block;font-family:var(--mono);font-size:1.6rem;font-weight:500;letter-spacing:-.02em}.flow span{display:block;font-size:.78rem;color:var(--muted);line-height:1.35}
 .flow i{display:none;font-style:normal;color:#C4B5A5;font-size:1.3rem;align-self:center}@media(min-width:860px){.flow i{display:block}}
-.f-a b{color:#9CA3AF}.f-b{border-top:3px solid #9FD1CA!important}.f-c{background:linear-gradient(135deg,#1F5F5B,#2E7D75)!important;border:0!important}.f-c b,.f-c span{color:#fff}
+.f-a b{color:#9CA3AF}.f-b{border-top:3px solid var(--acc-line,#CFE0CF)!important}.f-c{background:linear-gradient(135deg,var(--acc,#3F6B4F),var(--acc,#3F6B4F))!important;border:0!important}.f-c b,.f-c span{color:#fff}
 /* Monochrome identity: ink on white, one soft neutral glow. */
 .hero::before,.appbar+.dk::before{background:radial-gradient(45% 60% at 80% 15%,rgba(17,24,39,.06),transparent 70%),radial-gradient(40% 55% at 15% 5%,rgba(253,230,210,.45),transparent 70%)!important}
 .eyebrow,.kicker,.step{color:#6B7280!important}
@@ -64,11 +64,11 @@ body{background:linear-gradient(180deg,#F3F7F6 0%,#F6F8FA 38%,#F7F7FB 75%,#FFFFF
 .appbar{background:rgba(255,250,246,.75)!important}
 .ph-close{font-size:.72rem;color:#374151;background:#F9FAFB;border-top:1px solid var(--line);margin:0 -12px;padding:8px 14px;min-height:0}.ph-close:empty{display:none}
 /* Final palette: warm, light and professional. Terracotta action on a soft apricot-to-white sky. */
-:root{--tt:#1F5F5B;--tt-d:#174A47;--tt-soft:#EFF6F5;--tt-line:#CFE3E0}
+:root{--tt:var(--acc,#3F6B4F);--tt-d:var(--acc-d,#2F5240);--tt-soft:var(--acc-soft,#EEF4EC);--tt-line:var(--acc-line,#CFE0CF)}
 body{background:linear-gradient(180deg,#FFF8F1 0%,#FFFBF6 30%,#FFFFFF 70%)!important;background-attachment:fixed!important}
 .hero::before,.appbar+.dk::before{background:radial-gradient(45% 65% at 85% 8%,rgba(253,186,116,.45),transparent 70%),radial-gradient(40% 55% at 10% 0%,rgba(254,215,170,.5),transparent 72%),radial-gradient(35% 50% at 55% 30%,rgba(255,237,213,.55),transparent 75%)!important}
 .appbar{background:rgba(255,251,246,.85)!important;backdrop-filter:blur(10px);border-bottom:1px solid #F5E6D6!important}
-.cta,.btn.primary,.appbar nav a.pri{background:var(--tt)!important;border-color:var(--tt)!important;color:#fff!important;box-shadow:0 6px 16px -8px rgba(31,95,91,.55)!important}
+.cta,.btn.primary,.appbar nav a.pri{background:var(--tt)!important;border-color:var(--tt)!important;color:#fff!important;box-shadow:0 6px 16px -8px var(--acc-glow,rgba(63,107,79,.12))!important}
 .cta:hover,.btn.primary:hover,.appbar nav a.pri:hover{background:var(--tt-d)!important}
 .appbar nav a.q2c{color:var(--tt-d)!important;font-weight:600;border:1px solid var(--tt-line);background:var(--tt-soft)}
 .appbar nav a.q2c:hover{background:#FFEDD5}
@@ -102,6 +102,6 @@ blockquote,.hero .ins,.hero [class*=quote]{border-left-color:var(--tt-line)!impo
 @media(max-width:520px){.kp{grid-template-columns:minmax(0,1fr)}}
 
 /* calm finance palette: deep teal on mist */
-body{background:linear-gradient(180deg,#F2F7F6 0%,#F7F9FA 45%,#FFFFFF 100%)!important}
-.hero::before,.appbar+.dk::before{background:radial-gradient(42% 60% at 82% 10%,rgba(159,209,202,.32),transparent 70%),radial-gradient(40% 55% at 12% 4%,rgba(205,220,240,.38),transparent 70%)!important}
 .appbar,.tt-head{background:rgba(255,255,255,.92)!important}
+body{background:radial-gradient(55% 45% at 10% 0%,var(--pa,#EEF3E6) 0%,transparent 70%),radial-gradient(50% 40% at 95% 12%,var(--pb,#FBEBDD) 0%,transparent 70%),radial-gradient(60% 50% at 50% 100%,var(--pc,#F2ECF5) 0%,transparent 70%),#FBFAF7!important;background-attachment:fixed!important}
+.hero::before,.appbar+.dk::before{background:none!important}

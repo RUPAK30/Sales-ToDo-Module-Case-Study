@@ -7,7 +7,7 @@ h1,h2,h3{margin:0 0 .5em;line-height:1.2}p{margin:0 0 1em}a{color:inherit}.mono{
 table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}
 .plain{padding-left:18px}
 /* Product theme: neutral, crisp, app-like. Loaded last; overrides the editorial look. */
-:root{--bg:#F7F6F2;--surface:#FFFFFF;--ink:#0F172A;--muted:#5B6474;--line:#E4E7EC;--accent:#0D9488;--accent-soft:#E3F6F2;--serif:"Inter",system-ui,sans-serif;--rev:#B7791F;--rev-soft:#FEF6E7;--dispute:#1F5F5B;--dispute-soft:#FFF1EA;--tds:#64748B}
+:root{--bg:#F7F6F2;--surface:#FFFFFF;--ink:#0F172A;--muted:#5B6474;--line:#E4E7EC;--accent:#0D9488;--accent-soft:#E3F6F2;--serif:"Inter",system-ui,sans-serif;--rev:#B7791F;--rev-soft:#FEF6E7;--dispute:var(--acc,#3F6B4F);--dispute-soft:#FFF1EA;--tds:#64748B}
 body{background:var(--bg);color:var(--ink);font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-family:var(--sans);letter-spacing:-.02em;font-weight:650}
 h1{font-size:clamp(1.9rem,4.6vw,2.7rem);line-height:1.12}

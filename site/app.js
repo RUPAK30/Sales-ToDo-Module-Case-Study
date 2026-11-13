@@ -124,14 +124,14 @@ function renderSeal() {
     <div class="cv" id="cv">${blocks || '<p class="hint">Nothing recorded yet.</p>'}</div>
     ${sealEdit ? (() => { const e = w.chain[sealEdit - 1]; const liveCalc = E.sha256(JSON.stringify({ n: e.n, at: e.at, who: e.who, text: e.text, ref: e.ref, prev: e.prev })); return `<div class="dbx"><p class="k">⚠ Outside the app · raw database row (insider edit test)</p><p class="hint" style="margin:0 0 6px;color:#D6D3D1">There is no "Edit" button in the app. But what if someone with database access quietly changes a stored discount from <b>8%</b> to <b>12%</b>? Change the text below (or click the orange button) and press <b>Save &amp; check</b> to see how the SHA-256 fingerprint catches it immediately.</p>
       <div class="row"><label>Block<select id="db-n">${w.chain.map(x => `<option value="${x.n}" ${x.n === sealEdit ? 'selected' : ''}>#${x.n} · ${esc(x.who)} (${esc(x.text.slice(0, 36))}…)</option>`).join('')}</select></label>
-      <button class="btn" type="button" data-seal="preset-inflate" style="background:#292524;color:#9FD1CA;border-color:#9FD1CA;font-size:.76rem;padding:6px 10px">⚡ Change discount % by +4% in DB</button></div>
+      <button class="btn" type="button" data-seal="preset-inflate" style="background:#292524;color:var(--acc-line,#CFE0CF);border-color:var(--acc-line,#CFE0CF);font-size:.76rem;padding:6px 10px">⚡ Change discount % by +4% in DB</button></div>
       <label style="margin-top:6px">Stored database text (type anything below to tamper)<textarea id="db-text" rows="2">${esc(e.text)}</textarea></label>
       <div class="mono" style="margin:4px 0 0;font-size:.72rem;color:#A8A29E;display:grid;gap:2px">
         <span>who: <b>${esc(e.who)}</b> · time: <b>${esc(e.at)}</b></span>
         <span>original sealed fingerprint: <code style="background:#292524;color:#86EFAC;border-color:#3F3A36">${esc(e.hash.slice(0, 28))}…</code></span>
-        <span id="db-live-hash">new fingerprint as you type: <code style="background:#292524;color:#9FD1CA;border-color:#3F3A36">${esc(liveCalc.slice(0, 28))}…</code></span>
+        <span id="db-live-hash">new fingerprint as you type: <code style="background:#292524;color:var(--acc-line,#CFE0CF);border-color:#3F3A36">${esc(liveCalc.slice(0, 28))}…</code></span>
       </div>
-      <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:#9FD1CA"><input type="checkbox" id="db-rebuild"> Admin with full access: also recompute every fingerprint after the edit</label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:6px;color:var(--acc-line,#CFE0CF)"><input type="checkbox" id="db-rebuild"> Admin with full access: also recompute every fingerprint after the edit</label>
       <div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-seal="dbsave">Save to database &amp; verify</button><button class="btn" type="button" data-seal="dbcancel" style="background:transparent;color:#fff;border-color:#57534E">Cancel</button></div><div id="db-err"></div></div>`; })() : ''}
     ${status}
     <details class="how"><summary>Tamper-evident, not tamper-proof: what that means</summary><p class="hint" style="margin:6px 0 0">Tamper-evident, not tamper-proof: it detects edits, it doesn't prevent them. Same model as Microsoft's SQL Ledger (a chain of blocks plus a digest kept outside the database). Supports the auditor's Rule 11(g) check that the audit trail wasn't tampered with. Production writes it on the server.</p></details>
