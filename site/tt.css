@@ -667,3 +667,23 @@ body::after{background:
 @media (prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
 /* frosted glass bars, like iOS */
 .appbar,.tt-head,.bar,.sx-bar{background:rgba(255,255,255,.66)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+/* ---------- phones: say less, keep every number and action. Desktop unchanged. ---------- */
+@media (max-width:640px){
+ #ctrl-room .cr-top .lede{display:none}
+ #ctrl-room h1{font-size:1.25rem!important}
+ .cr-tb .btn{padding:8px 12px;font-size:.84rem}
+ .cr-k{gap:8px}.cr-k>div{padding:10px 12px}.cr-k b{font-size:1.1rem}.cr-k small{display:none}
+ .cr-sw span{display:none}.cr-sw b{font-size:.88rem}.cr-sw{padding:10px 12px}
+ .cr-fn{display:none}
+ .cr-wf-r{font-size:.78rem}.cr-wf{padding:10px 12px}
+ .cr-g>.card .sub{display:none}
+ .cr-q small{display:none}.cr-q th:nth-child(2),.cr-q td:nth-child(2){display:none}
+ .cr-dh .cr-s{font-size:.8rem}.cr-dh .cr-s br~*{display:none}
+ .cr-c li{padding:7px 9px;font-size:.8rem}.cr-c li small{display:none}
+ .cr-c li span{color:#44403C}
+ .cr-act .btn{font-size:.8rem;padding:8px 11px}
+ .tk-g{grid-template-columns:1fr 1fr!important}.tk-f:nth-child(n+5){display:none}.tk-a{display:none}
+ .cr-more h2{font-size:.95rem}.cr-more .cr-act label{flex-basis:100%}
+ #tabintro .hx-c,#tabintro .hx-w,.tls .tl span{display:none}
+ #notes{display:none}
+}

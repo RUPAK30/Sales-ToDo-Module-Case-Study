@@ -111,7 +111,7 @@ function render() {
     <section class="card cr-more"><h2>For finance, tax and audit</h2><div class="cr-act">
       <button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
       <label class="cr-s">GSTR-9 for FY 2025-26 filed on <input type="date" class="cr-in" id="cr-g9" value="${S.settings.gstr9Filed['2025-26'] ?? ''}"></label><button class="btn ghost" data-a="reset" type="button">Reset sample</button></div>
-      <details class="cr-ru" open><summary>Terms in plain words</summary><dl class="cr-gl">
+      <details class="cr-ru"${innerWidth > 640 ? " open" : ""}><summary>Terms in plain words</summary><dl class="cr-gl">
         <dt>Post-sale discount</dt><dd>Money given back to a buyer after the bill, for example a 6% rebate for hitting a target.</dd>
         <dt>Credit note</dt><dd>A "minus bill". A <b>GST credit note</b> also lowers the tax on the sale; a <b>financial credit note</b> returns money but leaves the tax as billed.</dd>
         <dt>IMS (Invoice Management System)</dt><dd>The page on the GST portal where the buyer accepts or rejects your credit note. Rejected means your tax saving is lost; left pending past one tax period, it counts as accepted.</dd>
