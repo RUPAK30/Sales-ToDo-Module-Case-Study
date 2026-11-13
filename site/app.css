@@ -103,5 +103,5 @@ blockquote,.hero .ins,.hero [class*=quote]{border-left-color:var(--tt-line)!impo
 
 /* calm finance palette: deep teal on mist */
 .appbar,.tt-head{background:rgba(255,255,255,.92)!important}
-body{background:radial-gradient(55% 45% at 10% 0%,var(--pa,#EEF3E6) 0%,transparent 70%),radial-gradient(50% 40% at 95% 12%,var(--pb,#FBEBDD) 0%,transparent 70%),radial-gradient(60% 50% at 50% 100%,var(--pc,#F2ECF5) 0%,transparent 70%),#FBFAF7!important;background-attachment:fixed!important}
+body{background:radial-gradient(60% 50% at 0% 0%,var(--pa,#DCEBD3) 0%,transparent 65%),radial-gradient(55% 45% at 100% 8%,var(--pb,#FBE3CF) 0%,transparent 65%),radial-gradient(60% 55% at 85% 100%,var(--pc,#E9DFF1) 0%,transparent 65%),radial-gradient(50% 45% at 5% 95%,var(--pb,#FBE3CF) 0%,transparent 60%),var(--pd,#F6EFE4)!important;background-attachment:fixed!important}
 .hero::before,.appbar+.dk::before{background:none!important}
