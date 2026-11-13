@@ -19,18 +19,25 @@ if (root) {
     [['day', '3 weeks later'], ['ok', '₹9,40,000 received. Matches the approved net.']],
     [['ok', 'All 7 controls pass. Every entry is fingerprinted: change one and C7 names it.']],
   ];
-  let i = 0, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches, timer = null;
-  const bubble = ([k, a, b]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}</div></div>`;
+  let typing = null, i = 0, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches, timer = null;
+  const T = { me: '4:12 pm ✓✓', them: '4:20 pm', buyer: '4:31 pm' };
+  const bubble = ([k, a, b]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}<span class="tm">${T[k] ?? ''}</span></div></div>`;
   function draw(anim) {
     const s = steps[i], r = C.evaluate(s.d, { today, settings: C.SETTINGS, history: {}, opened: {} }), e = r.economics;
     const refused = s.t.startsWith('Self');
     $('#dm-n').textContent = `${i + 1} / ${steps.length}`;
     $('#dm-prog').style.width = `${(i + 1) / steps.length * 100}%`;
     $('#dm-cap').innerHTML = `<b>${s.t}.</b> ${s.s}`;
-    const box = $('#dm-msgs');
-    box.innerHTML = M.slice(0, i + 1).map((g, gi) => g.map(m => bubble(m).replace(/^<div class="/, `<div class="${gi === i && anim ? 'in ' : ''}`)).join('')).join('');
-    box.scrollTop = box.scrollHeight;
+    const box = $('#dm-msgs'), past = M.slice(0, i).map(g => g.map(bubble).join('')).join(''), now = M[i].map(m => bubble(m).replace(/^<div class="/, '<div class="in ')).join('');
+    clearTimeout(typing);
+    if (anim && M[i][0][0] !== 'day') {
+      const who = ['bad', 'ok', 'warn'].includes(M[i][0][0]) ? 'Ten Today is checking' : `${M[i][0][1].split(' · ')[0]} is typing`;
+      box.innerHTML = past + `<div class="ty"><span>${who}</span><i></i><i></i><i></i></div>`; box.scrollTop = box.scrollHeight;
+      typing = setTimeout(() => { box.innerHTML = past + now; box.scrollTop = box.scrollHeight; }, 750);
+    } else { box.innerHTML = past + now; box.scrollTop = box.scrollHeight; }
+    $('.ph-tap').textContent = i === steps.length - 1 ? '↺ Tap to replay' : 'Tap for the next step →';
     $('#dm-c').innerHTML = r.controls.map(c => { const st = refused && c.id === 'C2' ? 'fail' : c.status; return `<li class="${st}"><i></i><b>${c.id} ${c.name}</b><span>${st === 'pass' ? 'Pass' : st === 'fail' ? 'Fail' : 'Waiting'}</span></li>`; }).join('');
+    $('#ph-cs').innerHTML = r.controls.map(c => { const st = refused && c.id === 'C2' ? 'fail' : c.status; return `<span class="${st}"><i></i>${c.id}</span>`; }).join('');
     const c5 = r.controls[4].status, gst = r.gst, cash = r.controls[5].status;
     const gstState = !s.d.cnNo ? ['wait', 'Not issued yet'] : c5 === 'fail' ? ['bad', `${inr(gst)} comes back`] : c5 === 'pass' ? ['ok', `${inr(gst)} secured`] : ['wait', `${inr(gst)} waiting on IMS`];
     $('#dm-m').innerHTML = `<div><span>Discount</span><b>${inr(e.discount)}</b></div><div><span>Extra margin from extra volume</span><b class="ok">${inr(e.extraMargin)}</b><small>net ${e.net >= 0 ? '+' : '−'}${inr(Math.abs(e.net))}</small></div><div><span>GST cut</span><b class="${gstState[0]}">${gstState[1]}</b></div><div><span>Cash</span><b class="${cash === 'pass' ? 'ok' : 'wait'}">${cash === 'pass' ? `${inr(s.d.received)} matched` : `${inr(C.netDue(s.d))} due`}</b></div>`;
@@ -43,7 +50,7 @@ if (root) {
   root.addEventListener('click', e => {
     const b = e.target.closest('[data-dm]'); if (!b) return;
     if (b.dataset.dm === 'play') { if (!playing && i === steps.length - 1) go(0); playing = !playing; draw(false); tick(); return; }
-    playing = false; clearTimeout(timer); go(i + (b.dataset.dm === 'next' ? 1 : -1));
+    playing = false; clearTimeout(timer); if (b.dataset.dm === 'next' && i === steps.length - 1) return go(0); go(i + (b.dataset.dm === 'next' ? 1 : -1));
   });
   // start playing only once the demo is on screen
   go(0, false);

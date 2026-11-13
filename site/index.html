@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="tabs.css?v=1794600010">
+<link rel="stylesheet" href="tabs.css?v=1794600012">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -85,7 +85,11 @@
     <div class="dm-bar"><i id="dm-prog"></i></div>
     <p class="dm-cap" id="dm-cap" aria-live="polite"></p>
     <div class="dm-g">
-      <div class="dm-chat"><div class="st-h"><span class="av dm-av">NT</span><div><b>Navkar Traders</b><small>Invoice INV-2603-301 · 12 Mar 2026 · ₹10,00,000</small></div></div><div class="dm-msgs" id="dm-msgs"></div></div>
+      <div class="ph"><div class="ph-fr"><div class="ph-sb"><span>9:41</span><i class="ph-nt"></i><span>5G ▮▮▮ 82%</span></div>
+        <div class="ph-h"><span class="dm-av">NT</span><div><b>Navkar Traders</b><small id="dm-sub">Invoice INV-2603-301 · ₹10,00,000</small></div><span class="ph-badge">Ten Today</span></div>
+        <div class="dm-msgs" id="dm-msgs"></div>
+        <div class="ph-cs" id="ph-cs" aria-hidden="true"></div>
+        <button type="button" class="ph-tap" data-dm="next">Tap for the next step →</button></div></div>
       <div class="dm-side">
         <p class="dm-k">Controls</p><ol class="dm-c" id="dm-c"></ol>
         <p class="dm-k">Money</p><div class="dm-m" id="dm-m"></div>
@@ -369,6 +373,6 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
 (function(){var b=document.getElementById('story');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var k=[].slice.call(b.children);k.forEach(function(x){x.style.opacity=0});var i=0;(function n(){if(i>=k.length)return;var x=k[i++];x.style.opacity='';x.classList.add('in');b.scrollTop=b.scrollHeight;setTimeout(n,i<3?700:1100)})();})();
 </script>
 <script src="tabs.js?v=1794600010"></script>
-<script type="module" src="demo.js?v=1794600010"></script>
+<script type="module" src="demo.js?v=1794600012"></script>
 </body>
 </html>
