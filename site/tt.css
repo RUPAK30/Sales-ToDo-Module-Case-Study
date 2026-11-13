@@ -648,3 +648,4 @@ body[data-tab="controls"] .rail-people,body[data-tab="controls"] .rail-tests,bod
 @media (max-width:1099px){.bn-w{display:none}.bn-m{display:inline}.bn ul{grid-template-columns:repeat(5,minmax(0,1fr))!important}}
 body{background:radial-gradient(55% 45% at 10% 0%,var(--pa,#EEF3E6) 0%,transparent 70%),radial-gradient(50% 40% at 95% 12%,var(--pb,#FBEBDD) 0%,transparent 70%),radial-gradient(60% 50% at 50% 100%,var(--pc,#F2ECF5) 0%,transparent 70%),#FBFAF7!important;background-attachment:fixed!important}
 .hero::before,.appbar+.dk::before{background:none!important}
+.cr-gl{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:6px 14px;margin:10px 0 0;font-size:.85rem}.cr-gl dt{font-weight:650}.cr-gl dd{margin:0;color:#57534E}@media (max-width:560px){.cr-gl{grid-template-columns:1fr}.cr-gl dd{margin-bottom:6px}}

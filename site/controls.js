@@ -67,9 +67,9 @@ export const OWNERS = {
   C5: { who: 'Asha', role: 'Receivables', tat: 2 }, C6: { who: 'Asha', role: 'Receivables', tat: 3 }, C7: { who: 'Vikram', role: 'Finance controller', tat: 1 },
 };
 export const CONTROLS = [
-  ['C1', 'Economics', 'Break-even recorded before approval'], ['C2', 'Authority', 'Within the approver\'s limit, not the requester'],
-  ['C3', 'Classification', 'A price cut, not payment for a service'], ['C4', 'Tax route', 'GST or financial credit note, valid under the rule in force'],
-  ['C5', 'Recovery', 'Buyer\'s IMS action holds the GST cut'], ['C6', 'Cash', 'Payment matches the approved net amount'], ['C7', 'Evidence', 'Pack complete, fingerprints intact'],
+  ['C1', 'Economics', 'Is it worth it? Break-even shown before approval'], ['C2', 'Authority', 'Right person said yes? Within limit, not the requester'],
+  ['C3', 'Classification', 'Really a discount, not payment for a service?'], ['C4', 'Tax route', 'Right kind of credit note, on time, under the rule in force?'],
+  ['C5', 'Recovery', 'Did the buyer accept it on the GST portal?'], ['C6', 'Cash', 'Did the agreed amount arrive?'], ['C7', 'Evidence', 'Is the record complete and untouched?'],
 ];
 
 /* ---------- evidence: each discount carries its own hash chain ---------- */
@@ -128,41 +128,41 @@ export function evaluate(d, ctx) {
   const set = (id, status, text, rupees = 0) => { out[id] = { id, status, text, rupees }; };
   const apv = ev(d, 'approved'), eco = ev(d, 'economics');
   // C1
-  if (!apv) set('C1', 'wait', `Waiting for approval · needs +${e.breakEvenPct}% volume to break even`);
-  else if (eco && eco.n < apv.n) set('C1', 'pass', `Break-even (+${e.breakEvenPct}%) seen before approval · actual +${e.upliftPct}% · ${e.paidBack ? `paid back ${e.multiple}×` : `lost ${inr(-e.net)}`}`);
-  else set('C1', 'fail', 'Approved without the break-even on record', e.discount);
+  if (!apv) set('C1', 'wait', `Waiting for approval · the buyer must buy ${e.breakEvenPct}% more than usual for this to pay for itself`);
+  else if (eco && eco.n < apv.n) set('C1', 'pass', `Needed ${e.breakEvenPct}% more sales, shown before approval · got ${e.upliftPct}% · ${e.paidBack ? `paid for itself (${e.multiple}× the discount in extra profit)` : `lost ${inr(-e.net)}`}`);
+  else set('C1', 'fail', 'Approved before anyone checked if it was worth it', e.discount);
   // C2
   if (!apv) set('C2', 'wait', 'Not approved yet');
   else if (apv.who === d.requestedBy || d.pct > d.limitPct) set('C2', 'fail', apv.who === d.requestedBy ? 'Approved by the requester' : `${d.pct}% approved above ${apv.who}'s ${d.limitPct}% limit`, e.discount);
   else set('C2', 'pass', `${apv.who} approved ${d.pct}% within a limit of ${d.limitPct}%`);
   // C3
   const service = d.review === 'service';
-  if (d.purpose === 'promo' && !d.review) set('C3', 'fail', 'Paid for a display or promotion: tax desk must confirm discount or service', gst);
-  else set('C3', 'pass', service ? 'Tax desk: a separate service, billed by the buyer with its own GST' : d.review === 'price' ? 'Tax desk confirmed a price cut' : 'Price cut on the invoice value');
+  if (d.purpose === 'promo' && !d.review) set('C3', 'fail', 'Linked to a shelf display or promotion: the tax team must decide if it is a discount or a paid service', gst);
+  else set('C3', 'pass', service ? 'Tax team: a paid service, so the buyer bills it separately with its own GST' : d.review === 'price' ? 'Tax team confirmed it is a price cut' : 'Price cut on the invoice value');
   // C4
   const psd = d.cnOn ? ruleAt('PSD', d.cnOn) : null;
   if (service) set('C4', d.route === 'service' ? 'pass' : 'fail', d.route === 'service' ? 'Settled against the buyer\'s service invoice, no credit note' : 'A service cannot go through a credit note', d.route === 'service' ? 0 : gst);
-  else if (!d.route) set('C4', today > dl.date ? 'fail' : 'wait', today > dl.date ? `Deadline ${dl.date} passed with no route: the GST cut is gone. Finance decides: financial credit note` : `Route not chosen · ${daysLeft} days to ${dl.date} (${dl.why})`, today > dl.date ? gst : 0);
-  else if (d.route === 'fin') set('C4', d.cnNo ? 'pass' : 'wait', d.cnNo ? `Financial credit note ${d.cnNo}: GST unchanged, nothing for the buyer to reverse` : 'Financial credit note to issue');
-  else if (!d.cnNo) set('C4', today > dl.date ? 'fail' : 'wait', today > dl.date ? `GST credit note not issued by ${dl.date}: the GST cut is gone. Finance decides: financial credit note` : `GST credit note to issue · ${daysLeft} days to ${dl.date} (${dl.why})`, today > dl.date ? gst : 0);
+  else if (!d.route) set('C4', today > dl.date ? 'fail' : 'wait', today > dl.date ? `Deadline ${dl.date} passed with nothing issued: the tax saving is gone. Finance can still return the money with a financial credit note` : `Kind of credit note not chosen yet · ${daysLeft} days to ${dl.date} (${dl.why})`, today > dl.date ? gst : 0);
+  else if (d.route === 'fin') set('C4', d.cnNo ? 'pass' : 'wait', d.cnNo ? `Financial credit note ${d.cnNo}: money back, tax unchanged, nothing for the buyer to do` : 'Financial credit note to issue');
+  else if (!d.cnNo) set('C4', today > dl.date ? 'fail' : 'wait', today > dl.date ? `GST credit note not issued by ${dl.date}: the tax saving is gone. Finance can still use a financial credit note` : `GST credit note to issue · ${daysLeft} days to ${dl.date} (${dl.why})`, today > dl.date ? gst : 0);
   else if (d.cnOn > dl.date) set('C4', 'fail', `Credit note dated ${d.cnOn}, after the ${dl.date} deadline`, gst);
-  else if (psd.v === 1 && !d.priorAgreement) set('C4', 'fail', `${d.cnNo} issued ${d.cnOn} under PSD v1, with no prior agreement: not valid. Reissue on or after 1 Nov 2026 under v2`, gst);
-  else set('C4', 'pass', `GST credit note ${d.cnNo} on ${d.cnOn}, valid under PSD v${psd.v}`);
+  else if (psd.v === 1 && !d.priorAgreement) set('C4', 'fail', `${d.cnNo} was issued on ${d.cnOn}, before the 1 Nov rule change, with no prior agreement, so it doesn't count. Reissue it now under the new rule`, gst);
+  else set('C4', 'pass', `GST credit note ${d.cnNo} on ${d.cnOn}, valid under the ${psd.v === 2 ? 'new (1 Nov 2026)' : 'old'} rule`);
   // C5
-  if (d.route !== 'gst' || out.C4.status === 'fail' || !d.cnNo) set('C5', d.route === 'gst' ? 'wait' : 'pass', d.route === 'gst' ? 'Waiting for a valid credit note' : 'Nothing for the buyer to reverse');
-  else if (d.ims === 'accepted') set('C5', 'pass', `${d.buyer} accepted in IMS on ${d.imsOn}: the ${inr(gst)} GST cut holds`);
-  else if (d.ims === 'rejected') set('C5', 'fail', `Rejected in IMS: "${d.imsRemark}". ${inr(gst)} of tax goes back on your liability. Fix and reissue, or settle as a financial note`, gst);
-  else { const by = imsDecideBy(d.cnOn); set('C5', today > by ? 'pass' : 'wait', today > by ? `Pending past ${by}: deemed accepted. Not confirmed by the buyer` : `Pending in IMS until ${by}`); }
+  if (d.route !== 'gst' || out.C4.status === 'fail' || !d.cnNo) set('C5', d.route === 'gst' ? 'wait' : 'pass', d.route === 'gst' ? 'Waiting for a valid credit note first' : 'Nothing for the buyer to approve');
+  else if (d.ims === 'accepted') set('C5', 'pass', `${d.buyer} accepted it on the GST portal on ${d.imsOn}: the ${inr(gst)} tax saving is safe`);
+  else if (d.ims === 'rejected') set('C5', 'fail', `Buyer rejected it on the GST portal: "${d.imsRemark}". The ${inr(gst)} tax saving is lost unless you fix and reissue, or settle with a financial credit note`, gst);
+  else { const by = imsDecideBy(d.cnOn); set('C5', today > by ? 'pass' : 'wait', today > by ? `No reply by ${by}, so it counts as accepted (deemed). The buyer never confirmed` : `Waiting for the buyer on the GST portal, until ${by}`); }
   // C6
-  if (d.received == null) set('C6', 'wait', `Awaiting ${inr(netDue(d))} before GST`);
-  else if (d.received >= netDue(d)) set('C6', 'pass', `${inr(d.received)} received, matches the approved net`);
-  else set('C6', 'fail', `${inr(netDue(d) - d.received)} short of the approved net`, netDue(d) - d.received);
+  if (d.received == null) set('C6', 'wait', `Waiting for ${inr(netDue(d))} (before GST)`);
+  else if (d.received >= netDue(d)) set('C6', 'pass', `${inr(d.received)} received, exactly what was agreed`);
+  else set('C6', 'fail', `${inr(netDue(d) - d.received)} less than agreed`, netDue(d) - d.received);
   // C7
   const chain = verify(d), needed = ['requested', 'economics', ...(apv ? ['approved'] : []), ...(d.route ? ['route'] : []), ...(d.cnNo ? ['credit note'] : []), ...(d.received != null ? ['payment'] : [])];
   const missing = needed.filter(x => !has(d, x));
-  if (!chain.ok) set('C7', 'fail', `Entry #${chain.at} (${chain.what}) was changed after it was sealed`, e.discount);
+  if (!chain.ok) set('C7', 'fail', `Step #${chain.at} (${chain.what}) was changed after it was recorded`, e.discount);
   else if (missing.length) set('C7', 'fail', `Missing: ${missing.join(', ')}`);
-  else set('C7', 'pass', `${chain.count} entries, every fingerprint matches`);
+  else set('C7', 'pass', `${chain.count} recorded steps, none changed`);
 
   const controls = CONTROLS.map(([id, name, what]) => ({ ...out[id], name, what, owner: OWNERS[id] }));
   const tickets = controls.filter(c => c.status === 'fail').map(c => {

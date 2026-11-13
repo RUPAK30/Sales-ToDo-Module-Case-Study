@@ -22,34 +22,34 @@ function head(k, sw) {
   return `<div class="cr-k">
       <div><span>Spent on discounts</span><b>${inr(k.spent)}</b><small>${k.rows.filter(x => x.d.approvedBy).length} approved</small></div>
       <div><span>Net after discounts</span><b class="${k.net >= 0 ? 'ok' : 'bad'}">${k.net >= 0 ? '+' : '−'}${inr(Math.abs(k.net))}</b><small>${inr(k.earned)} extra margin from extra volume</small></div>
-      <div class="${k.gstAtRisk ? 'hot' : ''}"><span>GST relief at risk</span><b>${inr(k.gstAtRisk)}</b><small>${k.nearest ? `${k.nearest.days} days to ${fmt(k.nearest.date)}` : 'Nothing open'}</small></div>
-      <div><span>Pass all 7 controls</span><b>${k.passAll} of ${k.count}</b><small>${k.tickets.length} open exception${k.tickets.length === 1 ? '' : 's'} · ${k.breached} past due</small></div>
+      <div class="${k.gstAtRisk ? 'hot' : ''}"><span>Tax saving at risk</span><b>${inr(k.gstAtRisk)}</b><small>${k.nearest ? `${k.nearest.days} days to ${fmt(k.nearest.date)}` : 'Nothing open'}</small></div>
+      <div><span>Passing all 7 checks</span><b>${k.passAll} of ${k.count}</b><small>${k.tickets.length} open exception${k.tickets.length === 1 ? '' : 's'} · ${k.breached} past due</small></div>
     </div>
-    ${sw.items.length && sw.daysLeft >= 0 ? `<div class="cr-sw"><div><b>Last chance for FY ${sw.fy}: ${inr(sw.total)} of GST cuts aren't safe, ${sw.daysLeft} day${sw.daysLeft === 1 ? '' : 's'} before ${fmt(sw.deadline)}.</b><span>After that date a GST credit note on these invoices can't cut tax (s.34(2)); only a financial credit note is left.</span></div><button class="btn" data-a="sweep" type="button">${S.sweep ? 'Hide' : 'See'} the ${sw.items.length}</button></div>
+    ${sw.items.length && sw.daysLeft >= 0 ? `<div class="cr-sw"><div><b>Last chance for FY ${sw.fy}: ${inr(sw.total)} of GST cuts aren't safe, ${sw.daysLeft} day${sw.daysLeft === 1 ? '' : 's'} before ${fmt(sw.deadline)}.</b><span>After that date, a GST credit note (a "minus bill" that also lowers tax) can no longer cut tax on these bills under s.34(2). Only a financial credit note is left: the money goes back, the tax stays.</span></div><button class="btn" data-a="sweep" type="button">${S.sweep ? 'Hide' : 'See'} the ${sw.items.length}</button></div>
     ${S.sweep ? `<div class="tbl"><table><thead><tr><th>Discount</th><th>Buyer</th><th>Invoice</th><th>GST at risk</th><th>What's blocking it</th></tr></thead><tbody>${sw.items.map(x => { const b = x.r.controls.find(c => c.status !== 'pass' && ['C2', 'C3', 'C4', 'C5'].includes(c.id)); return `<tr><td><button class="btn link" data-sel="${x.d.id}" type="button">${x.d.id}</button></td><td>${esc(x.d.buyer)}</td><td>${esc(x.d.invoiceNo)} · ${fmt(x.d.invoiceDate)}</td><td><b>${inr(x.r.gstAtRisk)}</b></td><td>${b ? `${b.id} · ${esc(b.text)}` : '—'}</td></tr>`; }).join('')}</tbody></table></div>` : ''}` : ''}
     <div class="cr-wf" aria-label="Where the discount money went">
-      ${bar('Discounts given', -k.spent, 'neg', '−')}${bar('Extra margin from extra volume', k.earned, 'pos', '+')}${bar('GST relief at risk', -k.gstAtRisk, 'neg', '−')}${bar('Cash short of approved net', -k.short, 'neg', '−')}
-      <div class="cr-wf-r tot"><span>Net after discounts, if every risk lands</span><div></div><b class="${k.net - k.gstAtRisk - k.short >= 0 ? 'pos' : 'neg'}">${k.net - k.gstAtRisk - k.short >= 0 ? '+' : '−'}${inr(Math.abs(k.net - k.gstAtRisk - k.short))}</b></div>
-      <p class="cr-fn">Extra margin = (order − the buyer's usual order) × 51.15% gross margin (HUL FY25, illustrative). Net = order × (margin − discount) − usual order × margin. Sample data.</p>
+      ${bar('Discounts given', -k.spent, 'neg', '−')}${bar('Extra margin from extra volume', k.earned, 'pos', '+')}${bar('Tax saving at risk', -k.gstAtRisk, 'neg', '−')}${bar('Cash short of approved net', -k.short, 'neg', '−')}
+      <div class="cr-wf-r tot"><span>Net result if every risk comes true</span><div></div><b class="${k.net - k.gstAtRisk - k.short >= 0 ? 'pos' : 'neg'}">${k.net - k.gstAtRisk - k.short >= 0 ? '+' : '−'}${inr(Math.abs(k.net - k.gstAtRisk - k.short))}</b></div>
+      <p class="cr-fn">How it's worked out: extra profit = (this order − the buyer's usual order) × 51.15% gross margin (HUL FY25, used as an example). Net = profit on this order after the discount − profit the usual order would have made. Sample data.</p>
     </div>`;
 }
 
 function queue(k) {
-  if (!k.tickets.length) return '<p class="cr-ok">No open exceptions. Every failed control has been fixed.</p>';
+  if (!k.tickets.length) return '<p class="cr-ok">No open tickets. Every failed check has been fixed.</p>';
   const tks = [...k.tickets].sort((a, b) => b.breached - a.breached || b.rupees - a.rupees);
   return `<div class="tbl"><table class="cr-q"><thead><tr><th>Exception</th><th>Owner</th><th>Due</th><th>₹ at stake</th></tr></thead><tbody>${tks.map(t => `<tr class="${t.discount === S.sel ? 'on' : ''}"><td><button class="btn link" data-sel="${t.discount}" type="button">${t.discount} · ${t.control} ${esc(t.name)}</button><br><small>${esc(t.buyer)}</small></td><td>${esc(t.owner.who)}<br><small>${esc(t.owner.role)}</small></td><td class="${t.breached ? 'bad' : ''}">${fmt(t.due).replace(/ \d{4}$/, '')}${t.breached ? '<br><small>past due</small>' : ''}</td><td>${t.rupees ? inr(t.rupees) : '—'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function actions(d, r) {
   const c = id => r.controls.find(x => x.id === id), b = [];
-  if (c('C3').status === 'fail') b.push(`<input class="cr-in" id="cr-note" placeholder="Tax desk note: what was paid for, and is there a written agreement?"><button class="btn" data-a="rv-price" type="button">Tax desk: price cut</button><button class="btn" data-a="rv-service" type="button">Tax desk: a service</button>`);
+  if (c('C3').status === 'fail') b.push(`<input class="cr-in" id="cr-note" placeholder="Tax desk note: what was paid for, and is there a written agreement?"><button class="btn" data-a="rv-price" type="button">Tax team: it is a price cut</button><button class="btn" data-a="rv-service" type="button">Tax team: it is a paid service</button>`);
   else if (d.review === 'service' && d.route !== 'service') b.push('<button class="btn" data-a="route-service" type="button">Settle against the buyer\'s service invoice</button>');
-  else if (!d.route && d.approvedBy && c('C2').status === 'pass') b.push('<button class="btn" data-a="route-gst" type="button">Route: GST credit note</button><button class="btn" data-a="route-fin" type="button">Route: financial credit note</button>');
+  else if (!d.route && d.approvedBy && c('C2').status === 'pass') b.push('<button class="btn" data-a="route-gst" type="button">Use a GST credit note (tax goes down too)</button><button class="btn" data-a="route-fin" type="button">Use a financial credit note (money back, tax unchanged)</button>');
   if (d.route && d.route !== 'service' && (!d.cnNo || c('C4').status === 'fail' || d.ims === 'rejected')) b.push(`<button class="btn pri" data-a="issue" type="button">${d.cnNo ? 'Reissue' : 'Issue'} ${d.route === 'gst' ? 'GST' : 'financial'} credit note today</button>`);
   if (d.route === 'gst' && d.ims === 'rejected') b.push('<button class="btn" data-a="to-fin" type="button">Settle as a financial credit note</button>');
-  if (d.route === 'gst' && d.cnNo && d.ims === 'pending' && c('C4').status === 'pass') b.push('<button class="btn" data-a="ims-ok" type="button">Buyer accepted in IMS</button><input class="cr-in" id="cr-rm" placeholder="Buyer\'s rejection remark from IMS"><button class="btn" data-a="ims-no" type="button">Buyer rejected</button>');
+  if (d.route === 'gst' && d.cnNo && d.ims === 'pending' && c('C4').status === 'pass') b.push('<button class="btn" data-a="ims-ok" type="button">Buyer accepted on the GST portal (IMS)</button><input class="cr-in" id="cr-rm" placeholder="Buyer\'s rejection remark from IMS"><button class="btn" data-a="ims-no" type="button">Buyer rejected</button>');
   if (c('C6').status === 'fail') b.push(`<button class="btn" data-a="pay" type="button">Record the ${inr(C.netDue(d) - d.received)} balance received</button>`);
-  if (c('C2').status === 'fail') b.push('<span class="cr-h">C2 can\'t be fixed by editing: the approval stays on record. Raise it with the approver\'s manager.</span>');
+  if (c('C2').status === 'fail') b.push('<span class="cr-h">Check 2 can\'t be fixed by editing: the over-limit approval stays on record, as it should. Raise it with the approver\'s manager.</span>');
   b.push(`<button class="btn ghost" data-a="tamper" type="button">${C.verify(d).ok ? 'Edit a sealed entry (test)' : 'Undo the edit'}</button>`);
   return `<div class="cr-act">${b.join('')}</div>`;
 }
@@ -59,10 +59,10 @@ function detail(d, k) {
   const prev = tk ? (S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk)) : null;
   return `<div class="cr-d">
     <div class="cr-dh"><div><p class="eyebrow">${d.id} · ${esc(d.invoiceNo)} · invoice ${fmt(d.invoiceDate)}</p><h3>${esc(d.buyer)}: ${d.pct}% = ${inr(e.discount)} before GST</h3>
-      <p class="cr-s">Needs <b>+${e.breakEvenPct}%</b> extra volume to break even · got <b>+${e.upliftPct}%</b> on the usual ${inr(d.baseline)} · ${e.paidBack ? `<span class="ok">paid back, ${e.multiple}× the discount in extra margin</span>` : `<span class="bad">lost ${inr(-e.net)}</span>`}<br>
-      ${br.recoveryPct === null ? 'No credit notes with this buyer yet.' : `This buyer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes in IMS: expect ${br.recoveryPct}% of the ${inr(r.gst)} GST cut to hold.`} Deadline ${fmt(r.deadline.date)} (${esc(r.deadline.why)}).</p></div>
+      <p class="cr-s">To pay for itself, the buyer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}; they bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">it lost ${inr(-e.net)}</span>`}<br>
+      ${br.recoveryPct === null ? 'No credit notes with this buyer yet.' : `This buyer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes on the GST portal, so expect about ${br.recoveryPct}% of the ${inr(r.gst)} tax saving to hold.`} Last date for the tax credit note: ${fmt(r.deadline.date)}.</p></div>
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
-    <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this control →</a></small></li>`).join('')}</ol>
+    <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this check →</a></small></li>`).join('')}</ol>
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}${S.note ? `<p class="cr-note" role="status">${esc(S.note)}</p>` : ''}
     ${actions(d, r)}
     ${prev ? ticketCard(tk, prev) : ''}
@@ -102,18 +102,29 @@ function packHtml() {
 function render() {
   const root = $('#ctrl-room'); if (!root) return;
   const k = C.desk(S.list, ctx()), sw = C.sweep(S.list, ctx(), '2025-26'), d = cur();
-  root.innerHTML = `<div class="cr-top"><div><p class="eyebrow">Post-sale discounts · rules in force from 1 Nov 2026</p><h1>Is the discount worth it, will the GST cut hold, can you prove it?</h1>
-      <p class="lede">Every discount given after the sale runs through seven controls. A failed control opens an exception with an owner and a due date. Every step is sealed for the auditor.</p></div>
+  root.innerHTML = `<div class="cr-top"><div><p class="eyebrow">Discounts given after a sale · GST rules from 1 Nov 2026</p><h1>Is the discount worth it, will the tax saving hold, and can you prove it?</h1>
+      <p class="lede">Every discount given after a sale runs through seven checks. A failed check becomes a task (an exception) for a named person with a due date, and every step is sealed so an auditor can trust it.</p></div>
       <div class="cr-tb"><button class="btn pri" data-a="walk" type="button">▶ 90-second walkthrough</button></div></div>
     ${head(k, sw)}
-    <div class="cr-g"><section class="card"><h2>Exceptions · ${k.tickets.length}</h2><p class="sub">Each failed control is a ticket: owner, turnaround in working days, rupees at stake.</p>${queue(k)}</section>
+    <div class="cr-g"><section class="card"><h2>Exceptions · ${k.tickets.length}</h2><p class="sub">Each failed check is a ticket, like ServiceNow or JIRA: who owns it, by when (working days), and how much money is at stake.</p>${queue(k)}</section>
       <section class="card"><h2>Discounts · ${k.count}</h2><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${x.d.id}</b> ${esc(x.d.buyer)}<span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section></div>
     <section class="card cr-more"><h2>For finance, tax and audit</h2><div class="cr-act">
-      <button class="btn" data-a="sample" type="button">Sample 5 discounts like an auditor</button><button class="btn" data-a="mis" type="button">Weekly control MIS (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix (CSV)</button>
+      <button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
       <label class="cr-s">GSTR-9 for FY 2025-26 filed on <input type="date" class="cr-in" id="cr-g9" value="${S.settings.gstr9Filed['2025-26'] ?? ''}"></label><button class="btn ghost" data-a="reset" type="button">Reset sample</button></div>
-      <details class="cr-ru"><summary>Rules in force, with effective dates · ${C.RULES.length}</summary><div class="tbl"><table><thead><tr><th>Rule</th><th>From</th><th>To</th><th>What it says</th><th>Source</th></tr></thead><tbody>${C.RULES.map(r => `<tr><td><b>${r.id} v${r.v}</b><br><small>${esc(r.name)}</small></td><td>${fmt(r.from)}</td><td>${r.to ? fmt(r.to) : 'in force'}</td><td>${esc(r.text)}</td><td><small>${esc(r.src)}</small></td></tr>`).join('')}</tbody></table></div><p class="cr-s">Each decision records the rule version in force on its date, so a note issued on 28 Oct is judged by v1 and one issued on 2 Nov by v2.</p></details>
+      <details class="cr-ru" open><summary>Terms in plain words</summary><dl class="cr-gl">
+        <dt>Post-sale discount</dt><dd>Money given back to a buyer after the bill, for example a 6% rebate for hitting a target.</dd>
+        <dt>Credit note</dt><dd>A "minus bill". A <b>GST credit note</b> also lowers the tax on the sale; a <b>financial credit note</b> returns money but leaves the tax as billed.</dd>
+        <dt>IMS (Invoice Management System)</dt><dd>The page on the GST portal where the buyer accepts or rejects your credit note. Rejected means your tax saving is lost; left pending past one tax period, it counts as accepted.</dd>
+        <dt>s.34(2) deadline</dt><dd>The last date to issue a GST credit note: 30 Nov after the financial year of the bill, or the annual return date if that is earlier.</dd>
+        <dt>Break-even</dt><dd>How much more the buyer must buy for the discount to pay for itself: discount ÷ (margin − discount). 6% at a 51% margin needs about 13% more.</dd>
+        <dt>Maker-checker</dt><dd>The person who asks can't be the person who approves.</dd>
+        <dt>Exception / ticket</dt><dd>A failed check turned into a task with an owner, a due date and the money at stake.</dd>
+        <dt>Hash chain (tamper-evident)</dt><dd>Each recorded step carries a fingerprint of the one before it, so changing any old entry breaks every fingerprint after it and shows exactly where.</dd>
+        <dt>Risk and control matrix</dt><dd>The auditor's table: what can go wrong, which check stops it, who owns it, and how to test it.</dd>
+      </dl></details>
+      <details class="cr-ru"><summary>Rules in force, with effective dates · ${C.RULES.length}</summary><div class="tbl"><table><thead><tr><th>Rule</th><th>From</th><th>To</th><th>What it says</th><th>Source</th></tr></thead><tbody>${C.RULES.map(r => `<tr><td><b>${r.id} v${r.v}</b><br><small>${esc(r.name)}</small></td><td>${fmt(r.from)}</td><td>${r.to ? fmt(r.to) : 'in force'}</td><td>${esc(r.text)}</td><td><small>${esc(r.src)}</small></td></tr>`).join('')}</tbody></table></div><p class="cr-s">Rules change, so each decision is judged by the version in force on its date: a note issued on 28 Oct follows the old rule (v1), one issued on 2 Nov the new one (v2).</p></details>
       <details class="cr-ru"><summary>Risk and control matrix · C1–C7</summary><div class="tbl"><table><thead><tr><th>Control</th><th>Risk</th><th>Control activity</th><th>Type · frequency</th><th>Owner</th><th>Evidence</th><th>Test</th></tr></thead><tbody>${C.RACM.map(r => `<tr><td><b>${r[0]}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}<br><small>${esc(r[4])}</small></td><td>${esc(r[5])}</td><td>${esc(r[6])}</td><td>${esc(r[7])}</td></tr>`).join('')}</tbody></table></div></details>
-      <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal, ServiceNow or JIRA: IMS actions are recorded by finance and ticket payloads are previews. Sample buyers and figures.</p></section>
+      <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal, ServiceNow or JIRA: finance records what the buyer did on the portal, and tickets are previews. Sample buyers and figures.</p></section>
     ${S.walk ? walkHtml() : ''}${S.pack ? packHtml() : ''}`;
 }
 
