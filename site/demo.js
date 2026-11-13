@@ -40,7 +40,7 @@ if (root) {
     [['day', '3 weeks later'], ['ok', '₹9,40,000 received, exactly what was agreed.']],
     [['ok', 'All 7 checks pass. Every step is fingerprinted, so any later change would show.']],
   ];
-  let typing = null, i = 0, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches, timer = null;
+  let typing = null, i = 0, timer = null, inView = false, manual = false, started = false, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const PLAIN = { C1: 'Worth it?', C2: 'Right person said yes?', C3: 'Really a discount?', C4: 'Paperwork right and on time?', C5: 'Buyer accepted?', C6: 'Right money arrived?', C7: 'Record untouched?' };
   const T = { me: '4:12 pm ✓✓', them: '4:20 pm', buyer: '4:31 pm' };
   const bubble = ([k, a, b]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}<span class="tm">${T[k] ?? ''}</span></div></div>`;
@@ -68,13 +68,22 @@ if (root) {
     $('#dm-play').textContent = playing ? '❚❚ Pause' : i === steps.length - 1 ? '↺ Replay' : '▶ Play';
   }
   const go = (n, anim = true) => { i = Math.max(0, Math.min(steps.length - 1, n)); draw(anim); };
-  const tick = () => { clearTimeout(timer); if (!playing) return; timer = setTimeout(() => { if (i < steps.length - 1) { go(i + 1); tick(); } else { playing = false; draw(false); } }, i === 0 ? 4200 : 3600); };
+  // reading pace: time to read what just appeared, plus the typing beat; never rushed, never dragging
+  const dwell = n => { const words = M[n].map(m => (m[2] || m[1] || '')).join(' ').split(/\s+/).length; return Math.min(7000, 2400 + words * 170); };
+  const tick = () => { clearTimeout(timer); if (!playing || !inView) return; timer = setTimeout(() => { if (i < steps.length - 1) { go(i + 1); tick(); } else { playing = false; draw(false); } }, dwell(i)); };
   root.addEventListener('click', e => {
     const b = e.target.closest('[data-dm]'); if (!b) return;
-    if (b.dataset.dm === 'play') { if (!playing && i === steps.length - 1) go(0); playing = !playing; draw(false); tick(); return; }
-    playing = false; clearTimeout(timer); if (b.dataset.dm === 'next' && i === steps.length - 1) return go(0); go(i + (b.dataset.dm === 'next' ? 1 : -1));
+    if (b.dataset.dm === 'play') { manual = false; if (!playing && i === steps.length - 1) go(0); playing = !playing; draw(false); tick(); return; }
+    manual = true; playing = false; clearTimeout(timer); if (b.dataset.dm === 'next' && i === steps.length - 1) return go(0); go(i + (b.dataset.dm === 'next' ? 1 : -1));
   });
-  // start playing only once the demo is on screen
+  // Plays by itself when the phone comes into view, pauses when it scrolls away, picks up where it left off.
   go(0, false);
-  if (playing) new IntersectionObserver((en, ob) => { if (en[0].isIntersecting) { ob.disconnect(); tick(); } }, { threshold: .35 }).observe(root);
+  const phone = root.querySelector('.ph-fr') || root;
+  new IntersectionObserver(en => {
+    inView = en[0].isIntersecting;
+    if (!inView) { clearTimeout(timer); clearTimeout(typing); return; }
+    if (manual || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!started) { started = true; playing = true; go(0, true); tick(); return; }
+    if (playing) { draw(false); tick(); }
+  }, { threshold: .55 }).observe(phone);
 }
