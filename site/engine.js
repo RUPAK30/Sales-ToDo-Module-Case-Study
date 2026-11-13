@@ -63,6 +63,12 @@ export function sample(today) {
     t(201, 'Neha', 'Delta Pharma', 'Negotiation', 2, 300000),
     t(202, 'Neha', 'Sunrise Medicals', 'Quote sent', 0, 120000),
     t(203, 'Neha', 'Green Leaf', 'New lead', 1, 30000),
+    t(204, 'Neha', 'Apollo Chemists', 'Quote sent', 1, 180000),
+    t(205, 'Neha', 'MedPlus Distributors', 'Negotiation', 3, 260000),
+    t(206, 'Neha', 'CarePoint Pharmacy', 'Qualified', 0, 45000),
+    t(207, 'Neha', 'Vital Meds', 'New lead', 2, 25000),
+    t(208, 'Neha', 'Lifeline Hospital Supplies', 'Qualified', 4, 95000),
+    t(209, 'Neha', 'Sanjivani Medicos', 'New lead', 0, 20000),
     t(301, 'Imran', 'Balaji Provisions', 'Qualified', 1, 55000),
     t(302, 'Imran', 'Sri Durga Stores', 'New lead', 0, 18000),
   ];
@@ -78,6 +84,12 @@ export function sample(today) {
       'Om Traders': { marginFloorPct: 8, creditLimit: 150000, outstanding: 140000, creditDays: 45, oldestBillDays: 12 },
       'Delta Pharma': { marginFloorPct: 11, creditLimit: 800000, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
       'Royal Foods': { marginFloorPct: 10, creditLimit: 400000, outstanding: 50000, creditDays: 30, oldestBillDays: 5 },
+      'MedPlus Distributors': { bucket: 'Pharma', marginFloorPct: 10, creditLimit: 500000, outstanding: 60000, creditDays: 30, oldestBillDays: 8 },
+      'Apollo Chemists': { bucket: 'Pharma', marginFloorPct: 9, creditLimit: 300000, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
+      'CarePoint Pharmacy': { bucket: 'Pharma', marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
+      'Vital Meds': { bucket: 'Pharma', marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
+      'Lifeline Hospital Supplies': { bucket: 'Pharma', marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
+      'Sanjivani Medicos': { bucket: 'Pharma', marginFloorPct: 10, creditLimit: 0, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
       'Sunrise Medicals': { marginFloorPct: 9, creditLimit: 300000, outstanding: 0, creditDays: 30, oldestBillDays: 0 },
     },
     approvals: [], orders: [], chain: [], delegations: [], lost: [], transfers: [],
@@ -96,6 +108,10 @@ export function sample(today) {
   // A second ask has sat with Kavita for 2 days: it escalates to the sales head on load.
   seeded = askDiscount(seeded, 'T-202', 'Neha', 5, 'Hospital tender; rival bid 5% lower');
   seeded.approvals[1].askedOn = addDays(today, -2);
+  // A third ask from Neha, fresh today, so Kavita has two decisions waiting.
+  seeded = askDiscount(seeded, 'T-205', 'Neha', 6, 'Distributor matching a rival scheme on the quarterly order');
+  // Kavita asked to move one FMCG dealer to Neha, outside her bucket: a second manager (Sanjay or Arjun) must decide.
+  seeded = rebalance(seeded, 'T-302', 'Kavita', 'Neha', 'Neha visits the same market weekly; Imran has no slot this month');
   const out = escalate(seeded);
   // Yesterday's close: the head fingerprint was shared outside the system (the 'digest', as in Microsoft's SQL Ledger).
   out.anchor = { n: out.chain.length, hash: out.chain.at(-1).hash, at: `${addDays(today, -1)} 18:00`, to: 'Finance (Every Rupee)' };

@@ -93,8 +93,9 @@ test('send back needs a reason and unfreezes the task so the rep can re-ask', ()
   assert.equal(t(w, 'T-101').status, 'open');
   assert.doesNotThrow(() => E.askDiscount(w, 'T-101', 'Rahul', 6, 'Quote attached'));
 });
-test('the seeded ask waits for Kavita from day one', () => {
-  assert.equal(E.decisionsFor(w0(), 'Kavita').length, 1);
+test('the seeded asks wait for Kavita from day one', () => {
+  assert.equal(E.decisionsFor(w0(), 'Kavita').length, 2);
+  assert.equal(E.transfersFor(w0(), 'Sanjay').length, 1);
 });
 test('rebalance: managers only, never a frozen task, never to a non-rep', () => {
   const w = w0();
@@ -196,7 +197,7 @@ test('delegation: approvals go to the stand-in, logged as acting for; limits sti
   assert.throws(() => E.delegate(w0(), 'Rahul', 'Sanjay', D, D), /Only a manager/);
   assert.throws(() => E.delegate(w0(), 'Kavita', 'Sanjay', D, E.addDays(D, 40)), /30 days/);
   const { w, moved } = E.delegate(w0(), 'Kavita', 'Sanjay', D, E.addDays(D, 3));
-  assert.equal(moved, 1); assert.equal(E.decisionsFor(w, 'Sanjay').length, 1);
+  assert.equal(moved, 2); assert.equal(E.decisionsFor(w, 'Sanjay').length, 2);
   const n = E.askDiscount(w, 'T-101', 'Rahul', 6, 'x'); assert.equal(n.approvals.at(-1).approver, 'Sanjay'); assert.equal(n.approvals.at(-1).actingFor, 'Kavita');
   assert.throws(() => E.approve(n, n.approvals.at(-1).id, 'Sanjay', 11, E.addDays(D, 5)), /more than was asked|limit/);
   assert.equal(E.decisionsFor(E.endDelegation(w, 'Kavita'), 'Kavita').length, 0);
@@ -224,7 +225,7 @@ test('buckets: a move outside the bucket needs a reason and a second manager', (
   assert.throws(() => E.decideTransfer(w, id, 'Arjun', false, ''), /why/);
   const ok = E.decideTransfer(w, id, 'Arjun', true); assert.equal(t(ok, 'T-104').rep, 'Neha');
   const no = E.decideTransfer(w, id, 'Arjun', false, 'Keep with territory owner'); assert.equal(t(no, 'T-104').rep, 'Rahul');
-  assert.ok(E.verifyChain(ok).ok); assert.match(ok.chain.at(-1).text, /Approved TRF-001/);
+  assert.ok(E.verifyChain(ok).ok); assert.match(ok.chain.at(-1).text, new RegExp(`Approved ${id}`));
 });
 
 test('auto-routing: overload is balanced within the bucket only', () => {

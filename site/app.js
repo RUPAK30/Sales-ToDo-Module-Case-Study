@@ -1,6 +1,6 @@
 import * as E from './engine.js?v=1794488317';
 
-const KEY = 'tentoday-product-v10';
+const KEY = 'tentoday-product-v11';
 const fits = x => x && Array.isArray(x.chain) && Array.isArray(x.orders) && Array.isArray(x.delegations) && Array.isArray(x.lost) && Array.isArray(x.schemes) && x.seq && x.seq.ord;
 const realToday = E.iso(new Date());
 const $ = s => document.querySelector(s);
@@ -46,7 +46,7 @@ function renderActors() {
     const p = E.person(name);
     const b = badge(name);
     const on = actor === name;
-    return `<button type="button" class="who ${on ? 'on' : ''}" data-actor="${name}"><b>${esc(name)}</b> <small>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</small>${b ? `<span class="badge">${b} ${p.rep ? 'due' : 'wait'}</span>` : ''}</button>`;
+    return `<button type="button" class="who ${on ? 'on' : ''}" data-actor="${name}"><b>${esc(name)}</b> <small>${esc(p.role)}${p.buckets ? ` · ${esc(p.buckets.join(', '))}` : ''}</small>${p.rep && E.activeCover(w, name) ? `<span class="badge off">on leave</span>` : b ? `<span class="badge">${b} ${p.rep ? 'due' : 'wait'}</span>` : ''}</button>`;
   }).join('');
   const whyEl = $('#actor-why');
   if (whyEl) whyEl.textContent = ROLE_WHY[actor] || '';
