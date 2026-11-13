@@ -218,7 +218,9 @@ document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.sett
 /* Deep links: app.html#controls/D-102/C5 · #controls/sweep · #controls/walk */
 function deepLink() {
   const p = location.hash.slice(1).split('/'); if (p[0] !== 'controls' || p.length < 2) return;
+  $('#drawer') && ($('#drawer').hidden = true);
   if (p[1] === 'sweep') S.sweep = true;
+  else if (p[1] === 'ask' || p[1] === 'signoff') { render(); return setTimeout(() => document.querySelector(p[1] === 'ask' ? '#ctrl-room .ask' : '#ctrl-room .so')?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 120); }
   else if (p[1] === 'walk') S.walk = { steps: C.walkthrough(C.todayIso()), i: 0 };
   else if (S.list.some(d => d.id === p[1])) { S.sel = p[1]; S.focus = p[2] ?? null; }
   render();
