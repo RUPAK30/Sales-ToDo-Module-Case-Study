@@ -203,3 +203,19 @@ a.cta:active,.x-cta a:active,button:active{transform:scale(.97)}
 .wk-f{margin:10px 0 0;font-size:.7rem;color:#78716C;line-height:1.45}
 @media (max-width:900px){.wk-sl{grid-template-columns:1fr 1fr}}
 @media (max-width:420px){.wk-sl{grid-template-columns:1fr}}
+/* hero: a question to tap, and a three-fact strip */
+.hook{display:flex;flex-direction:column;gap:6px;width:100%;max-width:640px;text-align:left;margin:14px 0 0;padding:14px 16px;border:1px solid var(--acc-line,#CFE0CF);border-radius:16px;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);cursor:pointer;font:inherit;color:#1C1917;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+.hook:hover{box-shadow:0 8px 24px var(--acc-glow,rgba(0,0,0,.08))}.hook:active{transform:scale(.985)}
+.hook-q{font-size:.98rem;line-height:1.4}.hook-a{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hook-a b{font-size:.82rem;font-weight:700;color:var(--acc,#3F6B4F);background:var(--acc-soft,#EEF4EC);border-radius:99px;padding:4px 12px}
+.hook.open .hook-a b{font-size:1.6rem;color:#B91C1C;background:none;padding:0;animation:sx-in .35s cubic-bezier(.2,.8,.2,1) both}
+.hook-a small{font-size:.82rem;color:#57534E;line-height:1.4;flex:1 1 260px}
+.strip3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 0;max-width:680px}
+.strip3>div{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(231,229,228,.9);border-radius:14px;padding:10px 12px}
+.strip3 svg{width:20px;height:20px;fill:none;stroke:var(--acc,#3F6B4F);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.strip3 b{font-size:1rem;letter-spacing:-.01em}.strip3 span{grid-column:1/-1;font-size:.76rem;color:#57534E;line-height:1.4;margin-top:4px}
+@media (max-width:560px){
+ .strip3{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;margin-right:-16px;padding-right:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .strip3::-webkit-scrollbar{display:none}.strip3>div{flex:0 0 72%;scroll-snap-align:start}
+ .hx-grid .x-prom{font-size:.98rem}.hook-q{font-size:.92rem}}
+.strip3 b span{display:inline;font-size:inherit;color:inherit;margin:0;grid-column:auto}

@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="tabs.css?v=1794600110">
+<link rel="stylesheet" href="tabs.css?v=1794600121">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -71,19 +71,15 @@
   <div class="hx-grid"><div class="hx2">
     <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
     <h1>Companies give money back to buyers after a sale. Most of it is never checked.</h1>
-    <p class="x-prom">Ten Today checks every such discount: is it worth giving, did the tax saving really go through, did the right money arrive, and is there proof for the auditor?</p>
-    <ul class="wwh">
-      <li><b>Why now</b>India's GST rules changed on 1 Nov 2026. These discounts became easier to give but harder to prove, and mistakes cost real money.</li>
-      <li><b>What it does</b>Seven simple checks on every discount, from "is it worth it?" to "can we prove it?"</li>
-      <li><b>How</b>A failed check becomes a task for a named person with a deadline. Every step is recorded, so nobody can quietly change it later.</li>
-    </ul>
+    <p class="x-prom">Ten Today checks every one: is it worth it, did the tax saving go through, did the money arrive, and can you prove it?</p>
+    <button type="button" class="hook" id="hook" aria-expanded="false"><span class="hook-q">You give a buyer <b>₹100</b> back after a sale. How much comes back to you?</span><span class="hook-a" aria-live="polite"><b id="hook-v">Tap to find out</b><small id="hook-s"></small></span></button>
+    <div class="strip3" role="list">
+      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>1 Nov 2026</b><span>GST rules changed: discounts got easier to give, harder to prove.</span></div>
+      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><b>7 checks</b><span>From "is it worth it?" to "can we prove it?" A failed one goes to a named person.</span></div>
+      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><b><span id="cd-days">—</span> days</b><span id="cd-text">left to fix last year's tax paperwork (30 Nov 2026).</span></div>
+    </div>
     <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: requirements → rules → tests → a working product.</p>
     <p class="x-cta"><a class="x-pri" href="app.html#controls">Try the live product →</a><a class="x-sec" href="#demo">▶ Watch one discount</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
-    <div class="proof3 pc" aria-label="At a glance">
-      <div><b>7</b><span>checks on every discount, each with a named owner</span></div>
-      <div><b id="cd-days">—</b><span id="cd-text">days left to issue GST credit notes on FY 2025-26 invoices</span></div>
-      <div><b>0</b><span>records anyone can change without it showing</span></div>
-    </div>
   </div>
     <div class="mny" id="money" aria-label="What it found in the sample">
       <div class="mny-h"><span>On 8 sample discounts worth <b id="m-spent">—</b>, Ten Today found</span><b class="mny-big" id="m-stake">—</b><span>at risk</span></div>
@@ -417,7 +413,7 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
 <script>
 (function(){var b=document.getElementById('story');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var k=[].slice.call(b.children);k.forEach(function(x){x.style.opacity=0});var i=0;(function n(){if(i>=k.length)return;var x=k[i++];x.style.opacity='';x.classList.add('in');b.scrollTop=b.scrollHeight;setTimeout(n,i<3?700:1100)})();})();
 </script>
-<script src="tabs.js?v=1794600110"></script>
-<script type="module" src="demo.js?v=1794600110"></script>
+<script src="tabs.js?v=1794600120"></script>
+<script type="module" src="demo.js?v=1794600120"></script>
 </body>
 </html>

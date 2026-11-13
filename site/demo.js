@@ -5,7 +5,7 @@ const today = C.todayIso();
 // countdown: the open s.34(2) window for the latest closed financial year; rolls to the next one after 30 Nov
 { const y = +today.slice(0, 4), cap = today <= `${y}-11-30` ? `${y}-11-30` : `${y + 1}-11-30`, fy = `${+cap.slice(0, 4) - 1}-${cap.slice(2, 4)}`;
   const b = $('#cd-days'), t = $('#cd-text');
-  if (b) { b.textContent = C.daysBetween(today, cap); t.textContent = `days left to fix last year's tax paperwork (30 Nov ${cap.slice(0, 4)})`; } }
+  if (b) { b.textContent = C.daysBetween(today, cap); t.textContent = `left to fix last year's tax paperwork (30 Nov ${cap.slice(0, 4)}).`; } }
 
 // money found in the sample: same engine, same data as the app
 const list = C.sampleDesk(), K = C.desk(list, { today, settings: C.SETTINGS, history: C.HISTORY, opened: C.OPENED });
@@ -15,6 +15,8 @@ const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
 const lakh = n => '₹' + (n / 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' lakh';
 set('#m-spent', lakh(K.spent)); set('#m-stake', lakh(lostAmt + K.gstAtRisk + K.short)); set('#m-lost', inr(lostAmt)); set('#m-gst', inr(K.gstAtRisk)); set('#m-short', inr(K.short));
 set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
+{ const h = $('#hook'); if (h) h.addEventListener('click', () => { const back = Math.round(K.earned / K.spent * 100); h.setAttribute('aria-expanded', 'true'); h.classList.add('open');
+  set('#hook-v', `₹${back}`); set('#hook-s', `On 8 sample discounts, every ₹100 given back brought only ₹${back} of extra profit. Ten Today shows this before anyone says yes.`); }); }
 
 // what it's worth at your scale
 { const bad = $('#w-bad'); if (bad) bad.value = badShare;
