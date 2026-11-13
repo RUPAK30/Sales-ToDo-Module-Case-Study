@@ -5,7 +5,7 @@ const today = C.todayIso();
 // countdown: the open s.34(2) window for the latest closed financial year; rolls to the next one after 30 Nov
 { const y = +today.slice(0, 4), cap = today <= `${y}-11-30` ? `${y}-11-30` : `${y + 1}-11-30`, fy = `${+cap.slice(0, 4) - 1}-${cap.slice(2, 4)}`;
   const b = $('#cd-days'), t = $('#cd-text');
-  if (b) { b.textContent = C.daysBetween(today, cap); t.textContent = `days left to issue GST credit notes on FY ${fy} invoices (deadline 30 Nov ${cap.slice(0, 4)})`; } }
+  if (b) { b.textContent = C.daysBetween(today, cap); t.textContent = `days to the FY ${fy} credit-note deadline (30 Nov ${cap.slice(0, 4)})`; } }
 
 // money found in the sample: same engine, same data as the app
 const list = C.sampleDesk(), K = C.desk(list, { today, settings: C.SETTINGS, history: C.HISTORY, opened: C.OPENED });

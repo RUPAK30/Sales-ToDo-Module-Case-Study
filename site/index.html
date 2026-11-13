@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="tabs.css?v=1794600030">
+<link rel="stylesheet" href="tabs.css?v=1794600040">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -67,12 +67,18 @@
 <script>(function(){var d=document.getElementById('ix-drawer');document.getElementById('ix-menu').onclick=function(){d.hidden=false};document.getElementById('ix-x').onclick=function(){d.hidden=true};d.addEventListener('click',function(e){if(e.target.tagName==='A')d.hidden=true});})();</script>
 
 <header class="wrap hero" data-sec="overview">
-  <div class="hx2">
+  <div class="hx-grid"><div class="hx2">
     <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
     <h1>Since 1 Nov 2026, a discount after the sale is easy to give and hard to defend.</h1>
     <p class="x-prom">Most discounts given after a sale never pay back, and now the GST cut on them can bounce. Ten Today checks both before the money's gone, and keeps the proof.</p>
     <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: requirements → rules → tests → a working product.</p>
     <p class="x-cta"><a class="x-pri" href="app.html#controls">Open the discount controls →</a><a class="x-sec" href="#demo">▶ Watch one discount</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
+    <div class="proof3 pc" aria-label="At a glance">
+      <div><b>7</b><span>controls on every discount, each with an owner</span></div>
+      <div><b id="cd-days">—</b><span id="cd-text">days left to issue GST credit notes on FY 2025-26 invoices</span></div>
+      <div><b>0</b><span>records anyone can edit quietly</span></div>
+    </div>
+  </div>
     <div class="mny" id="money" aria-label="What it found in the sample">
       <div class="mny-h"><span>On 8 sample discounts worth <b id="m-spent">—</b>, Ten Today flagged</span><b class="mny-big" id="m-stake">—</b><span>at stake</span></div>
       <div class="mny-g">
@@ -83,12 +89,26 @@
       </div>
       <p class="mny-f">Computed live by the same engine as the app, from sample data. <a href="#worth">What it's worth at your scale ↓</a></p>
     </div>
-    <div class="proof3" aria-label="At a glance">
-      <div><b>7</b><span>controls on every discount, each with an owner and a due date</span></div>
-      <div><b id="cd-days">—</b><span id="cd-text">days left to issue GST credit notes on FY 2025-26 invoices</span></div>
-      <div><b>0</b><span>records anyone can edit quietly: every step is fingerprinted</span></div>
-    </div>
   </div>
+
+  <section id="worth" class="wk" aria-label="What it's worth at your scale">
+    <p class="eyebrow">What it's worth at your scale</p>
+    <h2>Change the inputs. Every assumption is on the screen.</h2>
+    <div class="wk-g">
+      <div class="wk-in">
+        <label>Annual revenue, ₹ crore<input type="number" id="w-rev" value="500" min="10" step="10"></label>
+        <label>Trade spend, % of revenue<input type="number" id="w-trade" value="8" min="1" max="30" step="0.5"><small>McKinsey puts trade promotion at 8–11% of revenue for consumer goods makers.</small></label>
+        <label>Doesn't pay back, % of spend<input type="number" id="w-bad" value="0" min="0" max="100" step="1"><small id="w-bad-s">Default is the sample's own figure. McKinsey found 72% of US trade promotions lose money.</small></label>
+        <label>Given via GST credit notes, %<input type="number" id="w-post" value="30" min="0" max="100" step="5"><small>Your assumption. Only these depend on the buyer accepting in IMS.</small></label>
+      </div>
+      <div class="wk-out">
+        <div><span>Discount spend a year</span><b id="w-o1">—</b></div>
+        <div class="hot"><span>Of it, spend that doesn't pay back: worth checking before approval</span><b id="w-o2">—</b></div>
+        <div><span>GST on post-sale discounts that waits on buyers' IMS action (18%)</span><b id="w-o3">—</b></div>
+        <p>An estimate to size the problem, not a promise of savings. Ten Today doesn't stop a discount; it shows the break-even before someone approves it, and tracks the GST cut until it's safe.</p>
+      </div>
+    </div>
+  </section>
 
   <section id="demo" class="dm" aria-label="One discount, end to end">
     <div class="dm-top"><div><p class="eyebrow">One discount, end to end</p><h2>What happens on the left, what Ten Today does on the right</h2></div>
@@ -122,25 +142,6 @@
       <a id="c6" href="app.html#controls/D-106/C6"><b>C6 Cash</b><span>Paying out on money that never arrived. Payment is matched to the approved net.</span><em>See D-106: ₹63,000 short →</em></a>
       <a id="c7" href="app.html#controls/D-101/C7"><b>C7 Evidence</b><span>Records edited after approval. Every discount's entries are hash-chained; one edit and C7 names the entry.</span><em>See D-101 and try editing it →</em></a>
       <a href="app.html#controls/sweep" class="c7-hot"><b>Last chance: FY 2025-26</b><span>Every discount on last year's invoices whose GST cut isn't safe yet, largest first, with the days left.</span><em>Open the list →</em></a>
-    </div>
-  </section>
-
-  <section id="worth" class="wk" aria-label="What it's worth at your scale">
-    <p class="eyebrow">What it's worth at your scale</p>
-    <h2>Change the inputs. Every assumption is on the screen.</h2>
-    <div class="wk-g">
-      <div class="wk-in">
-        <label>Annual revenue (₹ crore)<input type="number" id="w-rev" value="500" min="10" step="10"></label>
-        <label>Trade spend, % of revenue<input type="number" id="w-trade" value="8" min="1" max="30" step="0.5"><small>McKinsey puts trade promotion at 8–11% of revenue for consumer goods makers.</small></label>
-        <label>Share of discount spend that doesn't pay back, %<input type="number" id="w-bad" value="0" min="0" max="100" step="1"><small id="w-bad-s">Default is the sample's own figure. McKinsey found 72% of US trade promotions lose money.</small></label>
-        <label>Share given after the sale through GST credit notes, %<input type="number" id="w-post" value="30" min="0" max="100" step="5"><small>Your assumption. Only these depend on the buyer accepting in IMS.</small></label>
-      </div>
-      <div class="wk-out">
-        <div><span>Discount spend a year</span><b id="w-o1">—</b></div>
-        <div class="hot"><span>Of it, spend that doesn't pay back: worth checking before approval</span><b id="w-o2">—</b></div>
-        <div><span>GST on post-sale discounts that waits on buyers' IMS action (18%)</span><b id="w-o3">—</b></div>
-        <p>An estimate to size the problem, not a promise of savings. Ten Today doesn't stop a discount; it shows the break-even before someone approves it, and tracks the GST cut until it's safe.</p>
-      </div>
     </div>
   </section>
 
@@ -425,6 +426,6 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
 (function(){var b=document.getElementById('story');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;var k=[].slice.call(b.children);k.forEach(function(x){x.style.opacity=0});var i=0;(function n(){if(i>=k.length)return;var x=k[i++];x.style.opacity='';x.classList.add('in');b.scrollTop=b.scrollHeight;setTimeout(n,i<3?700:1100)})();})();
 </script>
 <script src="tabs.js?v=1794600010"></script>
-<script type="module" src="demo.js?v=1794600030"></script>
+<script type="module" src="demo.js?v=1794600040"></script>
 </body>
 </html>
