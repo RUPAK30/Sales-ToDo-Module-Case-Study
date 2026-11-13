@@ -643,3 +643,6 @@ body[data-tab="controls"] .rail-people,body[data-tab="controls"] .rail-tests,bod
 .tk-g{background:#fff;gap:0}.tk-f{box-shadow:0 0 0 .5px var(--line)}
 .cr-c li.focus{box-shadow:0 0 0 3px rgba(194,65,12,.25);border-color:var(--tt)}.cr-c li small a{color:var(--tt-d);font-weight:600}
 .badge.off{background:#E7E5E4;color:#57534E}
+.bn-sep{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#A8A29E;padding:14px 10px 4px;list-style:none}@media (max-width:1099px){.bn-sep{display:none}}
+.bn-m{display:none}
+@media (max-width:1099px){.bn-w{display:none}.bn-m{display:inline}.bn ul{grid-template-columns:repeat(5,minmax(0,1fr))!important}}

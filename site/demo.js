@@ -2,9 +2,26 @@ import * as C from './controls.js';
 const $ = s => document.querySelector(s), inr = C.inr;
 const today = C.todayIso();
 
-// countdown to the FY 2025-26 credit-note deadline
-{ const d = C.daysBetween(today, '2026-11-30'), b = $('#cd-days'), t = $('#cd-text');
-  if (b) { if (d >= 0) b.textContent = d; else { b.textContent = 'Closed'; t.textContent = 'FY 2025-26 credit-note window shut on 30 Nov 2026'; } } }
+// countdown: the open s.34(2) window for the latest closed financial year; rolls to the next one after 30 Nov
+{ const y = +today.slice(0, 4), cap = today <= `${y}-11-30` ? `${y}-11-30` : `${y + 1}-11-30`, fy = `${+cap.slice(0, 4) - 1}-${cap.slice(2, 4)}`;
+  const b = $('#cd-days'), t = $('#cd-text');
+  if (b) { b.textContent = C.daysBetween(today, cap); t.textContent = `days left to issue GST credit notes on FY ${fy} invoices (deadline 30 Nov ${cap.slice(0, 4)})`; } }
+
+// money found in the sample: same engine, same data as the app
+const list = C.sampleDesk(), K = C.desk(list, { today, settings: C.SETTINGS, history: C.HISTORY, opened: C.OPENED });
+const lost = K.rows.filter(x => x.d.approvedBy && x.r.economics.net < 0), lostAmt = lost.reduce((a, x) => a - x.r.economics.net, 0);
+const lostSpend = lost.reduce((a, x) => a + x.r.economics.discount, 0), badShare = Math.round(lostSpend / K.spent * 100);
+const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+const lakh = n => '₹' + (n / 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' lakh';
+set('#m-spent', lakh(K.spent)); set('#m-stake', lakh(lostAmt + K.gstAtRisk + K.short)); set('#m-lost', inr(lostAmt)); set('#m-gst', inr(K.gstAtRisk)); set('#m-short', inr(K.short));
+set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
+
+// what it's worth at your scale
+{ const bad = $('#w-bad'); if (bad) { bad.value = badShare; $('#w-bad-s').textContent = `Default ${badShare}% is the sample's own figure (share of discount ₹ that didn't pay back). McKinsey found 72% of US trade promotions lose money.`; }
+  const cr = n => '₹' + (n >= 1 ? n.toLocaleString('en-IN', { maximumFractionDigits: 1 }) + ' crore' : (n * 100).toLocaleString('en-IN', { maximumFractionDigits: 1 }) + ' lakh');
+  const calc = () => { const v = id => Math.max(0, +$(id).value || 0); const spend = v('#w-rev') * v('#w-trade') / 100;
+    set('#w-o1', cr(spend)); set('#w-o2', cr(spend * v('#w-bad') / 100)); set('#w-o3', cr(spend * v('#w-post') / 100 * 0.18)); };
+  document.querySelectorAll('.wk-in input').forEach(i => i.addEventListener('input', calc)); if ($('#w-rev')) calc(); }
 
 const root = $('#demo');
 if (root) {
@@ -14,7 +31,7 @@ if (root) {
     [['me', 'Neha · commercial', 'It\'s urgent, approving it myself.'], ['bad', 'Refused: the person who asked can\'t approve (C2).']],
     [['them', 'Vikram · finance controller', 'Approved 6%, within my 8% limit.'], ['ok', 'Sealed. The break-even was on record before the approval.']],
     [['them', 'Farah · tax desk', 'GST credit note CN-26-041 issued. Rule in force since 1 Nov 2026: no prior agreement needed.'], ['warn', '₹10,800 GST cut now waits on Navkar accepting in IMS. Deadline 30 Nov 2026.']],
-    [['buyer', 'IMS · Navkar Traders', 'Rejected: "Wrong invoice reference".'], ['bad', '₹10,800 of tax comes back (Rule 67B). Ticket opened for Asha in receivables, due in 2 working days.']],
+    [['buyer', 'IMS · Navkar Traders', 'Rejected: "Wrong invoice reference".'], ['bad', '₹10,800 of tax goes back on the supplier\'s liability. Ticket opened for Asha in receivables, due in 2 working days.']],
     [['them', 'Farah · tax desk', 'Reissued as CN-26-042 with the right invoice reference.'], ['buyer', 'IMS · Navkar Traders', 'Accepted.'], ['ok', 'The GST cut holds. Ticket closed.']],
     [['day', '3 weeks later'], ['ok', '₹9,40,000 received. Matches the approved net.']],
     [['ok', 'All 7 controls pass. Every entry is fingerprinted: change one and C7 names it.']],

@@ -542,7 +542,7 @@ function renderInner() {
 
 
 /* ---------- sections: one fixed set of tabs for every role; content adapts to who is signed in ---------- */
-const TABS = [['controls', 'Controls', 'M9 12l2 2 4-4M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'], ['today', 'Today', 'M4 6h16M4 12h16M4 18h10'], ['team', 'Team & Cover', 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8'], ['approvals', 'Approvals', 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5'], ['pulse', 'Pulse', 'M3 17l6-6 4 4 8-8M15 7h6v6']];
+const TABS = [['controls', '<span class="bn-w">Discount controls</span><span class="bn-m">Controls</span>', 'M9 12l2 2 4-4M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'], ['today', 'Today', 'M4 6h16M4 12h16M4 18h10'], ['team', 'Team & Cover', 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8'], ['approvals', 'Approvals', 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5'], ['pulse', 'Pulse', 'M3 17l6-6 4 4 8-8M15 7h6v6']];
 const ALIAS = { seal: 'approvals', asks: 'approvals', cover: 'team', proof: 'approvals', mis: 'pulse', record: 'approvals' };
 let tab = 'today';
 const scrollMem = {};
@@ -562,7 +562,7 @@ function badgeCount() {
 function renderTabs() {
   document.body.dataset.tab = tab;
   const n = badgeCount();
-  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
+  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `${id === 'today' ? '<li class="bn-sep" aria-hidden="true">Approval desk, underneath</li>' : ''}<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
 }
 const UH = {
   team: {

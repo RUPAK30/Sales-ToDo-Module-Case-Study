@@ -4,7 +4,7 @@
  * every discount keeps its own hash-chained evidence. No GST portal calls; IMS actions are recorded by finance.
  * Sources: CGST s.15(3)(b) and s.34 as amended (Finance Act 2026, Notification 03/2026-CT, from 1 Nov 2026);
  * s.34(2) deadline; CBIC Circular 251/08/2025-GST (financial credit notes, promotional services);
- * GSTN IMS advisory (credit note pending for one tax period); Rule 67B (rejected credit note restores supplier liability).
+ * GSTN IMS advisory (credit note pending for one tax period); a rejected credit note puts the tax back on the supplier's liability.
  */
 import { sha256 } from './engine.js';
 
@@ -25,7 +25,7 @@ export const RULES = [
   { id: 'PSD', v: 1, from: '2017-07-01', to: '2026-10-31', name: 'Post-sale discount, old s.15(3)(b)', text: 'A post-sale discount cuts GST only if it was agreed before or at supply and linked to specific invoices, with a credit note and the buyer reversing ITC.', src: 'CGST s.15(3)(b) as it stood until 31 Oct 2026' },
   { id: 'PSD', v: 2, from: '2026-11-01', to: null, name: 'Post-sale discount, amended', text: 'No prior agreement or invoice link needed. GST is cut only through a s.34 credit note, and only if the buyer reverses the matching ITC.', src: 'Finance Act 2026 · Notification 03/2026-CT (26 Oct 2026)' },
   { id: 'S34', v: 1, from: '2017-07-01', to: null, name: 'Credit note deadline', text: 'Declare the credit note by 30 Nov after the end of the financial year of the supply, or the annual return (GSTR-9) filing date if that is earlier.', src: 'CGST s.34(2)' },
-  { id: 'IMS', v: 1, from: '2025-10-01', to: null, name: 'Buyer action in IMS', text: 'The buyer accepts, rejects (with a remark) or keeps a credit note pending for one tax period. Left pending past that, it is treated as accepted. A rejection restores the supplier\'s tax.', src: 'GSTN IMS advisory · Rule 67B' },
+  { id: 'IMS', v: 1, from: '2025-10-01', to: null, name: 'Buyer action in IMS', text: 'The buyer accepts, rejects (with a remark) or keeps a credit note pending for one tax period. Left pending past that, it is treated as accepted. A rejection puts the tax back on the supplier.', src: 'GSTN IMS advisories' },
   { id: 'FCN', v: 1, from: '2025-09-12', to: null, name: 'Financial credit note', text: 'A financial credit note leaves GST as billed; the buyer reverses nothing. A payment for a distinct promotion service under an explicit agreement is a separate supply, not a discount.', src: 'CBIC Circular 251/08/2025-GST' },
 ];
 export const ruleAt = (id, date) => RULES.find(r => r.id === id && r.from <= date && (!r.to || date <= r.to)) ?? null;
@@ -151,7 +151,7 @@ export function evaluate(d, ctx) {
   // C5
   if (d.route !== 'gst' || out.C4.status === 'fail' || !d.cnNo) set('C5', d.route === 'gst' ? 'wait' : 'pass', d.route === 'gst' ? 'Waiting for a valid credit note' : 'Nothing for the buyer to reverse');
   else if (d.ims === 'accepted') set('C5', 'pass', `${d.buyer} accepted in IMS on ${d.imsOn}: the ${inr(gst)} GST cut holds`);
-  else if (d.ims === 'rejected') set('C5', 'fail', `Rejected in IMS: "${d.imsRemark}". ${inr(gst)} of tax comes back (Rule 67B). Fix and reissue, or settle as a financial note`, gst);
+  else if (d.ims === 'rejected') set('C5', 'fail', `Rejected in IMS: "${d.imsRemark}". ${inr(gst)} of tax goes back on your liability. Fix and reissue, or settle as a financial note`, gst);
   else { const by = imsDecideBy(d.cnOn); set('C5', today > by ? 'pass' : 'wait', today > by ? `Pending past ${by}: deemed accepted. Not confirmed by the buyer` : `Pending in IMS until ${by}`); }
   // C6
   if (d.received == null) set('C6', 'wait', `Awaiting ${inr(netDue(d))} before GST`);
@@ -271,7 +271,7 @@ export function walkthrough(today) {
   try { approve(d, today, 'Neha', 8); } catch (e) { S.push({ d, t: 'Self-approval refused', s: e.message }); }
   d = approve(d, today, 'Vikram', 8); S.push({ d, t: 'Approved', s: 'Vikram approves within his 8% limit. The economics entry sits before the approval in the chain, so C1 and C2 pass.' });
   d = chooseRoute(d, today, 'Farah', 'gst', 'Registered buyer, monthly filer'); d = issueNote(d, today, 'Farah', 'CN-26-041'); S.push({ d, t: 'GST credit note', s: `Farah issues CN-26-041 under PSD v2 (in force from 1 Nov 2026), so no prior agreement is needed. The March invoice means the deadline is 30 Nov 2026.` });
-  d = recordIms(d, today, 'Asha', 'rejected', 'Wrong invoice reference'); S.push({ d, t: 'Buyer rejects in IMS', s: `${inr(gstOf(d))} of tax comes back to the supplier (Rule 67B). C5 fails and opens an exception for Asha, due in 2 working days, with a ServiceNow or JIRA ticket preview.` });
+  d = recordIms(d, today, 'Asha', 'rejected', 'Wrong invoice reference'); S.push({ d, t: 'Buyer rejects in IMS', s: `${inr(gstOf(d))} of tax goes back on the supplier's liability. C5 fails and opens an exception for Asha, due in 2 working days, with a ServiceNow or JIRA ticket preview.` });
   d = issueNote(d, today, 'Farah', 'CN-26-042'); d = recordIms(d, today, 'Asha', 'accepted'); S.push({ d, t: 'Fixed and accepted', s: 'Farah reissues with the right invoice reference; the buyer accepts. The GST cut holds and the exception closes.' });
   d = recordPayment(d, today, 'Asha', 940000, 'UTR HDFCN26317001'); S.push({ d, t: 'Cash matched', s: `₹9,40,000 received against the approved net: C6 passes.` });
   S.push({ d, t: 'Audit pack', s: `All 7 controls pass. The pack holds ${d.events.length} sealed entries; change any one and C7 names it.`, pack: true });
