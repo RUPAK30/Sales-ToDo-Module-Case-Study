@@ -7,9 +7,9 @@ const KEY = 'tentoday-controls-v1';
 const ctx = () => ({ today: C.todayIso(), settings: S.settings, history: C.HISTORY, opened: S.opened });
 
 let S = fresh();
-function fresh() { return { list: C.sampleDesk(), settings: structuredClone(C.SETTINGS), opened: { ...C.OPENED }, sel: 'D-102', view: 'servicenow', sweep: false, walk: null, pack: null, err: '', note: '' }; }
-try { const s = JSON.parse(localStorage.getItem(KEY)); if (s?.list?.length) S = { ...fresh(), ...s, walk: null, pack: null, err: '', note: '' }; } catch { /* first visit */ }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ list: S.list, settings: S.settings, opened: S.opened, sel: S.sel, view: S.view })); } catch { /* fine */ } };
+function fresh() { return { list: C.sampleDesk(), settings: structuredClone(C.SETTINGS), opened: { ...C.OPENED }, sel: 'D-102', view: 'servicenow', sweep: false, walk: null, pack: null, sign: null, signoffs: [], err: '', note: '' }; }
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s?.list?.length) S = { ...fresh(), ...s, walk: null, pack: null, sign: null, err: '', note: '' }; } catch { /* first visit */ }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ list: S.list, settings: S.settings, opened: S.opened, sel: S.sel, view: S.view, signoffs: S.signoffs })); } catch { /* fine */ } };
 const cur = () => S.list.find(d => d.id === S.sel) ?? S.list[0];
 const put = d => { S.list = S.list.map(x => (x.id === d.id ? d : x)); };
 const fmt = d => new Date(d + 'T00:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -85,6 +85,24 @@ function ticketCard(tk, prev) {
     <p class="cr-fn">Preview of the ticket as it would appear in ${jira ? 'JIRA' : 'ServiceNow'}. Not sent. <button type="button" class="btn link" data-copy="1">Copy the API call (${jira ? 'POST /rest/api/3/issue' : 'POST /api/now/table/incident'})</button></p></div>`;
 }
 
+function signBlock() {
+  const wk = C.weekOf(C.todayIso()), done = S.signoffs.find(x => x.week === wk), fmtW = w => `week of ${fmt(w)}`;
+  const hist = S.signoffs.slice().reverse().map(r => { const v = C.verifySignoff(r, S.list);
+    return `<li class="${v.ok ? 'ok' : 'bad'}"><b>${fmtW(r.week)}</b><span>Signed by ${esc(r.who)} on ${fmt(r.on)}${r.countersign ? ` · countersigned by ${esc(r.countersign.who)}` : ''} · ${r.open.length} open item${r.open.length === 1 ? '' : 's'} explained</span>
+      <em>${v.ok ? '🔒 intact' : '⚠ ' + esc(v.why)}</em><code title="fingerprint">${r.hash.slice(0, 10)}</code>${r.countersign ? '' : `<button class="btn link" data-cs="${r.week}" type="button">Countersign as Arjun</button>`}</li>`; }).join('');
+  return `<div class="so"><div class="so-h"><div><b>Weekly audit sign-off</b><span>The finance controller signs off the week's checks. Open items need a one-line reason. The record is sealed and a second person countersigns.</span></div>
+    ${done ? `<span class="so-done">✓ ${fmtW(wk)} signed</span>` : `<button class="btn pri" data-a="sign" type="button">Sign off this week</button>`}</div>
+    ${hist ? `<ul class="so-l">${hist}</ul>` : '<p class="cr-s">No sign-offs yet.</p>'}</div>`;
+}
+function signHtml() {
+  const k = C.desk(S.list, ctx()), m = C.mis(S.list, ctx());
+  return `<div class="cr-w" role="dialog" aria-label="Sign off this week"><div class="cr-wt"><b>Sign off the week of ${fmt(C.weekOf(C.todayIso()))}</b><button class="x" data-a="sign-x" type="button" aria-label="Close">×</button></div>
+    <div class="so-k">${m.kpis.slice(4).map(([a, b]) => `<div><span>${esc(a)}</span><b>${esc(b)}</b></div>`).join('')}</div>
+    ${k.tickets.length ? `<p class="cr-s" style="margin:10px 0 6px"><b>${k.tickets.length} items are still open.</b> Write one line on each, so an auditor can see why you signed anyway.</p>
+    <ol class="so-n">${k.tickets.map(t => `<li><label><b>${t.key}</b> · ${esc(t.name)} · ${esc(t.buyer)}${t.rupees ? ` · ${inr(t.rupees)}` : ''}<input class="cr-in" data-note="${t.key}" placeholder="e.g. Asha chasing the buyer, reissue by Monday" value="${esc(S.signNotes?.[t.key] ?? '')}"></label></li>`).join('')}</ol>` : '<p class="cr-s">Every check passes. Nothing to explain.</p>'}
+    ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}
+    <div class="cr-act"><button class="btn pri" data-a="sign-go" type="button">Sign as Vikram, finance controller</button></div></div>`;
+}
 function walkHtml() {
   const s = S.walk.steps[S.walk.i], r = C.evaluate(s.d, ctx()), n = S.walk.steps.length;
   return `<div class="cr-w" role="dialog" aria-label="Walkthrough"><div class="cr-wt"><b>Step ${S.walk.i + 1} of ${n} · ${esc(s.t)}</b><button class="x" data-a="walk-x" type="button" aria-label="Close">×</button></div><p>${esc(s.s)}</p>
@@ -104,11 +122,11 @@ function render() {
   const k = C.desk(S.list, ctx()), sw = C.sweep(S.list, ctx(), '2025-26'), d = cur();
   root.innerHTML = `<div class="cr-top"><div><p class="eyebrow">Discounts given after a sale · GST rules from 1 Nov 2026</p><h1>Is the discount worth it, will the tax saving hold, and can you prove it?</h1>
       <p class="lede">Every discount given after a sale runs through seven checks. A failed check becomes a task (an exception) for a named person with a due date, and every step is sealed so an auditor can trust it.</p></div>
-      <div class="cr-tb"><button class="btn pri" data-a="walk" type="button">▶ 90-second walkthrough</button></div></div>
+      <div class="cr-tb"><button class="btn pri" data-a="walk" type="button">▶ 90-second walkthrough</button><a class="btn" href="#cover" data-tab="team">Leave &amp; cover →</a></div></div>
     ${head(k, sw)}
     <div class="cr-g"><section class="card"><h2>Exceptions · ${k.tickets.length}</h2><p class="sub">Each failed check is a ticket, like ServiceNow or JIRA: who owns it, by when (working days), and how much money is at stake.</p>${queue(k)}</section>
       <section class="card"><h2>Discounts · ${k.count}</h2><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${x.d.id}</b> ${esc(x.d.buyer)}<span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section></div>
-    <section class="card cr-more"><h2>For finance, tax and audit</h2><div class="cr-act">
+    <section class="card cr-more"><h2>For finance, tax and audit</h2>${signBlock()}<div class="cr-act">
       <button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
       <label class="cr-s">GSTR-9 for FY 2025-26 filed on <input type="date" class="cr-in" id="cr-g9" value="${S.settings.gstr9Filed['2025-26'] ?? ''}"></label><button class="btn ghost" data-a="reset" type="button">Reset sample</button></div>
       <details class="cr-ru"${innerWidth > 640 ? " open" : ""}><summary>Terms in plain words</summary><dl class="cr-gl">
@@ -125,7 +143,7 @@ function render() {
       <details class="cr-ru"><summary>Rules in force, with effective dates · ${C.RULES.length}</summary><div class="tbl"><table><thead><tr><th>Rule</th><th>From</th><th>To</th><th>What it says</th><th>Source</th></tr></thead><tbody>${C.RULES.map(r => `<tr><td><b>${r.id} v${r.v}</b><br><small>${esc(r.name)}</small></td><td>${fmt(r.from)}</td><td>${r.to ? fmt(r.to) : 'in force'}</td><td>${esc(r.text)}</td><td><small>${esc(r.src)}</small></td></tr>`).join('')}</tbody></table></div><p class="cr-s">Rules change, so each decision is judged by the version in force on its date: a note issued on 28 Oct follows the old rule (v1), one issued on 2 Nov the new one (v2).</p></details>
       <details class="cr-ru"><summary>Risk and control matrix · C1–C7</summary><div class="tbl"><table><thead><tr><th>Control</th><th>Risk</th><th>Control activity</th><th>Type · frequency</th><th>Owner</th><th>Evidence</th><th>Test</th></tr></thead><tbody>${C.RACM.map(r => `<tr><td><b>${r[0]}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}<br><small>${esc(r[4])}</small></td><td>${esc(r[5])}</td><td>${esc(r[6])}</td><td>${esc(r[7])}</td></tr>`).join('')}</tbody></table></div></details>
       <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal, ServiceNow or JIRA: finance records what the buyer did on the portal, and tickets are previews. Sample buyers and figures.</p></section>
-    ${S.walk ? walkHtml() : ''}${S.pack ? packHtml() : ''}`;
+    ${S.walk ? walkHtml() : ''}${S.pack ? packHtml() : ''}${S.sign ? signHtml() : ''}`;
 }
 
 function act(a, el) {
@@ -152,6 +170,9 @@ function act(a, el) {
     else if (a === 'pack-dl') return download(`audit-pack-${today}.json`, JSON.stringify(S.pack.packs, null, 2), 'application/json');
     else if (a === 'mis') return download(`ten-today-control-mis-${today}.csv`, C.misCsv(S.list, ctx()));
     else if (a === 'racm') return download('ten-today-risk-control-matrix.csv', C.racmCsv());
+    else if (a === 'sign') { S.sign = true; S.signNotes = {}; }
+    else if (a === 'sign-x') S.sign = null;
+    else if (a === 'sign-go') { document.querySelectorAll('[data-note]').forEach(i => { S.signNotes[i.dataset.note] = i.value; }); const r = C.signOff(S.list, ctx(), 'Vikram', S.signNotes, S.signoffs.at(-1)); S.signoffs = [...S.signoffs, r]; S.sign = null; S.note = `Signed. Fingerprint ${r.hash.slice(0, 10)}. Arjun can countersign below.`; }
     else if (a === 'reset') { S = fresh(); try { localStorage.removeItem(KEY); } catch { /* fine */ } }
   } catch (e) { S.err = e.message; }
   // a ticket opens the day its control first fails
@@ -165,7 +186,8 @@ document.addEventListener('click', e => {
   const sel = e.target.closest('[data-sel]'); if (sel) { S.focus = null; S.sel = sel.dataset.sel; S.err = ''; S.note = ''; save(); render(); root.querySelector('.cr-d')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
   const v = e.target.closest('[data-view]'); if (v) { S.view = v.dataset.view; save(); render(); root.querySelector('.tk')?.scrollIntoView({ block: 'nearest' }); return; }
   const cpy = e.target.closest('[data-copy]'); if (cpy) { const r = C.evaluate(cur(), ctx()), tk = r.tickets[0]; if (tk) navigator.clipboard?.writeText(JSON.stringify(S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk), null, 2)).then(() => { cpy.textContent = 'Copied ✓'; }); return; }
-  const b = e.target.closest('[data-a]'); if (b) act(b.dataset.a, b);
+  const cs = e.target.closest('[data-cs]'); if (cs) { S.signoffs = S.signoffs.map(r => (r.week === cs.dataset.cs ? C.countersign(r, 'Arjun', C.todayIso()) : r)); save(); render(); return; }
+  const b = e.target.closest('[data-a]'); if (b) { if (b.dataset.a === 'sign-go') document.querySelectorAll('[data-note]').forEach(i => { (S.signNotes ??= {})[i.dataset.note] = i.value; }); act(b.dataset.a, b); }
 });
 document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); } });
 

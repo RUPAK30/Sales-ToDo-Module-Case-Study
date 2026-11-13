@@ -126,3 +126,18 @@ test('walkthrough ends with all seven controls passing', () => {
   assert.equal(C.evaluate(s.at(-1).d, ctx()).allPass, true);
   assert.ok(s.some(x => /refused|requester/i.test(x.t + x.s)));
 });
+
+test('weekly sign-off: every open item needs a note, the signer cannot countersign, later edits show', () => {
+  const list = C.sampleDesk(), c = ctx();
+  assert.throws(() => C.signOff(list, c, 'Vikram', {}), /Explain each open item/);
+  const notes = Object.fromEntries(C.desk(list, c).tickets.map(t => [t.key, 'Owner chasing, due this week']));
+  const rec = C.signOff(list, c, 'Vikram', notes);
+  assert.equal(rec.week, '2026-11-09');
+  assert.ok(C.verifySignoff(rec, list).ok);
+  assert.throws(() => C.countersign(rec, 'Vikram', '2026-11-13'), /second person/);
+  assert.equal(C.countersign(rec, 'Arjun', '2026-11-13').countersign.who, 'Arjun');
+  const moved = structuredClone(list); moved[0].events[1].data.net = 1;
+  assert.match(C.verifySignoff(rec, moved).why, /D-101 was changed/);
+  const later = structuredClone(list); later[1] = C.recordPayment(later[1], '2026-11-14', 'Asha', 1, 'x');
+  assert.ok(C.verifySignoff(rec, later).ok, 'new entries after sign-off are fine');
+});

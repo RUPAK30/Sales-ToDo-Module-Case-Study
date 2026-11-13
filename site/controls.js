@@ -277,3 +277,29 @@ export function walkthrough(today) {
   S.push({ d, t: 'Audit pack', s: `All 7 checks pass. The audit pack holds ${d.events.length} recorded steps; if anyone changed one later, check 7 would show which.`, pack: true });
   return S;
 }
+
+/* ---------- weekly audit sign-off (the HDFC audit-app pattern): sealed, explained, countersigned ---------- */
+export const weekOf = d => { const t0 = t(d), wd = (new Date(t0).getUTCDay() + 6) % 7; return iso(t0 - wd * D); };
+export function signOff(list, ctx, who, notes = {}, prev = null) {
+  const k = desk(list, ctx), open = k.tickets.map(x => x.key);
+  const missing = open.filter(key => !notes[key]?.trim());
+  if (missing.length) throw new Error(`Explain each open item before signing: ${missing.join(', ')}.`);
+  const m = mis(list, ctx);
+  const rec = { week: weekOf(ctx.today), on: ctx.today, who, kpis: m.kpis, open, notes: Object.fromEntries(open.map(key => [key, notes[key].trim()])),
+    heads: Object.fromEntries(list.map(d => [d.id, [d.events.length, d.events.at(-1)?.hash ?? '']])), prev: prev?.hash ?? 'GENESIS', countersign: null };
+  rec.hash = sha256(JSON.stringify({ ...rec, countersign: undefined, hash: undefined }));
+  return rec;
+}
+export function countersign(rec, who, on) {
+  if (who === rec.who) throw new Error('The person who signed can\'t countersign. A second person must.');
+  return { ...rec, countersign: { who, on, hash: sha256(rec.hash + who + on) } };
+}
+/* Intact if the sealed record is unchanged and every discount still holds the exact entries it had at sign-off. */
+export function verifySignoff(rec, list) {
+  if (sha256(JSON.stringify({ ...rec, countersign: undefined, hash: undefined })) !== rec.hash) return { ok: false, why: 'The sign-off record itself was edited' };
+  for (const [id, [n, h]] of Object.entries(rec.heads)) {
+    const d = list.find(x => x.id === id); if (!d) return { ok: false, why: `${id} was removed after sign-off` };
+    if (n && (d.events[n - 1]?.hash !== h || !verify(d).ok)) return { ok: false, why: `${id} was changed after sign-off` };
+  }
+  return { ok: true };
+}
