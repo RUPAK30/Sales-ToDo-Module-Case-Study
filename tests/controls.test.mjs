@@ -141,3 +141,15 @@ test('weekly sign-off: every open item needs a note, the signer cannot countersi
   const later = structuredClone(list); later[1] = C.recordPayment(later[1], '2026-11-14', 'Asha', 1, 'x');
   assert.ok(C.verifySignoff(rec, later).ok, 'new entries after sign-off are fine');
 });
+
+test('two-input request fills buyer, usual order, break-even, buyer record and deadline from the invoice', () => {
+  const r = C.draftRequest('inv-2603-301', 6, ctx());
+  assert.equal(r.fields.buyer, 'Navkar Traders');
+  assert.equal(r.fields.baseline, Math.round((840000 + 870000 + 870000) / 3));
+  assert.equal(r.economics.breakEvenPct, 13.3);
+  assert.equal(r.deadline.date, '2026-11-30');
+  assert.throws(() => C.draftRequest('INV-9999', 6, ctx()), /No invoice/);
+  assert.throws(() => C.draftRequest('INV-2603-301', 0, ctx()), /between/);
+  const first = C.draftRequest('INV-2603-340', 5, ctx());
+  assert.equal(first.hasBaseline, false, 'no history: says so instead of guessing');
+});

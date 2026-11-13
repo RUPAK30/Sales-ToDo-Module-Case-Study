@@ -303,3 +303,24 @@ export function verifySignoff(rec, list) {
   }
   return { ok: true };
 }
+
+/* ---------- two-input request: the rep types an invoice number and a %, the desk fills in the rest ---------- */
+// Invoice register (sample): what the ERP already knows. Past invoices give each buyer's usual order.
+export const INVOICES = [
+  ['INV-2510-118', 'Navkar Traders', '2025-10-14', 840000], ['INV-2512-044', 'Navkar Traders', '2025-12-09', 870000], ['INV-2601-210', 'Navkar Traders', '2026-01-22', 870000],
+  ['INV-2603-301', 'Navkar Traders', '2026-03-12', 1000000],
+  ['INV-2511-090', 'Shree Ganesh Agencies', '2025-11-03', 420000], ['INV-2601-131', 'Shree Ganesh Agencies', '2026-01-17', 400000], ['INV-2602-188', 'Shree Ganesh Agencies', '2026-02-20', 410000],
+  ['INV-2603-322', 'Shree Ganesh Agencies', '2026-03-24', 430000],
+  ['INV-2603-340', 'Laxmi Wholesale', '2026-03-29', 650000],
+].map(([no, buyer, date, value]) => ({ no, buyer, date, value }));
+export function draftRequest(invoiceNo, pct, ctx, register = INVOICES) {
+  const inv = register.find(x => x.no.toLowerCase() === String(invoiceNo).trim().toLowerCase());
+  if (!inv) throw new Error(`No invoice ${invoiceNo} in the register. Check the number on the bill.`);
+  if (!(pct > 0 && pct <= 25)) throw new Error('Enter a discount between 0.5% and 25%.');
+  const past = register.filter(x => x.buyer === inv.buyer && x.date < inv.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 3);
+  const baseline = past.length ? Math.round(past.reduce((s, x) => s + x.value, 0) / past.length) : null;
+  const d = { id: null, buyer: inv.buyer, invoiceNo: inv.no, invoiceDate: inv.date, value: inv.value, baseline: baseline ?? inv.value, pct, margin: 51.15, rate: 18, purpose: 'price' };
+  const e = economics(d), dl = deadline(d, ctx.settings), br = buyerRecord(ctx, inv.buyer);
+  return { fields: d, invoice: inv, pastCount: past.length, hasBaseline: baseline !== null, economics: e, deadline: dl, daysLeft: daysBetween(ctx.today, dl.date), buyer: br,
+    gst: gstOf(d), late: ctx.today > dl.date };
+}

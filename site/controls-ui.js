@@ -42,6 +42,7 @@ function queue(k) {
 
 function actions(d, r) {
   const c = id => r.controls.find(x => x.id === id), b = [];
+  if (!d.approvedBy) b.push('<button class="btn pri" data-a="approve" type="button">Approve as Vikram (limit 8%)</button><button class="btn" data-a="approve-self" type="button">Try approving as Neha (the requester)</button>');
   if (c('C3').status === 'fail') b.push(`<input class="cr-in" id="cr-note" placeholder="Tax desk note: what was paid for, and is there a written agreement?"><button class="btn" data-a="rv-price" type="button">Tax team: it is a price cut</button><button class="btn" data-a="rv-service" type="button">Tax team: it is a paid service</button>`);
   else if (d.review === 'service' && d.route !== 'service') b.push('<button class="btn" data-a="route-service" type="button">Settle against the buyer\'s service invoice</button>');
   else if (!d.route && d.approvedBy && c('C2').status === 'pass') b.push('<button class="btn" data-a="route-gst" type="button">Use a GST credit note (tax goes down too)</button><button class="btn" data-a="route-fin" type="button">Use a financial credit note (money back, tax unchanged)</button>');
@@ -103,6 +104,25 @@ function signHtml() {
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}
     <div class="cr-act"><button class="btn pri" data-a="sign-go" type="button">Sign as Vikram, finance controller</button></div></div>`;
 }
+function askPreview(inv, pct) {
+  if (!inv || !pct) return '<p class="cr-s">Type an invoice number and a %. Ten Today fills in the rest from the invoice register and past orders.</p>';
+  let r; try { r = C.draftRequest(inv, +pct, ctx()); } catch (e) { return `<p class="cr-err">${esc(e.message)}</p>`; }
+  const e = r.economics, f = r.fields;
+  return `<dl class="ask-pv">
+    <dt>Buyer · invoice</dt><dd><b>${esc(f.buyer)}</b> · ${fmt(f.invoiceDate)} · ${inr(f.value)}</dd>
+    <dt>Discount</dt><dd><b>${inr(e.discount)}</b> before GST (${inr(r.gst)} GST)</dd>
+    <dt>Usual order</dt><dd>${r.hasBaseline ? `${inr(f.baseline)} (average of last ${r.pastCount})` : 'No past orders: break-even shown, extra sales unknown'}</dd>
+    <dt>Worth it?</dt><dd>Needs <b>${e.breakEvenPct}%</b> more than usual${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">pays for itself</span>' : `<span class="bad">loses ${inr(-e.net)}</span>`}` : ''}</dd>
+    <dt>Buyer record</dt><dd>${r.buyer.recoveryPct === null ? 'No credit notes with this buyer yet' : `Accepted ${r.buyer.accepted} of ${r.buyer.notes} credit notes`}</dd>
+    <dt>Tax deadline</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
+  </dl><button class="btn pri" data-a="ask-go" type="button">Send for approval</button>`;
+}
+function askCard() {
+  return `<section class="card ask"><h2>Ask for a discount</h2><p class="sub">Two inputs. Everything else is filled in from data Ten Today already has.</p>
+    <div class="ask-in"><label>Invoice number<input class="cr-in" id="ask-inv" list="ask-list" placeholder="INV-2603-301" value="${esc(S.ask?.inv ?? '')}" autocomplete="off"></label><label>Discount %<input class="cr-in" id="ask-pct" type="number" min="0.5" max="25" step="0.5" placeholder="6" value="${esc(S.ask?.pct ?? '')}"></label></div>
+    <datalist id="ask-list">${C.INVOICES.filter(x => x.date >= '2026-03-01').map(x => `<option value="${x.no}">${esc(x.buyer)}</option>`).join('')}</datalist>
+    <div id="ask-pv">${askPreview(S.ask?.inv, S.ask?.pct)}</div></section>`;
+}
 function walkHtml() {
   const s = S.walk.steps[S.walk.i], r = C.evaluate(s.d, ctx()), n = S.walk.steps.length;
   return `<div class="cr-w" role="dialog" aria-label="Walkthrough"><div class="cr-wt"><b>Step ${S.walk.i + 1} of ${n} · ${esc(s.t)}</b><button class="x" data-a="walk-x" type="button" aria-label="Close">×</button></div><p>${esc(s.s)}</p>
@@ -124,7 +144,7 @@ function render() {
       <p class="lede">Every discount given after a sale runs through seven checks. A failed check becomes a task (an exception) for a named person with a due date, and every step is sealed so an auditor can trust it.</p></div>
       <div class="cr-tb"><button class="btn pri" data-a="walk" type="button">▶ 90-second walkthrough</button><a class="btn" href="#cover" data-tab="team">Leave &amp; cover →</a></div></div>
     ${head(k, sw)}
-    <div class="cr-g"><section class="card"><h2>Exceptions · ${k.tickets.length}</h2><p class="sub">Each failed check is a ticket, like ServiceNow or JIRA: who owns it, by when (working days), and how much money is at stake.</p>${queue(k)}</section>
+    <div class="cr-g"><div class="cr-col">${askCard()}<section class="card"><h2>Exceptions · ${k.tickets.length}</h2><p class="sub">Each failed check is a ticket, like ServiceNow or JIRA: who owns it, by when (working days), and how much money is at stake.</p>${queue(k)}</section></div>
       <section class="card"><h2>Discounts · ${k.count}</h2><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${x.d.id}</b> ${esc(x.d.buyer)}<span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section></div>
     <section class="card cr-more"><h2>For finance, tax and audit</h2>${signBlock()}<div class="cr-act">
       <button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
@@ -170,6 +190,9 @@ function act(a, el) {
     else if (a === 'pack-dl') return download(`audit-pack-${today}.json`, JSON.stringify(S.pack.packs, null, 2), 'application/json');
     else if (a === 'mis') return download(`ten-today-control-mis-${today}.csv`, C.misCsv(S.list, ctx()));
     else if (a === 'racm') return download('ten-today-risk-control-matrix.csv', C.racmCsv());
+    else if (a === 'ask-go') { const r = C.draftRequest(S.ask.inv, +S.ask.pct, ctx()); const id = `D-${101 + S.list.length}`; S.list = [...S.list, C.request({ ...r.fields, id }, today, 'Neha')]; S.sel = id; S.ask = { inv: '', pct: '' }; S.note = `${id} sent to Vikram with the break-even, buyer record and deadline filled in.`; }
+    else if (a === 'approve') put(C.approve(d, today, 'Vikram', 8));
+    else if (a === 'approve-self') put(C.approve(d, today, 'Neha', 8));
     else if (a === 'sign') { S.sign = true; S.signNotes = {}; }
     else if (a === 'sign-x') S.sign = null;
     else if (a === 'sign-go') { document.querySelectorAll('[data-note]').forEach(i => { S.signNotes[i.dataset.note] = i.value; }); const r = C.signOff(S.list, ctx(), 'Vikram', S.signNotes, S.signoffs.at(-1)); S.signoffs = [...S.signoffs, r]; S.sign = null; S.note = `Signed. Fingerprint ${r.hash.slice(0, 10)}. Arjun can countersign below.`; }
@@ -189,6 +212,7 @@ document.addEventListener('click', e => {
   const cs = e.target.closest('[data-cs]'); if (cs) { S.signoffs = S.signoffs.map(r => (r.week === cs.dataset.cs ? C.countersign(r, 'Arjun', C.todayIso()) : r)); save(); render(); return; }
   const b = e.target.closest('[data-a]'); if (b) { if (b.dataset.a === 'sign-go') document.querySelectorAll('[data-note]').forEach(i => { (S.signNotes ??= {})[i.dataset.note] = i.value; }); act(b.dataset.a, b); }
 });
+document.addEventListener('input', e => { if (e.target.id === 'ask-inv' || e.target.id === 'ask-pct') { S.ask = { inv: $('#ask-inv').value, pct: $('#ask-pct').value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct); } });
 document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); } });
 
 /* Deep links: app.html#controls/D-102/C5 · #controls/sweep · #controls/walk */
