@@ -94,6 +94,30 @@
     </tbody></table>
     <p style="margin:10px 0 0"><b>Week one with your team:</b> map your approval flow, write the rules, and run UAT with three users. No ramp-up needed for the BRD, the UAT or the KPI. <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk →</a></p>
   </details>
+  <section class="card" id="ctrl-room" data-in="today" style="margin-top:16px">
+    <p class="eyebrow">Post-Sale Discount &amp; GST IMS Control Room · 7 Controls (C1–C7)</p>
+    <h2 style="margin-top:4px">Every rupee discounted is tracked from approval to GST recovery</h2>
+    <p class="sm">Plain-English view for leadership; full Rule 67B, Circular 251, and ServiceNow/JIRA audit rigor underneath.</p>
+    <div class="kp" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:14px 0">
+      <div><span>Spent on Discounts</span><b id="cr-spent">—</b></div>
+      <div><span>Extra Margin Earned</span><b id="cr-margin">—</b></div>
+      <div><span>GST at Risk (30 Nov)</span><b id="cr-gst">—</b></div>
+      <div><span>Passing All 7 Controls</span><b id="cr-pass">—</b></div>
+    </div>
+    <p class="sm" id="cr-waterfall" style="background:#F8FAFC;padding:10px 12px;border-radius:8px;border:1px solid #E2E8F0"></p>
+    <div class="row" style="margin:12px 0;flex-wrap:wrap;gap:8px">
+      <label class="sm">Inspect Discount: <select id="cr-record"></select></label>
+      <button class="btn small" id="sim-ims" type="button">Simulate IMS Reject (Rule 67B)</button>
+      <button class="btn small" id="sim-251" type="button">Simulate Past 30 Nov (Circ. 251)</button>
+      <button class="btn small" id="sim-c3" type="button">Simulate Promo Service (C3)</button>
+      <button class="btn small" id="sim-reset" type="button">Reset Clean</button>
+      <button class="btn small" id="cr-csv" type="button">Export Weekly MIS (CSV)</button>
+      <button class="btn small" id="cr-audit" type="button">Sample 5 discounts like an auditor</button>
+    </div>
+    <div id="cr-audit-out" hidden></div>
+    <div class="tbl"><table><thead><tr><th>Control</th><th>Status</th><th>Plain-English Check</th><th>Owner</th><th>SLA</th></tr></thead><tbody id="cr-matrix"></tbody></table></div>
+    <div id="cr-exceptions" style="margin-top:12px"></div>
+  </section>
 </main>
 </div>
 
@@ -103,5 +127,6 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 35 engine tests · <a href="cockpit.html?uat=1" style="color:inherit">18 UAT cases</a></span><span style="display:flex;gap:14px;flex-wrap:wrap"><a href="./">How it was designed →</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough">Hiring? Talk to me →</a></span></footer>
 <script type="module" src="app.js?v=1794491959"></script>
+<script type="module" src="controls-ui.js"></script>
 </body>
 </html>
