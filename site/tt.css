@@ -646,6 +646,24 @@ body[data-tab="controls"] .rail-people,body[data-tab="controls"] .rail-tests,bod
 .bn-sep{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#A8A29E;padding:14px 10px 4px;list-style:none}@media (max-width:1099px){.bn-sep{display:none}}
 .bn-m{display:none}
 @media (max-width:1099px){.bn-w{display:none}.bn-m{display:inline}.bn ul{grid-template-columns:repeat(5,minmax(0,1fr))!important}}
-body{background:radial-gradient(60% 50% at 0% 0%,var(--pa,#DCEBD3) 0%,transparent 65%),radial-gradient(55% 45% at 100% 8%,var(--pb,#FBE3CF) 0%,transparent 65%),radial-gradient(60% 55% at 85% 100%,var(--pc,#E9DFF1) 0%,transparent 65%),radial-gradient(50% 45% at 5% 95%,var(--pb,#FBE3CF) 0%,transparent 60%),var(--pd,#F6EFE4)!important;background-attachment:fixed!important}
 .hero::before,.appbar+.dk::before{background:none!important}
 .cr-gl{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:6px 14px;margin:10px 0 0;font-size:.85rem}.cr-gl dt{font-weight:650}.cr-gl dd{margin:0;color:#57534E}@media (max-width:560px){.cr-gl{grid-template-columns:1fr}.cr-gl dd{margin-bottom:6px}}
+/* Apple-style ambient light: big soft colour fields on one fixed GPU layer.
+   Only transform and opacity animate, so it composites at the display's own refresh rate (60/90/120 Hz) with no repaints. */
+html{background:var(--pd,#F6EFE4)}
+body{background:transparent!important;background-attachment:scroll!important}
+body::before,body::after{content:"";position:fixed;inset:-25vmax;z-index:-1;pointer-events:none;will-change:transform;backface-visibility:hidden;transform:translate3d(0,0,0)}
+body::before{background:
+  radial-gradient(closest-side at 22% 24% in oklab,var(--pa,#DCEBD3),transparent),
+  radial-gradient(closest-side at 78% 30% in oklab,var(--pb,#FBE3CF),transparent),
+  radial-gradient(closest-side at 50% 82% in oklab,var(--pc,#E9DFF1),transparent);
+  filter:blur(40px) saturate(115%);opacity:.95;animation:tt-drift-a 38s cubic-bezier(.45,0,.55,1) infinite alternate}
+body::after{background:
+  radial-gradient(closest-side at 70% 70% in oklab,var(--pa,#DCEBD3),transparent),
+  radial-gradient(closest-side at 18% 78% in oklab,var(--pb,#FBE3CF),transparent);
+  filter:blur(60px);opacity:.55;mix-blend-mode:multiply;animation:tt-drift-b 52s cubic-bezier(.45,0,.55,1) infinite alternate}
+@keyframes tt-drift-a{0%{transform:translate3d(-3%,-2%,0) scale(1)}50%{transform:translate3d(2%,1.5%,0) scale(1.06)}100%{transform:translate3d(4%,-1%,0) scale(1.02)}}
+@keyframes tt-drift-b{0%{transform:translate3d(3%,2%,0) rotate(0deg)}100%{transform:translate3d(-4%,-3%,0) rotate(8deg)}}
+@media (prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
+/* frosted glass bars, like iOS */
+.appbar,.tt-head,.bar,.sx-bar{background:rgba(255,255,255,.66)!important;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
