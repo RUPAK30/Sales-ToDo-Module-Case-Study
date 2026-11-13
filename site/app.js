@@ -542,7 +542,7 @@ function renderInner() {
 
 
 /* ---------- sections: one fixed set of tabs for every role; content adapts to who is signed in ---------- */
-const TABS = [['today', 'Today', 'M4 6h16M4 12h16M4 18h10'], ['team', 'Team & Cover', 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8'], ['approvals', 'Approvals', 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5'], ['pulse', 'Pulse', 'M3 17l6-6 4 4 8-8M15 7h6v6']];
+const TABS = [['controls', 'Controls', 'M9 12l2 2 4-4M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'], ['today', 'Today', 'M4 6h16M4 12h16M4 18h10'], ['team', 'Team & Cover', 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M22 19v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8'], ['approvals', 'Approvals', 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5'], ['pulse', 'Pulse', 'M3 17l6-6 4 4 8-8M15 7h6v6']];
 const ALIAS = { seal: 'approvals', asks: 'approvals', cover: 'team', proof: 'approvals', mis: 'pulse', record: 'approvals' };
 let tab = 'today';
 const scrollMem = {};
@@ -658,6 +658,7 @@ function impactCard() {
   <p class="imp-f">How it's worked out: ${cr(model.revenueCr * 1e7)} × ${model.tradePct}% trade incentives = ${cr(m.trade)}; × ${model.abovePct}% above approval = ${cr(m.blocked)}. ${m.withinBainCeiling ? '' : '⚠ This is above the 6% leakage Bain measured, so it is likely too high. '}Margin per order uses a typical FMCG gross margin of ${E.FMCG_GROSS_MARGIN}% (HUL FY25): 8% off leaves ${E.marginAfter(8)}%, 12% off leaves ${E.marginAfter(12)}%.<br>Sources: ${src('McKinsey, trade spend', 'https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/reimagining-trade-spend-from-cost-center-to-growth-catalyst')} · ${src('McKinsey, the power of pricing', 'https://www.mckinsey.com/featured-insights/business-functions/the-power-of-pricing')} · ${src('Everstage approval queue report', 'https://www.everstage.com/approval-queue-report')} · ${src('Bain, off-invoice discounts', 'https://www.bain.com/insights/off-invoice-discounts/')} · ${src('HUL FY25 income statement', 'https://stockanalysis.com/quote/nse/HINDUNILVR/financials/income-statement/')} · ${src('Conga', 'https://conga.com/resources/blog/how-shorten-your-sales-cycle-fix-handoffs-not-hustle')}</p></section>`;
 }
 function intro() {
+  if (tab === 'controls') { $('#tabintro').innerHTML = ''; $('#notes').innerHTML = ''; return; }
   const m = E.mis(w), judged = m.filter(x => x.ok !== null && x.target !== 'Tracked'), slipped = judged.filter(x => x.ok === false);
   const rep = isRep(actor), me = E.person(actor), q = rep ? E.today(w, actor) : null, top = rep && q.list[0];
   const pend = E.decisionsFor(w, actor), mine = w.approvals.filter(a => a.rep === actor && ['pending', 'countered'].includes(a.status));
@@ -863,8 +864,8 @@ document.addEventListener('change', async e => {
 });
 $('#panel').addEventListener('close', () => { panel = null; document.body.classList.remove('insp'); document.querySelectorAll('.task.sel').forEach(x => x.classList.remove('sel')); });
 
-load(); w = E.escalate(E.wakeHolds(w)); tab = tabFromHash() ?? (isRep(actor) ? 'today' : 'approvals');
-window.addEventListener('popstate', () => { const t = tabFromHash() ?? 'today'; if (t !== tab) { scrollMem[tab] = window.scrollY; tab = t; render(); window.scrollTo(0, scrollMem[t] ?? 0); } });
+load(); w = E.escalate(E.wakeHolds(w)); tab = tabFromHash() ?? 'controls';
+window.addEventListener('popstate', () => { const t = tabFromHash() ?? 'controls'; if (t !== tab) { scrollMem[tab] = window.scrollY; tab = t; render(); window.scrollTo(0, scrollMem[t] ?? 0); } });
 (() => {
   const tok = new URLSearchParams(location.search).get('task'); if (!tok) return;
   try { const r = E.importRecovery(w, tok); w = r.w; actor = r.task.rep; signedIn = true; save(); result = { text: r.fresh ? `New task from Every Rupee: ${r.task.title}.` : `Already in ${r.task.rep}'s list: ${r.task.title}.`, sub: `Finance handed this short payment to ${r.task.rep}. Recover it from ${r.task.customer}, or get it approved. Open it in Today.` }; setTimeout(() => openTask(r.task.id), 300); }

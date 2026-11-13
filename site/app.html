@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ten Today — Today desk: 10 ranked actions, one sealed approval record</title>
-<meta name="description" content="Ten Today, the product: a sales rep's Today queue capped at 10, discount asks that freeze the task and route to the right approver, and a manager desk with limits, counter-offers and workload. Every rule is enforced and tested.">
+<title>Ten Today — post-sale discount controls</title>
+<meta name="description" content="Every post-sale discount through seven controls under the GST rules in force from 1 Nov 2026: break-even before approval, credit note and IMS recovery, cash match, exceptions with owners, and a sealed audit pack.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Ten Today — Today desk: 10 ranked actions, one sealed approval record">
 <meta property="og:description" content="Try it as a rep, a sales manager or the sales head: a discount ask freezes the rep's task, escalates on a clock, and lands in a tamper-evident approval record.">
@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tt.css?v=1794491959">
+<link rel="stylesheet" href="tt.css?v=1794600001">
 </head>
 <body>
 <header class="bar"><div class="in"><button class="btn ghost menu" id="menu-go" type="button" aria-label="Menu" aria-controls="drawer">☰</button><a class="logo" href="./" aria-label="Ten Today home">ten today<svg viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><div class="hr"><a class="btn ghost hide-m" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><button class="btn pri" id="tour-go" type="button">▶ <span class="hide-m">60-second </span>tour</button></div></div></header>
@@ -31,6 +31,7 @@
   <p class="rail-by">Built by <b>Rupak Ghanpathi</b><br>ex-HDFC Bank BA · <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a><br><a href="#notes">How I built this</a></p>
 </aside>
 <main class="wrap">
+  <section id="ctrl-room" data-in="controls" aria-label="Post-sale discount controls"></section>
   <div class="head" data-in="today">
     <div>
       <p class="eyebrow">B2B Sales Execution &amp; Discount Governance</p>
@@ -94,30 +95,6 @@
     </tbody></table>
     <p style="margin:10px 0 0"><b>Week one with your team:</b> map your approval flow, write the rules, and run UAT with three users. No ramp-up needed for the BRD, the UAT or the KPI. <a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk →</a></p>
   </details>
-  <section class="card" id="ctrl-room" data-in="today" style="margin-top:16px">
-    <p class="eyebrow">Post-Sale Discount &amp; GST IMS Control Room · 7 Controls (C1–C7)</p>
-    <h2 style="margin-top:4px">Every rupee discounted is tracked from approval to GST recovery</h2>
-    <p class="sm">Plain-English view for leadership; full Rule 67B, Circular 251, and ServiceNow/JIRA audit rigor underneath.</p>
-    <div class="kp" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:14px 0">
-      <div><span>Spent on Discounts</span><b id="cr-spent">—</b></div>
-      <div><span>Extra Margin Earned</span><b id="cr-margin">—</b></div>
-      <div><span>GST at Risk (30 Nov)</span><b id="cr-gst">—</b></div>
-      <div><span>Passing All 7 Controls</span><b id="cr-pass">—</b></div>
-    </div>
-    <p class="sm" id="cr-waterfall" style="background:#F8FAFC;padding:10px 12px;border-radius:8px;border:1px solid #E2E8F0"></p>
-    <div class="row" style="margin:12px 0;flex-wrap:wrap;gap:8px">
-      <label class="sm">Inspect Discount: <select id="cr-record"></select></label>
-      <button class="btn small" id="sim-ims" type="button">Simulate IMS Reject (Rule 67B)</button>
-      <button class="btn small" id="sim-251" type="button">Simulate Past 30 Nov (Circ. 251)</button>
-      <button class="btn small" id="sim-c3" type="button">Simulate Promo Service (C3)</button>
-      <button class="btn small" id="sim-reset" type="button">Reset Clean</button>
-      <button class="btn small" id="cr-csv" type="button">Export Weekly MIS (CSV)</button>
-      <button class="btn small" id="cr-audit" type="button">Sample 5 discounts like an auditor</button>
-    </div>
-    <div id="cr-audit-out" hidden></div>
-    <div class="tbl"><table><thead><tr><th>Control</th><th>Status</th><th>Plain-English Check</th><th>Owner</th><th>SLA</th></tr></thead><tbody id="cr-matrix"></tbody></table></div>
-    <div id="cr-exceptions" style="margin-top:12px"></div>
-  </section>
 </main>
 </div>
 
@@ -125,8 +102,8 @@
 <aside id="bk-ban" class="bk-ban" hidden role="status" aria-live="polite"></aside>
 <dialog id="panel" aria-labelledby="p-title"><div id="panel-body"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
-<footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 35 engine tests · <a href="cockpit.html?uat=1" style="color:inherit">18 UAT cases</a></span><span style="display:flex;gap:14px;flex-wrap:wrap"><a href="./">How it was designed →</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough">Hiring? Talk to me →</a></span></footer>
-<script type="module" src="app.js?v=1794491959"></script>
-<script type="module" src="controls-ui.js"></script>
+<footer class="wrap foot"><span>Rules, not AI: every rank has a reason you can read · 53 engine tests · <a href="cockpit.html?uat=1" style="color:inherit">18 UAT cases</a></span><span style="display:flex;gap:14px;flex-wrap:wrap"><a href="./">How it was designed →</a><a href="mailto:rupakr2g@gmail.com?subject=Ten%20Today%20walkthrough">Hiring? Talk to me →</a></span></footer>
+<script type="module" src="app.js?v=1794600001"></script>
+<script type="module" src="controls-ui.js?v=1794600001"></script>
 </body>
 </html>
