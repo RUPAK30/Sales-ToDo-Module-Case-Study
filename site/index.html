@@ -73,12 +73,6 @@
     <h1>Companies give money back to buyers after a sale. Most of it is never checked.</h1>
     <p class="x-prom">Ten Today checks every one: is it worth it, did the tax saving go through, did the money arrive, and can you prove it?</p>
     <button type="button" class="hook" id="hook" aria-expanded="false"><span class="hook-q">You give a buyer <b>₹100</b> back after a sale. How much comes back to you?</span><span class="hook-a" aria-live="polite"><b id="hook-v">Tap to find out</b><small id="hook-s"></small></span></button>
-    <div class="strip3" role="list">
-      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>1 Nov 2026</b><span>GST rules changed: discounts got easier to give, harder to prove.</span></div>
-      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><b>7 checks</b><span>From "is it worth it?" to "can we prove it?" A failed one goes to a named person.</span></div>
-      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><b><span id="cd-days">—</span> days</b><span id="cd-text">left to fix last year's tax paperwork (30 Nov 2026).</span></div>
-    </div>
-    <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: requirements → rules → tests → a working product.</p>
     <p class="x-cta"><a class="x-pri" href="app.html#controls">Try the live product →</a><a class="x-sec" href="#demo">▶ Watch one discount</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
   </div>
     <div class="mny" id="money" aria-label="What it found in the sample">
@@ -92,6 +86,12 @@
       <p class="mny-f">Computed live by the same engine as the app, from sample data. <a href="#worth">What it's worth at your scale ↓</a></p>
     </div>
   </div>
+    <div class="strip3" role="list">
+      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>1 Nov 2026</b><span>The rules changed: giving money back got easier, proving you were allowed to got harder.</span></div>
+      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><b>7 checks</b><span>From "is it worth it?" to "can we prove it?" A failed one goes to a named person.</span></div>
+      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><b><span id="cd-days">—</span> days</b><span id="cd-text">left to fix last year's tax paperwork (30 Nov 2026).</span></div>
+    </div>
+    <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: what people asked for → the rules → the tests → a product that runs.</p>
 
   <section id="worth" class="wk" aria-label="What it could be worth">
     <p class="eyebrow">What it could be worth</p>
@@ -140,7 +140,7 @@
       <li><b>No AI deciding the discount.</b> The rules decide and the numbers are shown; an approver can follow every one. AI only explains.</li>
       <li><b>No clawback from anyone's pay.</b> Taking back pay already earned runs into wage-law trouble. Pay is earned on cash received, so there is nothing to claw back.</li>
       <li><b>No blocking the buyer's next order.</b> Whether the buyer accepts a credit note is between them and finance. Ten Today raises a ticket; it doesn't hold the business hostage.</li>
-      <li><b>No GST filing.</b> Nothing is sent to the portal. Finance records the buyer's IMS action, so the tool never claims a status it can't see.</li>
+      <li><b>No GST filing.</b> Nothing is sent to the portal. Finance records what the buyer did on the GST portal, so the tool never claims a status it can't see.</li>
     </ol>
   </section>
 </header>
@@ -179,42 +179,43 @@
 <section class="wrap" data-sec="spec" style="padding-top:12px">
   <h2>BA specification</h2>
   <div class="src1"><b>Discount controls</b><p>The seven controls, their risk and control matrix, and the rules with effective dates live in the app, each one testable: <a href="app.html#controls">open the controls</a> · download the matrix and the weekly control MIS from "For finance, tax and audit". 63 tests cover the rules (35 engine, 28 controls).</p></div>
-  <h3 style="margin:18px 0 8px;font-size:1rem">Approval desk: ranking, lifecycle, RACI and traceability</h3>
+  <h3 style="margin:18px 0 8px;font-size:1rem">Approval desk: what gets done first, who is allowed to say yes, and how you prove it</h3>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px">
     <div style="display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #ECE7E1;padding-bottom:10px;margin-bottom:14px" id="sp-tabs">
-      <button type="button" data-sp="rank" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #111827;background:#111827;color:#fff;cursor:pointer">1 · Ranking &amp; Task Lifecycle</button>
-      <button type="button" data-sp="raci" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">2 · RACI &amp; Authority Matrix</button>
-      <button type="button" data-sp="trc" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">3 · Pain → Rule → Engine Test</button>
+      <button type="button" data-sp="rank" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #111827;background:#111827;color:#fff;cursor:pointer">1 · What gets done first</button>
+      <button type="button" data-sp="raci" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">2 · Who is allowed to say yes</button>
+      <button type="button" data-sp="trc" style="font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:8px;border:1px solid #ECE7E1;background:#fff;color:#111827;cursor:pointer">3 · The problem, the rule, the test</button>
     </div>
 
     <div id="sp-rank">
       <div class="wwh-grid" style="margin-bottom:12px">
         <div class="wwh-c">
-          <b>4-Rule Explicit Sort Order</b>
+          <b>The order the list is picked in (4 rules)</b>
           <ol>
-            <li><b>Pinned callbacks</b> at customer's agreed time</li>
-            <li><b>Priority tier:</b> P1 (5+d late) → P2 (1–4d) → P3 (today)</li>
-            <li><b>Money-blocking stage:</b> Quote sent &amp; Negotiation first</li>
-            <li><b>Days overdue</b>, then <b>Deal value</b> (tie-break only)</li>
+            <li><b>A call booked for a fixed time</b> comes first, at the buyer's time</li>
+            <li><b>How late it is:</b> 5+ days late → 1–4 days late → due today</li>
+            <li><b>Is money waiting on it:</b> a quote sent or a price being negotiated</li>
+            <li><b>Days overdue</b>, then <b>deal size</b>, only to break a tie</li>
           </ol>
         </div>
         <div class="wwh-c">
-          <b>Stage-Driven Lifecycle</b>
-          <p><code>New lead (1d)</code> → <code>Qualified (quote)</code> → <code>Quote sent (3d)</code> → <code>Negotiation</code> → <code>Order placed</code>.<br>Moving a stage auto-closes the old task and spawns the next step exactly once.</p>
+          <b>The stages a lead moves through</b>
+          <p><code>New lead (1 day)</code> → <code>Qualified (quote)</code> → <code>Quote sent (3 days)</code> → <code>Negotiating</code> → <code>Order placed</code>.<br>When a stage moves, the old task closes itself and the next step appears once. Never twice.</p>
         </div>
         <div class="wwh-c">
-          <b>2-Way Every Rupee Bridge</b>
-          <p>Approved discounts carry a <code>contractSeal</code> (SHA-256) to <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>. Unapproved short-payments (&gt;15d) return as a rep recovery task that blocks new discount asks (Rule R7).</p>
+          <b>The link to Every Rupee, both ways</b>
+          <p>Every approved discount carries a fingerprint (<code>contractSeal</code>, SHA-256) across to <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>. If a buyer later pays short without that approval, the difference comes back as a task for the rep, and it blocks new discount asks until it is settled.</p>
         </div>
       </div>
       <p style="margin:0;font-size:.84rem;color:var(--muted)"><b>Downloads:</b> <a href="Sales_ToDo_Module_Case_Study.pdf" style="font-weight:600;color:var(--acc-d,#2F5240)">Full Case Study (PDF, 4 pages)</a> · <a href="Sales_ToDo_Module_One_Pager.pdf" style="font-weight:600;color:var(--acc-d,#2F5240)">One-Pager (PDF)</a> · <a href="app.html" style="font-weight:600;color:var(--acc-d,#2F5240)">Open Live Product →</a></p>
     </div>
 
     <div id="sp-raci" style="display:none;overflow-x:auto">
+      <p style="margin:0 0 8px;font-size:.8rem;color:#57534E">In each row: <b>R</b> = does the work · <b>A</b> = answers for the decision · <b>C</b> = asked before it · <b>I</b> = told after it. That is the usual RACI shorthand.</p>
       <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.82rem">
         <thead>
           <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
-            <th style="padding:6px">Workflow Decision</th>
+            <th style="padding:6px">The decision</th>
             <th>Rahul / Neha (Rep)</th>
             <th>Kavita (Sales Manager)</th>
             <th>Arjun (Sales Head)</th>
@@ -222,10 +223,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Apply live volume slab scheme (e.g. 3% ≥ ₹2L)</td><td><b>R (Auto-applied)</b></td><td>Maker</td><td>Checker</td><td>I</td></tr>
-          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask ≤10% within margin floor &amp; credit limit</td><td>Submits (Task freezes)</td><td><b>R / A (Approve/Counter)</b></td><td>Escalated after 1d</td><td>Verifies SHA-256 seal</td></tr>
-          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask &gt;10%, below floor, or dealer on credit hold</td><td>Submits (Task freezes)</td><td>C (Blocked from deciding)</td><td><b>R / A (Written override)</b></td><td>Verifies SHA-256 seal</td></tr>
-          <tr><td style="padding:6px">Cross-bucket task transfer (e.g. FMCG → Pharma)</td><td>I</td><td>Requests with reason</td><td><b>2nd Manager Approves</b></td><td>—</td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Apply the live volume slab (e.g. 3% off once an order crosses ₹2 lakh)</td><td><b>R (applied by the system)</b></td><td>Prepares it</td><td>Second pair of eyes</td><td>I</td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask of 10% or less, inside the margin floor and the credit limit</td><td>Submits it (the task freezes)</td><td><b>R / A (approves or counters)</b></td><td>Steps in after 1 day</td><td>Checks the fingerprint</td></tr>
+          <tr style="border-bottom:1px solid #F5F2EE"><td style="padding:6px">Discount ask above 10%, below the floor, or a dealer on credit hold</td><td>Submits it (the task freezes)</td><td>C (not allowed to decide)</td><td><b>R / A (written override)</b></td><td>Checks the fingerprint</td></tr>
+          <tr><td style="padding:6px">Moving a task to another team (e.g. FMCG → Pharma)</td><td>I</td><td>Asks, with a reason</td><td><b>A second manager approves</b></td><td>—</td></tr>
         </tbody>
       </table></div>
     </div>
@@ -234,9 +235,9 @@
       <div class="tbl"><table style="width:100%;border-collapse:collapse;font-size:.82rem">
         <thead>
           <tr style="border-bottom:1px solid #ECE7E1;text-align:left;color:#6B7280">
-            <th style="padding:6px">Field Sales / Ops Failure Mode</th>
-            <th>Enforced Engine Rule</th>
-            <th>Verification</th>
+            <th style="padding:6px">What goes wrong on the ground</th>
+            <th>The rule that stops it</th>
+            <th>How it is proven</th>
           </tr>
         </thead>
         <tbody>
