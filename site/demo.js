@@ -16,7 +16,7 @@ const lakh = n => '₹' + (n / 100000).toLocaleString('en-IN', { maximumFraction
 set('#m-spent', lakh(K.spent)); set('#m-stake', lakh(lostAmt + K.gstAtRisk + K.short)); set('#m-lost', inr(lostAmt)); set('#m-gst', inr(K.gstAtRisk)); set('#m-short', inr(K.short));
 set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
 { const h = $('#hook'); if (h) h.addEventListener('click', () => { const back = Math.round(K.earned / K.spent * 100); h.setAttribute('aria-expanded', 'true'); h.classList.add('open');
-  set('#hook-v', `₹${back}`); set('#hook-s', `On 8 sample discounts, every ₹100 given back brought only ₹${back} of extra profit. Ten Today shows this before anyone says yes.`); }); }
+  set('#hook-v', `₹${back}`); set('#hook-s', `On 10 sample discounts, every ₹100 given back brought only ₹${back} of extra profit. Ten Today shows this before anyone says yes.`); }); }
 
 // what it's worth at your scale
 { const bad = $('#w-bad'); if (bad) bad.value = badShare;

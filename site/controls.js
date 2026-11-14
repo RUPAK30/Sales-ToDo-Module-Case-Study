@@ -25,7 +25,8 @@ export const RULES = [
   { id: 'PSD', v: 1, from: '2017-07-01', to: '2026-10-31', name: 'Post-sale discount, old s.15(3)(b)', text: 'A post-sale discount cuts GST only if it was agreed before or at supply and linked to specific invoices, with a credit note and the buyer reversing ITC.', src: 'CGST s.15(3)(b) as it stood until 31 Oct 2026' },
   { id: 'PSD', v: 2, from: '2026-11-01', to: null, name: 'Post-sale discount, amended', text: 'No prior agreement or invoice link needed. GST is cut only through a s.34 credit note, and only if the buyer reverses the matching ITC.', src: 'Finance Act 2026 · Notification 03/2026-CT (26 Oct 2026)' },
   { id: 'S34', v: 1, from: '2017-07-01', to: null, name: 'Credit note deadline', text: 'Declare the credit note by 30 Nov after the end of the financial year of the supply, or the annual return (GSTR-9) filing date if that is earlier.', src: 'CGST s.34(2)' },
-  { id: 'IMS', v: 1, from: '2025-10-01', to: null, name: 'Buyer action in IMS', text: 'The buyer accepts, rejects (with a remark) or keeps a credit note pending for one tax period. Left pending past that, it is treated as accepted. A rejection puts the tax back on the supplier.', src: 'GSTN IMS advisories' },
+  { id: 'IMS', v: 2, from: '2025-10-01', to: null, name: 'Buyer action in IMS', text: 'The buyer can accept, reject (with a remark) or keep a credit note pending. They can act until they file their own GSTR-3B for that month, usually the 20th of the next month, and one more tax period if they mark it pending. Silence after that counts as accepted. A rejection puts the tax back on the supplier.', src: 'GSTN IMS advisories (Advisory 631, 17 Oct 2025)' },
+  { id: 'EI30', v: 1, from: '2025-04-01', to: null, name: '30-day e-invoice reporting', text: 'Where e-invoicing applies (turnover of ₹10 crore or more), a credit note must be reported to the e-invoice system within 30 days of its date. Report it later and the portal rejects it, so the tax cut never reaches the buyer.', src: 'E-invoice reporting rule, from 1 Apr 2025' },
   { id: 'FCN', v: 1, from: '2025-09-12', to: null, name: 'Financial credit note', text: 'A financial credit note leaves GST as billed; the buyer reverses nothing. A payment for a distinct promotion service under an explicit agreement is a separate supply, not a discount.', src: 'CBIC Circular 251/08/2025-GST' },
 ];
 export const ruleAt = (id, date) => RULES.find(r => r.id === id && r.from <= date && (!r.to || date <= r.to)) ?? null;
@@ -50,7 +51,24 @@ export function deadline(d, settings) {
   const cap = `${y}-11-30`, filed = settings.gstr9Filed?.[fy];
   return filed && filed < cap ? { date: filed, why: `GSTR-9 for FY ${fy} filed ${filed}` } : { date: cap, why: `30 Nov after FY ${fy}` };
 }
-export const imsDecideBy = issued => { const y = +issued.slice(0, 4), m = +issued.slice(5, 7); return iso(Date.UTC(y, m, 0)); };
+/* The buyer's clock, in plain words: they can act in IMS until they file their own GSTR-3B for the month
+   the credit note appears in — usually the 20th of the next month. If they park it as Pending, it stays open
+   one more tax period (the 20th of the month after that). Only after both windows close does silence count
+   as acceptance, and even then nobody has confirmed anything. */
+export const imsActionBy = issued => { const y = +issued.slice(0, 4), m = +issued.slice(5, 7); return iso(Date.UTC(y, m, 20)); };
+export const imsPendingExpires = issued => { const y = +issued.slice(0, 4), m = +issued.slice(5, 7) + 1; return iso(Date.UTC(y, m, 20)); };
+export const imsDecideBy = imsActionBy; // kept for older callers
+
+/* 30-day e-invoice reporting window for one document. */
+export const reportBy = on => addDays(on, 30);
+
+/* ---------- one buyer, two bills: the discount and the ad invoice arrive in the same payout ---------- */
+export const OPEN_AD = {
+  'Navkar Traders': [{ no: 'AD-2610-07', amount: 40000, gst: 7200 }],
+  'Shree Ganesh Agencies': [{ no: 'AD-2610-11', amount: 25000, gst: 4500 }],
+};
+export const adOpen = buyer => OPEN_AD[buyer] ?? [];
+export const adTotal = buyer => adOpen(buyer).reduce((s, x) => s + x.amount + x.gst, 0);
 
 /* ---------- buyer track record (feeds the approval) ---------- */
 export function buyerRecord(ctx, buyer) {
@@ -109,8 +127,20 @@ export function chooseRoute(d0, on, who, route, reason) {
   const d = cp(d0); d.route = route; return log(d, on, who, 'route', { route, reason });
 }
 export function issueNote(d0, on, who, no) {
-  const d = cp(d0); d.cnNo = no; d.cnOn = on; d.ims = 'pending'; delete d.imsRemark;
+  const d = cp(d0); d.cnNo = no; d.cnOn = on; d.ims = 'pending'; d.reportedOn = null; delete d.imsRemark;
   return log(d, on, who, 'credit note', { no, taxable: discountOf(d), gst: d.route === 'gst' ? gstOf(d) : 0, rule: `PSD v${ruleAt('PSD', on).v}` });
+}
+/* Reporting the note to the e-invoice system. Separate from issuing it: the portal clock runs on this date. */
+export function reportNote(d0, on, who, irpRef) {
+  if (!d0.cnNo) throw new Error('C4: there is no credit note to report yet.');
+  const d = cp(d0); d.reportedOn = on; if (irpRef) d.irpRef = irpRef;
+  return log(d, on, who, 'reported', { irpRef: irpRef ?? '' });
+}
+/* Splitting one payout into two records: the discount, and the ad invoice. Done before any note is issued. */
+export function splitRecord(d0, on, who, note) {
+  if (!note?.trim()) throw new Error('C3: write down how the payout was split, so the two amounts can be told apart later.');
+  const d = cp(d0); d.split = note.trim();
+  return log(d, on, who, 'split', { note: note.trim(), ad: adTotal(d.buyer) });
 }
 export function recordIms(d0, on, who, ims, remark = '') {
   if (ims === 'rejected' && !remark.trim()) throw new Error('C5: copy the buyer\'s rejection remark from IMS.');
@@ -135,10 +165,14 @@ export function evaluate(d, ctx) {
   if (!apv) set('C2', 'wait', 'Not approved yet');
   else if (apv.who === d.requestedBy || d.pct > d.limitPct) set('C2', 'fail', apv.who === d.requestedBy ? 'Approved by the requester' : `${d.pct}% approved above ${apv.who}'s ${d.limitPct}% limit`, e.discount);
   else set('C2', 'pass', `${apv.who} approved ${d.pct}% within a limit of ${d.limitPct}%`);
-  // C3
+  // C3 — three questions in one: is it a discount at all, is it for a service, and is it arriving in one payout with something else?
   const service = d.review === 'service';
-  if (d.purpose === 'promo' && !d.review) set('C3', 'fail', 'Linked to a shelf display or promotion: the tax team must decide if it is a discount or a paid service', gst);
-  else set('C3', 'pass', service ? 'Tax team: a paid service, so the buyer bills it separately with its own GST' : d.review === 'price' ? 'Tax team confirmed it is a price cut' : 'Price cut on the invoice value');
+  const ads = adOpen(d.buyer), adAmt = ads.reduce((s, x) => s + x.amount + x.gst, 0);
+  const adWhat = ads.map(x => `${x.no} (${inr(x.amount)} + ${inr(x.gst)} GST)`).join(', ');
+  if (d.purpose === 'damage') set('C3', 'fail', `Not a discount: the goods came back damaged. This is a return against ${d.invoiceNo}, so it needs a goods-return note and the buyer's return acknowledgement. A discount credit note here would hide a return inside a price cut`);
+  else if (ads.length && !d.split) set('C3', 'fail', `${d.buyer} also has an open ad invoice ${adWhat}. One payout will arrive with both the discount and that ad bill inside it, so a credit note issued now settles against a service purchase, not a discount. Split the payout into two records first`, adAmt);
+  else if (d.purpose === 'promo' && !d.review) set('C3', 'fail', 'Linked to a shelf display or promotion: the tax team must decide if it is a discount or a paid service', gst);
+  else set('C3', 'pass', service ? 'Tax team: a paid service, so the buyer bills it separately with its own GST' : d.review === 'price' ? `Tax team confirmed it is a price cut${d.split ? ' · payout split, ad invoice kept separate' : ''}` : `Price cut on the invoice value${d.split ? ' · payout split, ad invoice kept separate' : ''}`);
   // C4
   const psd = d.cnOn ? ruleAt('PSD', d.cnOn) : null;
   if (service) set('C4', d.route === 'service' ? 'pass' : 'fail', d.route === 'service' ? 'Settled against the buyer\'s service invoice, no credit note' : 'A service cannot go through a credit note', d.route === 'service' ? 0 : gst);
@@ -147,12 +181,18 @@ export function evaluate(d, ctx) {
   else if (!d.cnNo) set('C4', today > dl.date ? 'fail' : 'wait', today > dl.date ? `GST credit note not issued by ${dl.date}: the tax saving is gone. Finance can still use a financial credit note` : `GST credit note to issue · ${daysLeft} days to ${dl.date} (${dl.why})`, today > dl.date ? gst : 0);
   else if (d.cnOn > dl.date) set('C4', 'fail', `Credit note dated ${d.cnOn}, after the ${dl.date} deadline`, gst);
   else if (psd.v === 1 && !d.priorAgreement) set('C4', 'fail', `${d.cnNo} was issued on ${d.cnOn}, before the 1 Nov rule change, with no prior agreement, so it doesn't count. Reissue it now under the new rule`, gst);
-  else set('C4', 'pass', `GST credit note ${d.cnNo} on ${d.cnOn}, valid under the ${psd.v === 2 ? 'new (1 Nov 2026)' : 'old'} rule`);
-  // C5
+  else if (ctx.settings.eInvoice && !d.reportedOn) { const by = reportBy(d.cnOn); set('C4', today > by ? 'fail' : 'wait', today > by ? `${d.cnNo} was never reported to the e-invoice system and the 30-day window closed on ${by}. The portal will reject it, so the tax cut never reaches the buyer` : `${d.cnNo} must be reported to the e-invoice system by ${by}: 30 days from ${d.cnOn}, ${daysBetween(today, by)} left`, today > by ? gst : 0); }
+  else set('C4', 'pass', `GST credit note ${d.cnNo} on ${d.cnOn}, valid under the ${psd.v === 2 ? 'new (1 Nov 2026)' : 'old'} rule${d.reportedOn ? `, reported to the e-invoice system on ${d.reportedOn}` : ''}`);
+  // C5 — the buyer's clock, and what to do when they refuse
   if (d.route !== 'gst' || out.C4.status === 'fail' || !d.cnNo) set('C5', d.route === 'gst' ? 'wait' : 'pass', d.route === 'gst' ? 'Waiting for a valid credit note first' : 'Nothing for the buyer to approve');
   else if (d.ims === 'accepted') set('C5', 'pass', `${d.buyer} accepted it on the GST portal on ${d.imsOn}: the ${inr(gst)} tax saving is safe`);
-  else if (d.ims === 'rejected') set('C5', 'fail', `Buyer rejected it on the GST portal: "${d.imsRemark}". The ${inr(gst)} tax saving is lost unless you fix and reissue, or settle with a financial credit note`, gst);
-  else { const by = imsDecideBy(d.cnOn); set('C5', today > by ? 'pass' : 'wait', today > by ? `No reply by ${by}, so it counts as accepted (deemed). The buyer never confirmed` : `Waiting for the buyer on the GST portal, until ${by}`); }
+  else if (d.ims === 'rejected') set('C5', 'fail', `${d.buyer} rejected it on the GST portal: "${d.imsRemark}". The ${inr(gst)} tax saving is lost unless you fix and reissue, or settle with a financial credit note`, gst);
+  else {
+    const by = imsActionBy(d.cnOn), till = imsPendingExpires(d.cnOn);
+    if (today > till) set('C5', 'pass', `Nobody replied by ${till}, so it counts as accepted. But the buyer never confirmed it: legally fine, no acknowledgement in the pack`);
+    else if (today > by) set('C5', 'wait', `Kept pending past ${by}, so the buyer can still act until ${till}. Nothing is safe yet`);
+    else set('C5', 'wait', `Waiting for the buyer on the GST portal until ${by} (their GSTR-3B date), and until ${till} if they mark it pending`);
+  }
   // C6
   if (d.received == null) set('C6', 'wait', `Waiting for ${inr(netDue(d))} (before GST)`);
   else if (d.received >= netDue(d)) set('C6', 'pass', `${inr(d.received)} received, exactly what was agreed`);
@@ -162,6 +202,7 @@ export function evaluate(d, ctx) {
   const missing = needed.filter(x => !has(d, x));
   if (!chain.ok) set('C7', 'fail', `Step #${chain.at} (${chain.what}) was changed after it was recorded`, e.discount);
   else if (missing.length) set('C7', 'fail', `Missing: ${missing.join(', ')}`);
+  else if (d.route === 'gst' && d.cnNo && d.ims !== 'accepted' && today > imsPendingExpires(d.cnOn)) set('C7', 'wait', `${chain.count} steps recorded, none changed. But the buyer's acceptance is missing: this one was only accepted by silence, so the pack has no proof the buyer agreed`);
   else set('C7', 'pass', `${chain.count} recorded steps, none changed`);
 
   const controls = CONTROLS.map(([id, name, what]) => ({ ...out[id], name, what, owner: OWNERS[id] }));
@@ -171,6 +212,19 @@ export function evaluate(d, ctx) {
   });
   const gstAtRisk = d.route === 'gst' || (!d.route && !service) ? (['fail', 'wait'].includes(out.C4.status) || out.C5.status !== 'pass' ? gst : 0) : 0;
   return { controls, tickets, economics: e, gst, gstAtRisk, deadline: dl, daysLeft, chain, allPass: controls.every(c => c.status === 'pass') };
+}
+
+/* What to do when the buyer rejects: three routes, three different rupee outcomes. Plain words on purpose. */
+export const recoveryRoutes = d => [
+  ['Same month, before you file GSTR-3B', `Send the identical note again in GSTR-1A, the one-time correction form. Then the buyer has to accept it again on the portal. Tax saving: ${inr(gstOf(d))} back, if they agree.`],
+  ['After you have filed', `Send the identical note again in the amendment table of a later GSTR-1 (Table 9C). The buyer accepts again and recomputes their GSTR-2B. Slower, same ${inr(gstOf(d))}, and it still needs their yes.`],
+  ['Or close it', `Settle as a financial credit note: the money still goes back, the tax stays as billed, and nothing waits on the buyer. You give up the ${inr(gstOf(d))} tax cut and stop chasing.`],
+];
+
+/* One payout advice, split into what it actually contains. Every number is the record's own. */
+export function payoutSplit(d) {
+  const disc = discountOf(d), ads = adOpen(d.buyer), adAmt = ads.reduce((s, x) => s + x.amount, 0), adGst = ads.reduce((s, x) => s + x.gst, 0);
+  return { gross: d.value, discount: disc, adAmount: adAmt, adGst, net: d.value - disc - adAmt - adGst, deducted: disc + adAmt + adGst, ads };
 }
 
 /* ---------- desk-level views ---------- */
@@ -209,9 +263,9 @@ export function misCsv(list, ctx) {
 export const RACM = [
   ['C1', 'Discounts given that never pay back', 'Break-even uplift computed and sealed before the approver can decide', 'Preventive · automated', 'Every discount', 'Finance controller', 'Economics entry earlier in the chain than the approval', 'Re-perform: break-even = d ÷ (m − d); confirm the entry precedes the approval'],
   ['C2', 'Unauthorised or self-approved discounts', 'Approver limit and maker-checker enforced by the system', 'Preventive · automated', 'Every discount', 'Finance controller', 'Approval entry with approver, limit and percentage', 'Attempt self-approval and above-limit approval; both must be refused'],
-  ['C3', 'A service payment treated as a discount', 'Promotion-linked discounts held for tax review with a written reason', 'Preventive · manual', 'Each promotion-linked discount', 'Tax desk', 'Tax review entry with verdict and note', 'Sample promotion-linked discounts; each has a review before any credit note'],
-  ['C4', 'GST cut claimed on an invalid or late credit note', 'Route chosen with a reason; credit note checked against the rule version in force and the s.34(2) deadline', 'Preventive · automated', 'Every credit note', 'Tax desk', 'Route and credit note entries, with rule version', 'Re-perform the deadline and rule version from the invoice and note dates'],
-  ['C5', 'GST cut lost when the buyer rejects in IMS', 'Buyer IMS action recorded; rejection opens an exception with the tax restored', 'Detective · manual', 'Each tax period', 'Receivables', 'IMS entry with action, date and remark', 'Agree recorded actions to the IMS dashboard for a sample'],
+  ['C3', 'A service payment, a damaged-goods return, or a netted payout treated as a discount', 'Promotion-linked discounts held for tax review with a written reason; damage claims routed out of the discount flow; a buyer who is also your ad seller must split the payout into two records first', 'Preventive · manual', 'Each promotion-linked discount and each payout with an open ad invoice', 'Tax desk', 'Tax review entry, split entry with the two amounts named, or a goods-return reference', 'Sample promotion-linked and netted discounts; each has a review or a split before any credit note'],
+  ['C4', 'GST cut claimed on an invalid or late credit note', 'Route chosen with a reason; credit note checked against the rule version in force, the s.34(2) deadline, and the 30-day e-invoice reporting window', 'Preventive · automated', 'Every credit note', 'Tax desk', 'Route and credit note entries with rule version and reported date', 'Re-perform the deadline, rule version and 30-day window from the invoice and note dates'],
+  ['C5', 'GST cut lost when the buyer rejects in IMS', 'Buyer IMS action recorded against their own GSTR-3B date; rejection opens an exception with the tax restored and the three recovery routes named', 'Detective · manual', 'Each tax period', 'Receivables', 'IMS entry with action, date and remark, or the reissued note reference', 'Agree recorded actions to the IMS dashboard for a sample'],
   ['C6', 'Short payment against the approved net', 'Payment matched to the approved net; gap opens an exception', 'Detective · automated', 'Each payment', 'Receivables', 'Payment entry with bank reference', 'Agree sample payments to the bank statement'],
   ['C7', 'Records altered after approval', 'Each discount\'s entries are hash-chained; any edit breaks the chain', 'Detective · automated', 'Continuous', 'Finance controller', 'Fingerprint check result', 'Change one stored entry in a test copy; the check must fail at that entry'],
 ];
@@ -238,30 +292,36 @@ export function jiraIssue(tk) {
 }
 
 /* ---------- sample desk: each record is built by the same actions the app uses ---------- */
-export const SETTINGS = { gstr9Filed: { '2025-26': null } };
+export const SETTINGS = { gstr9Filed: { '2025-26': null }, eInvoice: true };
 export const HISTORY = { 'Krishna Marketing': ['accepted', 'accepted', 'accepted', 'accepted'], 'Meera Trading': ['accepted', 'rejected', 'accepted', 'rejected', 'accepted'], 'Aarav Distributors': ['accepted', 'accepted'], 'Royal Foods': ['accepted', 'accepted', 'rejected'], 'Green Leaf': ['accepted'], 'Sunrise Medicals': [], 'Delta Pharma': ['accepted', 'accepted'], 'Patel Agencies': ['rejected', 'accepted'] };
 const base = (id, buyer, invoiceNo, invoiceDate, value, baseline, pct, rate = 18, purpose = 'price') => ({ id, buyer, invoiceNo, invoiceDate, value, baseline, pct, margin: 51.15, rate, purpose });
 export function sampleDesk() {
   const L = [];
   let d = request(base('D-101', 'Krishna Marketing', 'INV-2602-114', '2026-02-14', 1600000, 1350000, 6), '2026-10-30', 'Neha');
-  d = approve(d, '2026-10-31', 'Vikram', 8); d = chooseRoute(d, '2026-11-02', 'Farah', 'gst', 'Buyer is registered and files monthly; IMS action expected'); d = issueNote(d, '2026-11-03', 'Farah', 'CN-26-031'); d = recordIms(d, '2026-11-06', 'Asha', 'accepted'); d = recordPayment(d, '2026-11-07', 'Asha', 1504000, 'UTR HDFCN26311077'); L.push(d);
+  d = approve(d, '2026-10-31', 'Vikram', 8); d = chooseRoute(d, '2026-11-02', 'Farah', 'gst', 'Buyer is registered and files monthly; IMS action expected'); d = issueNote(d, '2026-11-03', 'Farah', 'CN-26-031'); d = reportNote(d, '2026-11-04', 'Farah', 'IRN-31'); d = recordIms(d, '2026-11-06', 'Asha', 'accepted'); d = recordPayment(d, '2026-11-07', 'Asha', 1504000, 'UTR HDFCN26311077'); L.push(d);
   d = request(base('D-102', 'Meera Trading', 'INV-2603-208', '2026-03-20', 800000, 800000, 8), '2026-10-30', 'Neha');
-  d = approve(d, '2026-10-31', 'Vikram', 8); d = chooseRoute(d, '2026-11-02', 'Farah', 'gst', 'Scheme rebate on a registered buyer'); d = issueNote(d, '2026-11-04', 'Farah', 'CN-26-032'); d = recordIms(d, '2026-11-09', 'Asha', 'rejected', 'Slab not met: 180 cases billed, slab starts at 200'); d = recordPayment(d, '2026-11-10', 'Asha', 736000, 'UTR ICICN26314402'); L.push(d);
+  d = approve(d, '2026-10-31', 'Vikram', 8); d = chooseRoute(d, '2026-11-02', 'Farah', 'gst', 'Scheme rebate on a registered buyer'); d = issueNote(d, '2026-11-04', 'Farah', 'CN-26-032'); d = reportNote(d, '2026-11-05', 'Farah', 'IRN-32'); d = recordIms(d, '2026-11-09', 'Asha', 'rejected', 'Slab not met: 180 cases billed, slab starts at 200'); d = recordPayment(d, '2026-11-10', 'Asha', 736000, 'UTR ICICN26314402'); L.push(d);
   d = request(base('D-103', 'Aarav Distributors', 'INV-2601-041', '2026-01-10', 500000, 440000, 5), '2026-10-24', 'Neha');
-  d = approve(d, '2026-10-26', 'Vikram', 8); d = chooseRoute(d, '2026-10-27', 'Farah', 'gst', 'Year-end rebate'); d = issueNote(d, '2026-10-28', 'Farah', 'CN-26-027'); d = recordPayment(d, '2026-11-02', 'Asha', 475000, 'UTR SBINN26306118'); L.push(d);
+  d = approve(d, '2026-10-26', 'Vikram', 8); d = chooseRoute(d, '2026-10-27', 'Farah', 'gst', 'Year-end rebate'); d = issueNote(d, '2026-10-28', 'Farah', 'CN-26-027'); d = reportNote(d, '2026-10-29', 'Farah', 'IRN-27'); d = recordPayment(d, '2026-11-02', 'Asha', 475000, 'UTR SBINN26306118'); L.push(d);
   d = request(base('D-104', 'Sunrise Medicals', 'INV-2603-077', '2026-03-05', 600000, 520000, 4, 5, 'promo'), '2026-11-05', 'Neha');
   d = approve(d, '2026-11-06', 'Vikram', 8); L.push(d);
   d = request(base('D-105', 'Green Leaf', 'INV-2512-310', '2025-12-12', 400000, 390000, 5), '2026-11-02', 'Neha');
   d = approve(d, '2026-11-03', 'Vikram', 8); d = chooseRoute(d, '2026-11-04', 'Farah', 'gst', 'Registered buyer, monthly filer'); L.push(d);
   d = request(base('D-106', 'Royal Foods', 'INV-2602-275', '2026-02-25', 900000, 760000, 7), '2026-11-02', 'Neha');
-  d = approve(d, '2026-11-03', 'Vikram', 8); d = chooseRoute(d, '2026-11-04', 'Farah', 'gst', 'Registered buyer'); d = issueNote(d, '2026-11-05', 'Farah', 'CN-26-035'); d = recordPayment(d, '2026-11-11', 'Asha', 774000, 'UTR AXISN26315530'); L.push(d);
+  d = approve(d, '2026-11-03', 'Vikram', 8); d = chooseRoute(d, '2026-11-04', 'Farah', 'gst', 'Registered buyer'); d = issueNote(d, '2026-11-05', 'Farah', 'CN-26-035'); d = reportNote(d, '2026-11-06', 'Farah', 'IRN-35'); d = recordPayment(d, '2026-11-11', 'Asha', 774000, 'UTR AXISN26315530'); L.push(d);
   d = request(base('D-107', 'Delta Pharma', 'INV-2610-019', '2026-10-06', 300000, 280000, 3), '2026-11-04', 'Neha');
   d = approve(d, '2026-11-04', 'Vikram', 8); d = chooseRoute(d, '2026-11-05', 'Farah', 'fin', 'Small amount; buyer asked not to reverse ITC'); d = issueNote(d, '2026-11-05', 'Farah', 'FCN-26-008'); d = recordPayment(d, '2026-11-09', 'Asha', 291000, 'UTR KKBKN26313021'); L.push(d);
   d = request(base('D-108', 'Patel Agencies', 'INV-2603-291', '2026-03-28', 500000, 490000, 12), '2026-11-06', 'Neha');
   d = cp(d); d.approvedBy = 'Vikram'; d.limitPct = 8; d.approvedOn = '2026-11-07'; d = log(d, '2026-11-07', 'Vikram', 'approved', { pct: 12, limitPct: 8, note: 'Approved by email, entered after the fact' }); L.push(d);
+  // The same buyer sells us ads, so one payout carries both. Nobody has split it yet.
+  d = request(base('D-109', 'Navkar Traders', 'INV-2603-301', '2026-03-12', 1000000, 860000, 6), '2026-11-11', 'Neha');
+  d = approve(d, '2026-11-11', 'Vikram', 8); L.push(d);
+  // Goods came back damaged: that is a return, not a discount.
+  d = request(base('D-110', 'Shree Ganesh Agencies', 'INV-2603-322', '2026-03-24', 430000, 410000, 4, 18, 'damage'), '2026-11-10', 'Neha');
+  d = approve(d, '2026-11-10', 'Vikram', 8); L.push(d);
   return L;
 }
-export const OPENED = { 'D-102-C5': '2026-11-09', 'D-103-C4': '2026-11-02', 'D-104-C3': '2026-11-06', 'D-106-C6': '2026-11-11', 'D-108-C2': '2026-11-07' };
+export const OPENED = { 'D-102-C5': '2026-11-09', 'D-103-C4': '2026-11-02', 'D-104-C3': '2026-11-06', 'D-106-C6': '2026-11-11', 'D-108-C2': '2026-11-07', 'D-109-C3': '2026-11-11', 'D-110-C3': '2026-11-10' };
 
 /* ---------- 90-second walkthrough: one discount, end to end, through the real actions ---------- */
 export function walkthrough(today) {
@@ -270,11 +330,12 @@ export function walkthrough(today) {
   let d = request(b, today, 'Neha'); S.push({ d, t: 'Request', s: `Neha asks to give Navkar 6% (${inr(discountOf(d))}) back on a ₹10 lakh March bill. Before anyone can say yes, Ten Today works out how much extra Navkar must buy to make it worth it: ${breakEven(6, 51.15)}% more than usual.` });
   try { approve(d, today, 'Neha', 8); } catch (e) { S.push({ d, t: 'Self-approval refused', s: e.message }); }
   d = approve(d, today, 'Vikram', 8); S.push({ d, t: 'Approved', s: 'Vikram from finance approves. He can approve up to 8%, and the "is it worth it" check was done first, so checks 1 and 2 pass.' });
-  d = chooseRoute(d, today, 'Farah', 'gst', 'Registered buyer, monthly filer'); d = issueNote(d, today, 'Farah', 'CN-26-041'); S.push({ d, t: 'GST credit note', s: `Farah from the tax team sends a tax credit note, a "minus bill" that lowers the GST on the sale. Under the rules since 1 Nov 2026 this is allowed, and for a March bill it must be done by 30 Nov 2026.` });
+  d = splitRecord(d, today, 'Asha', `Split the payout: ${inr(discountOf(d))} discount on INV-2603-301, and the ad invoice ${inr(40000)} + ${inr(7200)} GST billed separately`); S.push({ d, t: 'Split the payout', s: `Navkar also sells us ads: an open ad invoice of ${inr(40000)} plus ${inr(7200)} GST. The buyer will send one payment with the discount and the ad bill inside it. Asha splits it into two records first, so nobody has to guess later which rupee was which.` });
+  d = chooseRoute(d, today, 'Farah', 'gst', 'Registered buyer, monthly filer'); d = issueNote(d, today, 'Farah', 'CN-26-041'); d = reportNote(d, today, 'Farah', 'IRN-41'); S.push({ d, t: 'GST credit note', s: `Farah from the tax team sends a tax credit note, a "minus bill" that lowers the GST on the sale, and reports it to the e-invoice system the same day. Under the rules since 1 Nov 2026 this is allowed, and for a March bill it must be done by 30 Nov 2026.` });
   d = recordIms(d, today, 'Asha', 'rejected', 'Wrong invoice reference'); S.push({ d, t: 'Buyer rejects in IMS', s: `Navkar rejects it on the government GST site, so the ${inr(gstOf(d))} tax saving is lost for now. Check 5 fails and a task opens for Asha with a 2-day deadline, like a ServiceNow or JIRA ticket.` });
-  d = issueNote(d, today, 'Farah', 'CN-26-042'); d = recordIms(d, today, 'Asha', 'accepted'); S.push({ d, t: 'Fixed and accepted', s: 'Farah sends a corrected note and Navkar accepts it. The tax saving is safe and the task closes.' });
+  d = issueNote(d, today, 'Farah', 'CN-26-042'); d = reportNote(d, today, 'Farah', 'IRN-42'); d = recordIms(d, today, 'Asha', 'accepted'); S.push({ d, t: 'Fixed and accepted', s: 'Farah sends a corrected note, reports it, and Navkar accepts it. The tax saving is safe and the task closes.' });
   d = recordPayment(d, today, 'Asha', 940000, 'UTR HDFCN26317001'); S.push({ d, t: 'Cash matched', s: `Navkar pays ₹9,40,000, exactly what was agreed. Check 6 passes.` });
-  S.push({ d, t: 'Audit pack', s: `All 7 checks pass. The audit pack holds ${d.events.length} recorded steps; if anyone changed one later, check 7 would show which.`, pack: true });
+  S.push({ d, t: 'Audit pack', s: `All 7 checks pass. The audit pack holds ${d.events.length} recorded steps, including the split, so an auditor can see the discount and the ad invoice as two separate things. If anyone changed a step later, check 7 would show which.`, pack: true });
   return S;
 }
 
@@ -313,14 +374,16 @@ export const INVOICES = [
   ['INV-2603-322', 'Shree Ganesh Agencies', '2026-03-24', 430000],
   ['INV-2603-340', 'Laxmi Wholesale', '2026-03-29', 650000],
 ].map(([no, buyer, date, value]) => ({ no, buyer, date, value }));
-export function draftRequest(invoiceNo, pct, ctx, register = INVOICES) {
+export function draftRequest(invoiceNo, pct, ctx, register = INVOICES, purpose = 'price') {
   const inv = register.find(x => x.no.toLowerCase() === String(invoiceNo).trim().toLowerCase());
   if (!inv) throw new Error(`No invoice ${invoiceNo} in the register. Check the number on the bill.`);
   if (!(pct > 0 && pct <= 25)) throw new Error('Enter a discount between 0.5% and 25%.');
+  if (!['price', 'promo', 'damage'].includes(purpose)) throw new Error('Say what the money is for: a price cut, a promotion payment, or a damage claim.');
   const past = register.filter(x => x.buyer === inv.buyer && x.date < inv.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 3);
   const baseline = past.length ? Math.round(past.reduce((s, x) => s + x.value, 0) / past.length) : null;
-  const d = { id: null, buyer: inv.buyer, invoiceNo: inv.no, invoiceDate: inv.date, value: inv.value, baseline: baseline ?? inv.value, pct, margin: 51.15, rate: 18, purpose: 'price' };
-  const e = economics(d), dl = deadline(d, ctx.settings), br = buyerRecord(ctx, inv.buyer);
+  const d = { id: null, buyer: inv.buyer, invoiceNo: inv.no, invoiceDate: inv.date, value: inv.value, baseline: baseline ?? inv.value, pct, margin: 51.15, rate: 18, purpose };
+  const e = economics(d), dl = deadline(d, ctx.settings), br = buyerRecord(ctx, inv.buyer), ads = adOpen(inv.buyer);
   return { fields: d, invoice: inv, pastCount: past.length, hasBaseline: baseline !== null, economics: e, deadline: dl, daysLeft: daysBetween(ctx.today, dl.date), buyer: br,
+    ads, adTotal: ads.reduce((s, x) => s + x.amount + x.gst, 0), purpose,
     gst: gstOf(d), late: ctx.today > dl.date };
 }

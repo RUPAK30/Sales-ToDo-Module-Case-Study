@@ -3,12 +3,12 @@ import * as C from './controls.js';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const inr = C.inr;
-const KEY = 'tentoday-controls-v1';
+const KEY = 'tentoday-controls-v2';
 const ctx = () => ({ today: C.todayIso(), settings: S.settings, history: C.HISTORY, opened: S.opened });
 
 let S = fresh();
 function fresh() { return { list: C.sampleDesk(), settings: structuredClone(C.SETTINGS), opened: { ...C.OPENED }, sel: 'D-102', view: 'servicenow', sweep: false, walk: null, pack: null, sign: null, signoffs: [], err: '', note: '' }; }
-try { const s = JSON.parse(localStorage.getItem(KEY)); if (s?.list?.length) S = { ...fresh(), ...s, walk: null, pack: null, sign: null, err: '', note: '' }; } catch { /* first visit */ }
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s?.list?.length) S = { ...fresh(), ...s, settings: { ...structuredClone(C.SETTINGS), ...(s.settings ?? {}) }, walk: null, pack: null, sign: null, err: '', note: '' }; } catch { /* first visit */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ list: S.list, settings: S.settings, opened: S.opened, sel: S.sel, view: S.view, signoffs: S.signoffs })); } catch { /* fine */ } };
 const cur = () => S.list.find(d => d.id === S.sel) ?? S.list[0];
 const put = d => { S.list = S.list.map(x => (x.id === d.id ? d : x)); };
@@ -42,17 +42,42 @@ function queue(k) {
 
 function actions(d, r) {
   const c = id => r.controls.find(x => x.id === id), b = [];
+  const ads = C.adOpen(d.buyer), netted = ads.length && !d.split;
   if (!d.approvedBy) b.push('<button class="btn pri" data-a="approve" type="button">Approve as Vikram (limit 8%)</button><button class="btn" data-a="approve-self" type="button">Try approving as Neha (the requester)</button>');
-  if (c('C3').status === 'fail') b.push(`<input class="cr-in" id="cr-note" placeholder="Tax desk note: what was paid for, and is there a written agreement?"><button class="btn" data-a="rv-price" type="button">Tax team: it is a price cut</button><button class="btn" data-a="rv-service" type="button">Tax team: it is a paid service</button>`);
+  if (c('C3').status === 'fail') {
+    if (d.purpose === 'damage') b.push('<span class="cr-h">This is a return, not a discount. It stays stuck here until someone moves it onto a goods-return note against the invoice, with the buyer\'s return acknowledgement.</span>');
+    else if (netted) b.push(`<input class="cr-in" id="cr-note" placeholder="Split it: e.g. &#8377;60,000 discount on the invoice; &#8377;47,200 ad bill paid separately"><button class="btn pri" data-a="split" type="button">Split the payout into two records</button>`);
+    else b.push(`<input class="cr-in" id="cr-note" placeholder="Tax desk note: what was paid for, and is there a written agreement?"><button class="btn" data-a="rv-price" type="button">Tax team: it is a price cut</button><button class="btn" data-a="rv-service" type="button">Tax team: it is a paid service</button>`);
+  }
   else if (d.review === 'service' && d.route !== 'service') b.push('<button class="btn" data-a="route-service" type="button">Settle against the buyer\'s service invoice</button>');
   else if (!d.route && d.approvedBy && c('C2').status === 'pass') b.push('<button class="btn" data-a="route-gst" type="button">Use a GST credit note (tax goes down too)</button><button class="btn" data-a="route-fin" type="button">Use a financial credit note (money back, tax unchanged)</button>');
   if (d.route && d.route !== 'service' && (!d.cnNo || c('C4').status === 'fail' || d.ims === 'rejected')) b.push(`<button class="btn pri" data-a="issue" type="button">${d.cnNo ? 'Reissue' : 'Issue'} ${d.route === 'gst' ? 'GST' : 'financial'} credit note today</button>`);
+  if (d.route === 'gst' && d.cnNo && !d.reportedOn) b.push('<button class="btn pri" data-a="report" type="button">Report it to the e-invoice system today (30-day clock)</button>');
   if (d.route === 'gst' && d.ims === 'rejected') b.push('<button class="btn" data-a="to-fin" type="button">Settle as a financial credit note</button>');
-  if (d.route === 'gst' && d.cnNo && d.ims === 'pending' && c('C4').status === 'pass') b.push('<button class="btn" data-a="ims-ok" type="button">Buyer accepted on the GST portal (IMS)</button><input class="cr-in" id="cr-rm" placeholder="Buyer\'s rejection remark from IMS"><button class="btn" data-a="ims-no" type="button">Buyer rejected</button>');
+  if (d.route === 'gst' && d.cnNo && d.ims === 'pending' && c('C4').status !== 'fail') b.push('<button class="btn" data-a="ims-ok" type="button">Buyer accepted on the GST portal (IMS)</button><input class="cr-in" id="cr-rm" placeholder="Buyer\'s rejection remark from IMS"><button class="btn" data-a="ims-no" type="button">Buyer rejected</button>');
   if (c('C6').status === 'fail') b.push(`<button class="btn" data-a="pay" type="button">Record the ${inr(C.netDue(d) - d.received)} balance received</button>`);
   if (c('C2').status === 'fail') b.push('<span class="cr-h">Check 2 can\'t be fixed by editing: the over-limit approval stays on record, as it should. Raise it with the approver\'s manager.</span>');
   b.push(`<button class="btn ghost" data-a="tamper" type="button">${C.verify(d).ok ? 'Edit a sealed entry (test)' : 'Undo the edit'}</button>`);
   return `<div class="cr-act">${b.join('')}</div>`;
+}
+
+/* The buyer refused. Three ways out, three different rupee outcomes. */
+function routes(d) {
+  if (d.ims !== 'rejected') return '';
+  return `<div class="cr-rt"><b>Three ways to fix a rejection</b><ol>${C.recoveryRoutes(d).map(([t, s]) => `<li><b>${esc(t)}</b><span>${esc(s)}</span></li>`).join('')}</ol></div>`;
+}
+
+/* One payout, two things inside it. The number an accounts person recognises from their own month. */
+function payout(d) {
+  const p = C.payoutSplit(d);
+  if (!p.ads.length) return '';
+  return `<div class="cr-py"><b>Payout advice · ${esc(d.invoiceNo)}</b>
+    <div><span>Gross sales</span><b>${inr(p.gross)}</b></div>
+    <div><span>Trade promotion (a discount)</span><b>−${inr(p.discount)}</b></div>
+    <div><span>Ad invoice (a purchase)</span><b>−${inr(p.adAmount)}</b></div>
+    <div><span>GST on the ad invoice</span><b>−${inr(p.adGst)}</b></div>
+    <div class="tot"><span>Net bank credit</span><b>${inr(p.net)}</b></div>
+    <p>${inr(p.deducted)} was deducted. Only ${inr(p.discount)} is a discount. The other ${inr(p.adAmount + p.adGst)} is a purchase with its own GST invoice — and the payout advice shows one number.</p></div>`;
 }
 
 function detail(d, k) {
@@ -65,6 +90,8 @@ function detail(d, k) {
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
     <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this check →</a></small></li>`).join('')}</ol>
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}${S.note ? `<p class="cr-note" role="status">${esc(S.note)}</p>` : ''}
+    ${payout(d)}
+    ${routes(d)}
     ${actions(d, r)}
     ${prev ? ticketCard(tk, prev) : ''}
   </div>`;
@@ -104,10 +131,10 @@ function signHtml() {
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}
     <div class="cr-act"><button class="btn pri" data-a="sign-go" type="button">Sign as Vikram, finance controller</button></div></div>`;
 }
-function askPreview(inv, pct) {
-  if (!inv || !pct) return '<p class="cr-s">Type an invoice number and a %. Ten Today fills in the rest from the invoice register and past orders.</p>';
-  let r; try { r = C.draftRequest(inv, +pct, ctx()); } catch (e) { return `<p class="cr-err">${esc(e.message)}</p>`; }
-  const e = r.economics, f = r.fields;
+function askPreview(inv, pct, purpose = 'price') {
+  if (!inv || !pct) return '<p class="cr-s">Type an invoice number and a %, and say what the money is for. Ten Today fills in the rest from the invoice register and past orders.</p>';
+  let r; try { r = C.draftRequest(inv, +pct, ctx(), C.INVOICES, purpose); } catch (e) { return `<p class="cr-err">${esc(e.message)}</p>`; }
+  const e = r.economics, f = r.fields, p = r.ads.length ? C.payoutSplit(f) : null;
   return `<dl class="ask-pv">
     <dt>Buyer · invoice</dt><dd><b>${esc(f.buyer)}</b> · ${fmt(f.invoiceDate)} · ${inr(f.value)}</dd>
     <dt>Discount</dt><dd><b>${inr(e.discount)}</b> before GST (${inr(r.gst)} GST)</dd>
@@ -115,13 +142,27 @@ function askPreview(inv, pct) {
     <dt>Worth it?</dt><dd>Needs <b>${e.breakEvenPct}%</b> more than usual${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">pays for itself</span>' : `<span class="bad">loses ${inr(-e.net)}</span>`}` : ''}</dd>
     <dt>Buyer record</dt><dd>${r.buyer.recoveryPct === null ? 'No credit notes with this buyer yet' : `Accepted ${r.buyer.accepted} of ${r.buyer.notes} credit notes`}</dd>
     <dt>Tax deadline</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
-  </dl><button class="btn pri" data-a="ask-go" type="button">Send for approval</button>`;
+    <dt>What it is for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the buyer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the buyer, so it needs its own GST invoice, not a discount note.' : 'A price cut on the invoice value.'}</dd>
+  </dl>
+  ${p ? `<div class="cr-py"><b>One payout, two things · ${esc(f.invoiceNo)}</b>
+    <div><span>Gross sales</span><b>${inr(p.gross)}</b></div>
+    <div><span>Trade promotion (a discount)</span><b>−${inr(p.discount)}</b></div>
+    <div><span>Ad invoice (a purchase)</span><b>−${inr(p.adAmount)}</b></div>
+    <div><span>GST on the ad invoice</span><b>−${inr(p.adGst)}</b></div>
+    <div class="tot"><span>Net bank credit</span><b>${inr(p.net)}</b></div>
+    <p>${inr(p.deducted)} comes off. Only ${inr(p.discount)} is a discount. This buyer also has an open ad invoice, so the payout will have to be split into two records before any note is issued.</p></div>` : ''}
+  <button class="btn pri" data-a="ask-go" type="button">Send for approval</button>`;
 }
 function askCard() {
-  return `<section class="card ask"><h2>Ask for a discount</h2><p class="sub">Two inputs. Everything else is filled in from data Ten Today already has.</p>
+  const p = S.ask?.purpose ?? 'price';
+  const opts = [['price', 'Price cut on the bill', 'Money off the price. Nothing else changes.'],
+    ['promo', 'Promotion or ad payment', 'A display, a slot, an ad. We bought something from the buyer, so it is a purchase, not a discount.'],
+    ['damage', 'Damage claim', 'Goods came back damaged. That is a return, and it needs a return note, not a discount.']];
+  return `<section class="card ask"><h2>Ask for a discount</h2><p class="sub">Two numbers and one question: what is the money actually for? Everything else is filled in from data Ten Today already has.</p>
     <div class="ask-in"><label>Invoice number<input class="cr-in" id="ask-inv" list="ask-list" placeholder="INV-2603-301" value="${esc(S.ask?.inv ?? '')}" autocomplete="off"></label><label>Discount %<input class="cr-in" id="ask-pct" type="number" min="0.5" max="25" step="0.5" placeholder="6" value="${esc(S.ask?.pct ?? '')}"></label></div>
+    <div class="ask-why" role="radiogroup" aria-label="What is the money for?">${opts.map(([v, t, s]) => `<label class="ask-o"><input type="radio" name="ask-purpose" value="${v}"${p === v ? ' checked' : ''}><b>${t}</b><span>${s}</span></label>`).join('')}</div>
     <datalist id="ask-list">${C.INVOICES.filter(x => x.date >= '2026-03-01').map(x => `<option value="${x.no}">${esc(x.buyer)}</option>`).join('')}</datalist>
-    <div id="ask-pv">${askPreview(S.ask?.inv, S.ask?.pct)}</div></section>`;
+    <div id="ask-pv">${askPreview(S.ask?.inv, S.ask?.pct, p)}</div></section>`;
 }
 function walkHtml() {
   const s = S.walk.steps[S.walk.i], r = C.evaluate(s.d, ctx()), n = S.walk.steps.length;
@@ -149,10 +190,15 @@ function render() {
     <section class="card cr-more"><h2>For finance, tax and audit</h2>${signBlock()}<div class="cr-act">
       <button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
       <label class="cr-s">GSTR-9 for FY 2025-26 filed on <input type="date" class="cr-in" id="cr-g9" value="${S.settings.gstr9Filed['2025-26'] ?? ''}"></label><button class="btn ghost" data-a="reset" type="button">Reset sample</button></div>
+      <p class="cr-s" style="margin:8px 0 0"><label><input type="checkbox" id="cr-ei"${S.settings.eInvoice ? ' checked' : ''}> We must report every credit note to the e-invoice system (turnover of ₹10 crore or more). Then the 30-day clock in check 4 applies.</label></p>
       <details class="cr-ru"${innerWidth > 640 ? " open" : ""}><summary>Terms in plain words</summary><dl class="cr-gl">
         <dt>Post-sale discount</dt><dd>Money given back to a buyer after the bill, for example a 6% rebate for hitting a target.</dd>
         <dt>Credit note</dt><dd>A "minus bill". A <b>GST credit note</b> also lowers the tax on the sale; a <b>financial credit note</b> returns money but leaves the tax as billed.</dd>
-        <dt>IMS (Invoice Management System)</dt><dd>The page on the GST portal where the buyer accepts or rejects your credit note. Rejected means your tax saving is lost; left pending past one tax period, it counts as accepted.</dd>
+        <dt>IMS (Invoice Management System)</dt><dd>The page on the GST portal where the buyer accepts or rejects your credit note. They can act until they file their own GSTR-3B, usually the 20th of the next month, and one more tax period if they mark it Pending. Rejected means your tax saving is lost; silence after that counts as accepted, but nobody has confirmed it.</dd>
+        <dt>Netting</dt><dd>One payment carrying two different things: a discount you gave, and a bill the buyer sent you (an ad, a slot, a display). One bank credit, one payout advice, two separate tax questions. If they are never split, nobody can say which rupee was which.</dd>
+        <dt>Ad invoice</dt><dd>The buyer's own bill to you for advertising or display space, with its own GST. It is a purchase you make, not a discount you give, so it must not be settled with a discount credit note.</dd>
+        <dt>E-invoice 30-day clock</dt><dd>Where e-invoicing applies, a credit note must be reported to the e-invoice system within 30 days of its date. After that the portal rejects it and the tax cut never reaches the buyer.</dd>
+        <dt>Damage claim</dt><dd>Goods came back damaged. That is a return, not a discount: it needs a goods-return note and the buyer's acknowledgement, not a credit note that hides it inside a price cut.</dd>
         <dt>s.34(2) deadline</dt><dd>The last date to issue a GST credit note: 30 Nov after the financial year of the bill, or the annual return date if that is earlier.</dd>
         <dt>Break-even</dt><dd>How much more the buyer must buy for the discount to pay for itself: discount ÷ (margin − discount). 6% at a 51% margin needs about 13% more.</dd>
         <dt>Maker-checker</dt><dd>The person who asks can't be the person who approves.</dd>
@@ -170,6 +216,8 @@ function act(a, el) {
   const d = cur(), today = C.todayIso(); S.err = ''; S.note = '';
   try {
     if (a === 'sweep') S.sweep = !S.sweep;
+    else if (a === 'split') put(C.splitRecord(d, today, 'Asha', $('#cr-note')?.value ?? ''));
+    else if (a === 'report') put(C.reportNote(d, today, 'Farah', `IRN-${d.id}`));
     else if (a === 'rv-price' || a === 'rv-service') put(C.taxReview(d, today, 'Farah', a === 'rv-price' ? 'price' : 'service', $('#cr-note')?.value ?? ''));
     else if (a === 'route-gst') put(C.chooseRoute(d, today, 'Farah', 'gst', 'Registered buyer; IMS action expected'));
     else if (a === 'route-fin') put(C.chooseRoute(d, today, 'Farah', 'fin', 'GST cut not worth the buyer reversing ITC'));
@@ -190,7 +238,7 @@ function act(a, el) {
     else if (a === 'pack-dl') return download(`audit-pack-${today}.json`, JSON.stringify(S.pack.packs, null, 2), 'application/json');
     else if (a === 'mis') return download(`ten-today-control-mis-${today}.csv`, C.misCsv(S.list, ctx()));
     else if (a === 'racm') return download('ten-today-risk-control-matrix.csv', C.racmCsv());
-    else if (a === 'ask-go') { const r = C.draftRequest(S.ask.inv, +S.ask.pct, ctx()); const id = `D-${101 + S.list.length}`; S.list = [...S.list, C.request({ ...r.fields, id }, today, 'Neha')]; S.sel = id; S.ask = { inv: '', pct: '' }; S.note = `${id} sent to Vikram with the break-even, buyer record and deadline filled in.`; }
+    else if (a === 'ask-go') { const r = C.draftRequest(S.ask.inv, +S.ask.pct, ctx(), C.INVOICES, S.ask.purpose ?? 'price'); const id = `D-${101 + S.list.length}`; S.list = [...S.list, C.request({ ...r.fields, id }, today, 'Neha')]; S.sel = id; S.ask = { inv: '', pct: '' }; S.note = `${id} sent to Vikram with the break-even, buyer record and deadline filled in.`; }
     else if (a === 'approve') put(C.approve(d, today, 'Vikram', 8));
     else if (a === 'approve-self') put(C.approve(d, today, 'Neha', 8));
     else if (a === 'sign') { S.sign = true; S.signNotes = {}; }
@@ -212,8 +260,12 @@ document.addEventListener('click', e => {
   const cs = e.target.closest('[data-cs]'); if (cs) { S.signoffs = S.signoffs.map(r => (r.week === cs.dataset.cs ? C.countersign(r, 'Arjun', C.todayIso()) : r)); save(); render(); return; }
   const b = e.target.closest('[data-a]'); if (b) { if (b.dataset.a === 'sign-go') document.querySelectorAll('[data-note]').forEach(i => { (S.signNotes ??= {})[i.dataset.note] = i.value; }); act(b.dataset.a, b); }
 });
-document.addEventListener('input', e => { if (e.target.id === 'ask-inv' || e.target.id === 'ask-pct') { S.ask = { inv: $('#ask-inv').value, pct: $('#ask-pct').value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct); } });
-document.addEventListener('change', e => { if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); } });
+document.addEventListener('input', e => { if (e.target.id === 'ask-inv' || e.target.id === 'ask-pct') { S.ask = { ...(S.ask ?? {}), inv: $('#ask-inv').value, pct: $('#ask-pct').value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct, S.ask.purpose ?? 'price'); } });
+document.addEventListener('change', e => {
+  if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); }
+  else if (e.target.id === 'cr-ei') { S.settings.eInvoice = e.target.checked; save(); render(); }
+  else if (e.target.name === 'ask-purpose') { S.ask = { ...(S.ask ?? {}), purpose: e.target.value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct, S.ask.purpose); }
+});
 
 /* Deep links: app.html#controls/D-102/C5 · #controls/sweep · #controls/walk */
 function deepLink() {

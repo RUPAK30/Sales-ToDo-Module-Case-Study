@@ -51,7 +51,8 @@ test('C3 holds a promotion-linked discount for tax review; a service cannot go t
 test('C4: a note issued 28 Oct without prior agreement is invalid under PSD v1; reissued after 1 Nov it is valid', () => {
   const d = byId('D-103');
   assert.equal(st(d, 'C4'), 'fail');
-  assert.equal(st(C.issueNote(d, '2026-11-13', 'Farah', 'CN-26-040'), 'C4'), 'pass');
+  const again = C.reportNote(C.issueNote(d, '2026-11-13', 'Farah', 'CN-26-040'), '2026-11-13', 'Farah', 'IRN-40');
+  assert.equal(st(again, 'C4'), 'pass');
   assert.equal(st({ ...d, priorAgreement: true }, 'C4'), 'pass');
 });
 
@@ -69,7 +70,8 @@ test('C5: rejection fails with the tax restored; pending past one tax period is 
   assert.equal(rej.controls[4].rupees, C.gstOf(byId('D-102')));
   assert.throws(() => C.recordIms(byId('D-106'), '2026-11-13', 'Asha', 'rejected'), /remark/);
   assert.equal(st(byId('D-106'), 'C5'), 'wait');
-  assert.equal(st(byId('D-106'), 'C5', ctx('2026-12-01')), 'pass');
+  assert.equal(st(byId('D-106'), 'C5', ctx('2026-12-21')), 'wait', 'buyer can still act, or park it one more period');
+  assert.equal(st(byId('D-106'), 'C5', ctx('2027-01-21')), 'pass', 'both windows closed: accepted by silence');
 });
 
 test('C6 measures the gap against the approved net', () => {
@@ -152,4 +154,77 @@ test('two-input request fills buyer, usual order, break-even, buyer record and d
   assert.throws(() => C.draftRequest('INV-2603-301', 0, ctx()), /between/);
   const first = C.draftRequest('INV-2603-340', 5, ctx());
   assert.equal(first.hasBaseline, false, 'no history: says so instead of guessing');
+});
+
+test('the buyer clock is their GSTR-3B date, not month-end: the 20th of the next month, plus one pending period', () => {
+  assert.equal(C.imsActionBy('2026-11-05'), '2026-12-20');
+  assert.equal(C.imsPendingExpires('2026-11-05'), '2027-01-20');
+  assert.equal(C.imsActionBy('2026-12-28'), '2027-01-20');
+  assert.equal(C.imsPendingExpires('2026-12-28'), '2027-02-20');
+});
+
+test('C3 blocks a payout that also carries an open ad invoice until it is split into two records', () => {
+  const d = byId('D-109');
+  assert.deepEqual(C.adOpen('Navkar Traders').map(x => x.no), ['AD-2610-07']);
+  assert.equal(C.adTotal('Navkar Traders'), 47200);
+  const c3 = C.evaluate(d, ctx()).controls[2];
+  assert.equal(c3.status, 'fail');
+  assert.match(c3.text, /ad invoice/);
+  assert.equal(c3.rupees, 47200);
+  assert.throws(() => C.splitRecord(d, '2026-11-13', 'Asha', ''), /how the payout was split/);
+  const split = C.splitRecord(d, '2026-11-13', 'Asha', '₹60,000 discount on the invoice; ₹47,200 ad bill paid separately');
+  assert.equal(C.evaluate(split, ctx()).controls[2].status, 'pass');
+});
+
+test('a damage claim is routed out of the discount flow instead of being given a credit note', () => {
+  const c3 = C.evaluate(byId('D-110'), ctx()).controls[2];
+  assert.equal(c3.status, 'fail');
+  assert.match(c3.text, /goods-return note/);
+});
+
+test('C4: an unreported credit note waits, then fails when the 30-day e-invoice window closes', () => {
+  const note = C.issueNote(byId('D-101'), '2026-11-03', 'Farah', 'CN-99');
+  assert.equal(C.reportBy('2026-11-03'), '2026-12-03');
+  const waiting = C.evaluate(note, ctx('2026-11-20')).controls[3];
+  assert.equal(waiting.status, 'wait');
+  assert.match(waiting.text, /2026-12-03/);
+  assert.equal(C.evaluate(note, ctx('2026-12-04')).controls[3].status, 'fail');
+  const reported = C.reportNote(note, '2026-11-04', 'Farah', 'IRN-1');
+  assert.equal(C.evaluate(reported, ctx('2026-11-20')).controls[3].status, 'pass');
+});
+
+test('accepted by silence is a pass on C5 but leaves the audit pack short of the buyer\'s word', () => {
+  const late = C.evaluate(byId('D-106'), ctx('2027-01-25'));
+  assert.equal(late.controls[4].status, 'pass');
+  assert.match(late.controls[4].text, /never confirmed/);
+  assert.equal(late.controls[6].status, 'wait');
+  assert.match(late.controls[6].text, /accepted by silence/);
+});
+
+test('a rejection names three recovery routes with the rupee outcome of each', () => {
+  const d = byId('D-102'), r = C.recoveryRoutes(d);
+  assert.equal(r.length, 3);
+  assert.match(r[0][1], /GSTR-1A/);
+  assert.match(r[1][1], /Table 9C/);
+  assert.match(r[2][1], /tax stays as billed/);
+  assert.ok(r.every(x => x[1].includes(C.inr(C.gstOf(d)))));
+});
+
+test('the payout advice adds up: what was deducted, and which part is a discount', () => {
+  const p = C.payoutSplit(byId('D-109'));
+  assert.equal(p.gross, 1000000);
+  assert.equal(p.discount, 60000);
+  assert.equal(p.adAmount, 40000);
+  assert.equal(p.adGst, 7200);
+  assert.equal(p.deducted, 107200);
+  assert.equal(p.net, 892800);
+});
+
+test('the request says what the money is for, and a damage claim is not priced as a discount', () => {
+  assert.throws(() => C.draftRequest('INV-2603-301', 6, ctx(), C.INVOICES, 'bribe'), /what the money is for/);
+  const dmg = C.draftRequest('INV-2603-322', 4, ctx(), C.INVOICES, 'damage');
+  assert.equal(dmg.purpose, 'damage');
+  assert.equal(C.evaluate(C.request({ ...dmg.fields, id: 'X' }, '2026-11-10', 'Neha'), ctx()).controls[2].status, 'fail');
+  const netted = C.draftRequest('INV-2603-301', 6, ctx());
+  assert.equal(netted.adTotal, 47200, 'the request already shows the open ad invoice');
 });
