@@ -1,4 +1,4 @@
-import * as V from './viz.js?v=2';
+import * as V from './viz.js?v=4';
 import * as E from './engine.js?v=1794488317';
 
 const KEY = 'tentoday-product-v11';
@@ -217,7 +217,7 @@ function repDesk() {
   const mini = (arr, f, none) => arr.length ? `<ul class="mini">${arr.map(t => `<li><button type="button" data-open="${t.id}"><b>${esc(t.customer)}</b> · ${f(t)}</button></li>`).join('')}</ul>` : `<p class="empty">${none}</p>`;
   const frozenLine = t => { const a = apvOf(t); return a?.status === 'countered' ? `<span class="chip st-bad">Counter: ${a.capPct}%</span> your answer needed` : `<span class="chip st-frozen">Waiting</span> ${a ? `${E.label(a.approver)} · ${a.askPct}% asked` : ''}`; };
   return `${coverCard()}${cnCard()}${impactCard()}<div id="c-week" data-in="pulse">${(() => { const mm = E.metrics(w); return `<div class="vz-rings">${V.ring(mm.pct, 'Done by the original date', `${mm.onTime} of ${mm.done} tasks · moving a date doesn't reset it`)}${V.ring(mm.done ? Math.round((mm.done - mm.movedThrice) / mm.done * 100) : null, 'Not pushed three times', `${mm.movedThrice} task(s) moved 3+ times`)}</div>`; })()}${misTable()}${snap}</div><div class="grid">
-    <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2>${V.todayStrip(q.list, q.waiting, t => E.tier(w, t), E.CAP)}<p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
+    <div class="card" data-in="today"><h2>Today · ${q.list.length} of ${E.CAP}</h2>${V.todayStrip(q.list, q.waiting, t => E.tier(w, t), E.CAP, t => E.daysOver(w, t), flashId)}<p class="sub">Ranked: past-target tier → money-blocking stage → days overdue → deal value (tie-break only). A callback pinned at the customer's time sits above the tiers.</p>
       ${q.list.length ? `<ol class="list">${q.list.map(row).join('')}</ol>` : '<p class="empty">Nothing due. Well done.</p>'}
       ${q.waiting ? `<p class="more">+${q.waiting} more due, kept out so Today stays at ${E.CAP}. They move up as you finish these.</p>` : ''}
     </div>

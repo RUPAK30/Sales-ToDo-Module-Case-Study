@@ -1,5 +1,5 @@
 import * as C from './controls.js';
-import * as V from './viz.js?v=2';
+import * as V from './viz.js?v=4';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -201,7 +201,7 @@ function render() {
     <p class="st1-f">If any answer is "no", it becomes a task for one named person, with a due date and the rupees at stake. Below: the same seven questions across all 10 retailers you gave money back to.</p></section>
     <h2 class="st1-h">Your 10 retailers this year</h2>
     ${head(k, sw)}
-    <section class="card"><h2>Pick a retailer to see its seven answers</h2>${V.heatmap(k.rows.map(x => ({ id: x.d.id, name: x.d.buyer, money: inr(C.discountOf(x.d)), cells: x.r.controls.map(c => c.status) })), k.rows[0].r.controls.map(c => c.name), (id, n) => `#controls/${id}/C${n + 1}`)}<p class="sub">Green = yes, red = no, yellow = waiting.</p><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${esc(x.d.buyer)}</b> <small style="color:#78716C">${x.d.id}</small><span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section>
+    <section class="card"><h2>Pick a retailer to see its seven answers</h2>${V.heatmap(k.rows.map(x => ({ id: x.d.id, name: x.d.buyer, money: inr(C.discountOf(x.d)), cells: x.r.controls.map(c => ({ s: c.status, rupees: c.rupees, who: c.owner?.who ?? '', text: c.text })) })), k.rows[0].r.controls.map(c => c.name), (id, n) => `#controls/${id}/C${n + 1}`)}<p class="sub">Green = yes, red = no, yellow = waiting.</p><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${esc(x.d.buyer)}</b> <small style="color:#78716C">${x.d.id}</small><span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section>
     <details class="cr-more-d card"><summary>Try it yourself: ask for a discount</summary>${askCard()}</details>
     <details class="cr-more-d card"><summary>Every "no" as a task · ${k.tickets.length} open</summary><figure class="hl-tag"><div class="hl" data-hl="relay" data-hl-label="A hub and branches; the path to the tile under the pointer lights hop by hop"></div><figcaption><b>Each "no" travels to one person.</b> The path lights hop by hop, from the failed check to its owner, the way a task here moves to Vikram, Farah or Asha with a due date.</figcaption></figure><p class="sub">Each one has an owner, a due date in working days, and the rupees at stake, like a ServiceNow or JIRA ticket.</p>${queue(k)}</details>
     <div class="one-flow" style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:14px 0;padding:12px;border:1px solid #ECE7E1;border-radius:14px;background:#fff">
