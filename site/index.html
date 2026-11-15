@@ -94,6 +94,11 @@
       <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><b><span id="cd-days">—</span> days</b><span id="cd-text">left to fix last year's tax paperwork (30 Nov 2026).</span></div>
     </div>
     <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: what people asked for → the rules → the tests → a product that runs.</p>
+    <div class="bcd" role="list" aria-label="What was built, checked and left out">
+      <div role="listitem"><b>Built</b><strong>A working product, not a deck.</strong><span>Seven checks on every discount, a desk you can click, 63 tests behind it.</span><a href="app.html#controls">Open the desk →</a></div>
+      <div role="listitem"><b>Checked</b><strong>It says no, with a reason.</strong><span>A service bill, a damaged return, an unsplit payment: each is refused, and the ticket names the person who fixes it.</span><a href="cockpit.html">Try to break it →</a></div>
+      <div role="listitem"><b>Left out</b><strong>Three things I chose not to build.</strong><span>No AI deciding, no GST filing, no blocking orders. Each would have looked impressive and worked worse.</span><a href="#calls">Why not →</a></div>
+    </div>
 
   <section id="worth" class="wk" aria-label="What it could be worth">
     <p class="eyebrow">What it could be worth</p>
@@ -135,19 +140,10 @@
     <ol class="ck"><li id="c1"><span class="ck-n">C1</span><div><b>Is it worth it?</b><span>The retailer must buy enough extra to cover the money you give back. Best: pay only on the extra boxes.</span></div><a href="app.html#controls/D-102/C1">Lost ₹64,000 →</a></li><li id="c2"><span class="ck-n">C2</span><div><b>Did the right person say yes?</b><span>Not the person who asked, and not above their limit.</span></div><a href="app.html#controls/D-108/C2">12% on an 8% limit →</a></li><li id="c3"><span class="ck-n">C3</span><div><b>Is it really a price cut?</b><span>Ads and shelf space are a service you bought. Damaged goods are a return. Only a real price cut gets a discount note.</span></div><a href="app.html#controls/D-109/C3">Ad bill mixed in →</a></li><li id="c4"><span class="ck-n">C4</span><div><b>Right paperwork, on time?</b><span>The right "minus bill" (credit note), under the rule of that day, before the deadline.</span></div><a href="app.html#controls/D-103/C4">Old rule used →</a></li><li id="c5"><span class="ck-n">C5</span><div><b>Did the retailer accept it?</b><span>On ₹100 back, ₹18 is GST. If the retailer doesn't accept the note on the GST portal, you lose that ₹18 and they keep it.</span></div><a href="app.html#controls/D-102/C5">Retailer rejected →</a></li><li id="c6"><span class="ck-n">C6</span><div><b>Did the right money arrive?</b><span>What the retailer paid must match the bill minus what was approved.</span></div><a href="app.html#controls/D-106/C6">₹63,000 short →</a></li><li id="c7"><span class="ck-n">C7</span><div><b>Can anyone change the record?</b><span>Every step is fingerprinted. Change one later and it shows which.</span></div><a href="app.html#controls/D-101/C7">Try editing one →</a></li><li class="ck-hot"><span class="ck-n">!</span><div><b>Last chance: 30 Nov 2026</b><span>Last year's bills where the ₹18 isn't safe yet, biggest first.</span></div><a href="app.html#controls/sweep">Open the list →</a></li></ol>
   </section>
 
-  <p class="eyebrow" style="margin:22px 0 0">One flow, three screens</p>
-  <div class="one-flow" style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:14px 0;padding:12px;border:1px solid #ECE7E1;border-radius:14px;background:#fff">
-  <a href="app.html#today" style="text-decoration:none;color:#1C1917;padding:8px 10px;border-radius:10px;"><small style="display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C">① Before the sale · Today desk</small><b>Each rep's top-10 to-do.</b> A discount on the price is asked for here; the sales manager (Kavita) approves.</a>
-  <a href="app.html#controls" style="text-decoration:none;color:#1C1917;padding:8px 10px;border-radius:10px;"><small style="display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C">② After the sale · Discount controls</small><b>Money given back later.</b> Rebates and credit notes; finance (Vikram) approves and seven checks run.</a>
-  <a href="https://everyrupee-o2c.vercel.app/" style="text-decoration:none;color:#1C1917;padding:8px 10px;border-radius:10px"><small style="display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C">③ When cash arrives · Every Rupee ↗</small><b>Payment matched.</b> A short payment becomes a task, and a rep with one open can't ask for a new discount.</a>
-</div>
-  <a href="ba.html" class="ba-cta" style="display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:18px 0;padding:16px 18px;border:1px solid #ECE7E1;border-radius:16px;background:#fff;text-decoration:none;color:#1C1917">
-    <span><span class="eyebrow" style="display:block;margin:0 0 4px">The BA work behind it</span><b style="font-size:1.05rem">BRD · As-is → To-be · Stakeholders · User stories · UAT · Traceability · Data dictionary</b><span style="display:block;color:#57534E;font-size:.88rem;margin-top:3px">12 UAT cases you can run live against the rule engine.</span></span>
-    <span class="btn pri" style="flex:0 0 auto">Open the BA pack →</span></a>
-
-  <section class="dl" aria-label="What I didn't build">
-    <p class="eyebrow">Product calls</p>
-    <h2>What I didn't build, and why</h2>
+  <section class="dl" id="calls" aria-label="What I didn't build">
+    <p class="eyebrow">The decisions I'd defend</p>
+    <h2>What I left out, and why</h2>
+    <p style="max-width:680px;color:#57534E;margin:-2px 0 12px;font-size:.92rem">Every one of these would have looked impressive in a demo, and made the product worse. Choosing not to build is half the job.</p>
     <ol>
       <li><b>No AI deciding the discount.</b> The rules decide and the numbers are shown; an approver can follow every one. AI only explains.</li>
       <li><b>No clawback from anyone's pay.</b> Taking back pay already earned runs into wage-law trouble. Pay is earned on cash received, so there is nothing to claw back.</li>
@@ -189,7 +185,7 @@
 </section>
 
 <section class="wrap" data-sec="spec" style="padding-top:12px">
-  <h2>BA specification</h2>
+  <h2>How it was built, and how it's tested</h2>
   <div class="src1"><b>Discount controls</b><p>The seven controls, their risk and control matrix, and the rules with effective dates live in the app, each one testable: <a href="app.html#controls">open the controls</a> · download the matrix and the weekly control MIS from "For finance, tax and audit". 63 tests cover the rules (35 engine, 28 controls).</p></div>
   <h3 style="margin:18px 0 8px;font-size:1rem">Approval desk: what gets done first, who is allowed to say yes, and how you prove it</h3>
   <div style="background:#fff;border:1px solid #ECE7E1;border-radius:14px;padding:16px">
