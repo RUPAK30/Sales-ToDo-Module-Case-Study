@@ -21,13 +21,31 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
     const raw = { l: lostAmt / K.spent * 100, g: K.gstAtRisk / K.spent * 100, s: K.short / K.spent * 100 };
     const n = { l: Math.round(raw.l), g: Math.round(raw.g), s: Math.round(raw.s) };
     const stake = Math.round((lostAmt + K.gstAtRisk + K.short) / K.spent * 100); n.l += stake - (n.l + n.g + n.s);
-    const seq = [...Array(n.l).fill('l'), ...Array(n.g).fill('g'), ...Array(n.s).fill('s')]; while (seq.length < 100) seq.push('k');
+    n.k = 100 - n.l - n.g - n.s;
+    // An isometric block of ₹100, drawn in the same hairline style as the figures below it, cut into four slabs.
+    const C = Math.cos(Math.PI / 6), S = 0.5, W = 64, D = 64, U = 1.25; // U = px of height per rupee
+    const P = (x, y, z) => `${(62 + (x - y) * C).toFixed(1)},${(148 + (x + y) * S - z).toFixed(1)}`;
+    const box = (z0, h) => {
+      const z1 = z0 + h;
+      return `<path class="sf sf-l" d="M${P(0, D, z0)} L${P(W, D, z0)} L${P(W, D, z1)} L${P(0, D, z1)}Z"/>
+        <path class="sf sf-r" d="M${P(W, 0, z0)} L${P(W, D, z0)} L${P(W, D, z1)} L${P(W, 0, z1)}Z"/>
+        <path class="sf sf-t" d="M${P(0, 0, z1)} L${P(W, 0, z1)} L${P(W, D, z1)} L${P(0, D, z1)}Z"/>`;
+    };
+    const order = [['k', 'comes back'], ['s', 'paid short'], ['g', 'GST waiting'], ['l', 'lost']];
+    let z = 0, gap = 3, out = '';
+    order.forEach(([c, name], idx) => {
+      const h = Math.max(4, n[c] * U), mid = z + h / 2, [lx, ly] = P(W, 0, mid).split(',').map(Number);
+      out += `<g class="sl sl-${c}" style="--i:${idx}">${box(z, h)}<path class="ld" d="M${lx + 2},${ly} h14"/><text x="${lx + 19}" y="${ly + 3.5}"><tspan class="tn">₹${n[c]}</tspan> ${name}</text></g>`;
+      z += h + gap;
+    });
+        const host = document.getElementById('coins');
+    host.className = 'slabs'; host.setAttribute('aria-label', `A block of ₹100 cut into four slabs: ₹${n.k} comes back, ₹${n.s} paid short, ₹${n.g} GST waiting, ₹${n.l} lost`);
+    host.innerHTML = `<svg viewBox="0 -6 250 226" aria-hidden="true">${out}</svg>`;
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    box.innerHTML = seq.map((c, i) => `<i class="c c-${c}" style="--d:${calm ? 0 : (i % 10) * 22 + Math.floor(i / 10) * 45}ms;--d2:${calm ? 0 : (99 - i) * 9}ms"></i>`).join('');
-    const go = () => { box.classList.add('in'); setTimeout(() => box.classList.add('sorted'), calm ? 0 : 1300); };
-    if (calm || !('IntersectionObserver' in window)) go(); else { const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }); io.observe(box); }
+    const go = () => host.classList.add('in');
+    if (calm || !('IntersectionObserver' in window)) go(); else { const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }); io.observe(host); }
     document.querySelectorAll('.mny-g [data-seg]').forEach(t => {
-      const on = () => box.dataset.hi = t.dataset.seg, off = () => delete box.dataset.hi;
+      const hostEl = document.getElementById('coins'); const on = () => hostEl.dataset.hi = t.dataset.seg, off = () => delete hostEl.dataset.hi;
       t.addEventListener('mouseenter', on); t.addEventListener('mouseleave', off); t.addEventListener('focus', on); t.addEventListener('blur', off);
     });
   }

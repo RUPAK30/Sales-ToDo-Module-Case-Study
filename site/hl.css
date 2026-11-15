@@ -47,3 +47,22 @@
 .coins[data-hi=l] .c-l,.coins[data-hi=g] .c-g,.coins[data-hi=s] .c-s,.coins[data-hi=k] .c-k{opacity:1!important;transform:translateY(-2px) scale(1.12)!important}
 .mny-g [data-seg=k]::before{background:radial-gradient(circle at 35% 30%,#FFF7D6 0 18%,#F2C94C 45%,#B8860B 100%)!important;box-shadow:none!important}
 @media(max-width:420px){.coins{grid-template-columns:repeat(10,10px)!important;gap:2px!important}.coins .c{width:10px!important;height:10px!important}}
+/* v3: the ₹100 block, drawn like the Hairline figures (replaces the coins) */
+.slabs{flex:0 0 215px;width:215px;padding:0!important;background:none!important;border:0!important;display:block!important}
+.slabs svg{width:100%;height:auto;display:block;overflow:visible}
+.slabs .sf{stroke:#A8A29E;stroke-width:.9;stroke-linejoin:round;vector-effect:non-scaling-stroke;transition:stroke .25s,fill .25s}
+.slabs .sf-t{fill:#fff}.slabs .sf-l{fill:#F6F3EF}.slabs .sf-r{fill:#ECE7E1}
+.slabs .sl-k .sf{stroke:var(--acc-d,#2F5240)}.slabs .sl-k .sf-t{fill:var(--acc-soft,#EEF4EC)}
+.slabs .ld{stroke:#C9C2BA;stroke-width:.8;stroke-dasharray:2 2}
+.slabs text{font:500 10.5px Inter,system-ui,sans-serif;fill:#78716C}
+.slabs .tn{font-weight:700;font-size:12.5px}
+.slabs .sl-l .tn{fill:#B91C1C}.slabs .sl-g .tn{fill:#B45309}.slabs .sl-s .tn{fill:#E11D48}.slabs .sl-k .tn{fill:var(--acc-d,#2F5240)}
+.slabs .sl{opacity:0;transform:translateY(-26px);transition:opacity .45s ease calc(var(--i)*160ms),transform .7s cubic-bezier(.2,1.4,.4,1) calc(var(--i)*160ms)}
+.slabs.in .sl{opacity:1;transform:none}
+.slabs[data-hi] .sl{opacity:.35}
+.slabs[data-hi] .sl:is(.sl-l,.sl-g,.sl-s,.sl-k){transition-delay:0ms}
+.slabs[data-hi=l] .sl-l,.slabs[data-hi=g] .sl-g,.slabs[data-hi=s] .sl-s,.slabs[data-hi=k] .sl-k{opacity:1;transform:translate(-8px,-4px)}
+.slabs[data-hi=l] .sl-l .sf,.slabs[data-hi=g] .sl-g .sf,.slabs[data-hi=s] .sl-s .sf{stroke:#44403C}
+.mny-g [data-seg]::before{display:none}.mny-g [data-seg]{padding-left:12px!important}
+@media(max-width:420px){.slabs{flex-basis:150px;width:150px}}
+@media(prefers-reduced-motion:reduce){.slabs .sl{transition:none;opacity:1;transform:none}}
