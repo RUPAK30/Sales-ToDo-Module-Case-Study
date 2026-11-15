@@ -13,7 +13,7 @@ const lost = K.rows.filter(x => x.d.approvedBy && x.r.economics.net < 0), lostAm
 const lostSpend = lost.reduce((a, x) => a + x.r.economics.discount, 0), badShare = Math.round(lostSpend / K.spent * 100);
 const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
 const lakh = n => '₹' + (n / 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' lakh';
-set('#m-spent', lakh(K.spent)); set('#m-stake', lakh(lostAmt + K.gstAtRisk + K.short)); set('#m-lost', inr(lostAmt)); set('#m-gst', inr(K.gstAtRisk)); set('#m-short', inr(K.short));
+set('#m-spent', lakh(K.spent)); set('#m-stake', '₹' + Math.round((lostAmt + K.gstAtRisk + K.short) / K.spent * 100)); set('#m-abs', lakh(lostAmt + K.gstAtRisk + K.short)); set('#m-lost', inr(lostAmt)); set('#m-gst', inr(K.gstAtRisk)); set('#m-short', inr(K.short));
 set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
 { const h = $('#hook'); if (h) h.addEventListener('click', () => { const back = Math.round(K.earned / K.spent * 100); h.setAttribute('aria-expanded', 'true'); h.classList.add('open');
   set('#hook-v', `₹${back}`); set('#hook-s', `On 10 sample discounts, every ₹100 given back brought only ₹${back} of extra profit. Ten Today shows this before anyone says yes.`); }); }
