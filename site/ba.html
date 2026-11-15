@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="palette.js?v=1794600101"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BA pack · Ten Today discount controls</title>
+<meta name="description" content="The business analysis behind Ten Today: one-page BRD, as-is and to-be process, stakeholder map, user stories with acceptance criteria, UAT cases that run live against the rule engine, traceability and a data dictionary.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="product.css">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="tabs.css?v=1794600151">
+<style>
+.ba{max-width:980px;margin:0 auto;padding:22px 18px 80px}
+.ba h1{font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.02em;margin:6px 0 8px}
+.ba .lede{color:#57534E;max-width:720px;margin:0 0 16px}
+.chips{position:sticky;top:58px;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:8px 0;background:rgba(255,255,255,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.chips a{flex:0 0 auto;font:600 .8rem Inter,sans-serif;padding:7px 12px;border-radius:999px;border:1px solid #ECE7E1;background:#fff;color:#1C1917;text-decoration:none}
+.chips a:hover{border-color:#A8A29E}
+.bs{background:#fff;border:1px solid #ECE7E1;border-radius:16px;padding:18px 18px 14px;margin:16px 0;scroll-margin-top:110px}
+.bs h2{font-size:1.15rem;margin:0 0 4px}.bs .k{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78716C;margin:0}
+.bs p,.bs li{font-size:.9rem;line-height:1.5}
+.tw{overflow-x:auto}
+.bs table{width:100%;border-collapse:collapse;font-size:.82rem}
+.bs th{text-align:left;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:#78716C;padding:7px 6px;border-bottom:1px solid #ECE7E1;white-space:nowrap}
+.bs td{padding:8px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
+.bs code{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.76rem;background:#F5F2EE;padding:1px 5px;border-radius:5px}
+.g2{display:grid;gap:12px}@media(min-width:760px){.g2{grid-template-columns:1fr 1fr}}
+.flow{display:flex;flex-direction:column;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+.ba .flow li{margin:0!important;width:auto!important;text-align:left!important;display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:start;border:1px solid #F0EBE5;border-radius:10px;padding:8px 10px;background:#FCFBFA}
+.flow b.who{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#57534E}
+.flow li.gap{border-color:#FECACA;background:#FEF2F2}.flow li.ctl{border-color:#BBF7D0;background:#F0FDF4}
+.flow .tag{display:inline-block;font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:5px;margin-left:4px;background:#111827;color:#fff}
+.pill{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:6px}
+.pill.ok{background:#DCFCE7;color:#15803D}.pill.no{background:#B91C1C;color:#fff}.pill.wt{background:#F5F2EE;color:#57534E}
+.run{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 10px}
+.run .sum{font-size:.85rem;font-weight:600}
+.note{font-size:.78rem!important;color:#78716C}
+@media(max-width:640px){.bs{padding:14px 12px}.flow li{grid-template-columns:1fr}.hide-s{display:none}}
+</style></head>
+<body>
+<header class="appbar tt-head"><div class="in"><nav class="l" aria-label="Pages"><a href="./">Case study</a><a href="app.html#controls">Discount controls</a><a href="ba.html" class="on">BA pack</a></nav><a class="logo" href="./" aria-label="Ten Today home"><span class="tt-wm">ten today<svg class="tt-tick" viewBox="0 0 28 18" aria-hidden="true"><path d="M2 10h5l4 5L26 2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a><nav class="r" aria-label="Product"><a href="app.html#controls/walk" class="pri hide-s">▶ Walkthrough</a><a href="app.html#controls" class="pri">Try the product</a></nav></div></header>
+
+<main class="ba">
+<p class="k" style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78716C;margin:0">Business analysis · the paper trail behind the product</p>
+<h1>BA pack: discount controls</h1>
+<p class="lede">The same set I wrote at HDFC Bank for every release: requirement, process, stakeholders, stories, UAT, traceability, data. The UAT here isn't a static table. Press <b>Run UAT</b> and each case runs against the real rule engine in your browser.</p>
+
+<nav class="chips" aria-label="BA pack sections"><a href="#brd">1 · BRD</a><a href="#process">2 · As-is → To-be</a><a href="#people">3 · Stakeholders</a><a href="#stories">4 · User stories</a><a href="#uat">5 · UAT (live)</a><a href="#trace">6 · Traceability</a><a href="#data">7 · Data dictionary</a></nav>
+
+<section class="bs" id="brd"><p class="k">1 · Business requirement document (one page)</p><h2>Every rupee given back after a sale is checked before and after it leaves</h2>
+<div class="g2">
+<div><p><b>Problem.</b> Brands give money back to retailers after a sale: price cuts, promotion payouts, early-payment discounts, damage claims. Today it moves on email and spreadsheets. Nobody checks whether it paid for itself, whether the tax cut is valid, whether the retailer reversed its input tax, or whether the cash matches.</p>
+<p><b>Why now.</b> From 1 Nov 2026 the GST rules for post-sale discounts changed (Notification 03/2026-CT). A credit note for FY 2025-26 must be issued by the earlier of 30 Nov 2026 or the GSTR-9 filing date, or the tax cut is lost.</p>
+<p><b>Who it hurts.</b> Finance (money out without proof), tax (output tax cut that later gets reversed), receivables (short payments nobody can explain), auditors (no trail).</p></div>
+<div><p><b>In scope.</b> Request, approval, classification, tax route, recovery through IMS, cash match, sealed evidence, weekly sign-off, MIS.</p>
+<p><b>Out of scope.</b> Filing returns, e-invoice generation, live ERP or GSTN connection, pricing strategy.</p>
+<p><b>Success metric (north star).</b> Rupees recovered or justified per ₹1 of discount given. Sample desk: <b>₹0.81</b>. Guardrail: zero discounts approved by the person who asked for them.</p>
+<p><b>Assumptions.</b> Sample margin 51.15% and GST 18% are labelled sample values. Owners are sample roles.</p></div>
+</div></section>
+
+<section class="bs" id="process"><p class="k">2 · Process map</p><h2>As-is vs to-be</h2>
+<div class="g2">
+<div><p><b>As-is</b> <span class="pill no">5 gaps</span></p><ol class="flow">
+<li><b class="who">Sales</b><span>Agrees a % off with the retailer on a call</span></li>
+<li class="gap"><b class="who">Sales</b><span>Emails finance. No break-even, no reason recorded</span></li>
+<li class="gap"><b class="who">Finance</b><span>Approves on trust; sometimes the requester approves</span></li>
+<li class="gap"><b class="who">Accounts</b><span>Issues a GST credit note for everything, ads and damage included</span></li>
+<li class="gap"><b class="who">Retailer</b><span>Ignores or rejects in IMS. Nobody follows up</span></li>
+<li class="gap"><b class="who">Receivables</b><span>Short payment arrives. Nobody can tie it back</span></li></ol></div>
+<div><p><b>To-be with Ten Today</b> <span class="pill ok">7 controls</span></p><ol class="flow">
+<li class="ctl"><b class="who">Sales</b><span>Enters invoice + % + reason; break-even fills in <span class="tag">C1</span></span></li>
+<li class="ctl"><b class="who">Finance</b><span>Different person approves, within limit <span class="tag">C2</span></span></li>
+<li class="ctl"><b class="who">Tax</b><span>Discount vs service vs return decided <span class="tag">C3</span></span></li>
+<li class="ctl"><b class="who">Tax</b><span>Right credit note, before the deadline <span class="tag">C4</span></span></li>
+<li class="ctl"><b class="who">Tax</b><span>Retailer's IMS response tracked; reject → ticket <span class="tag">C5</span></span></li>
+<li class="ctl"><b class="who">Receivables</b><span>Payment matched to approved net <span class="tag">C6</span></span></li>
+<li class="ctl"><b class="who">Audit</b><span>Every step sealed; weekly sign-off <span class="tag">C7</span></span></li></ol></div>
+</div></section>
+
+<section class="bs" id="people"><p class="k">3 · Stakeholder map</p><h2>Who wants what, and what each one fears</h2>
+<div class="tw"><table><thead><tr><th>Stakeholder</th><th>Wants</th><th>Fears</th><th>Influence</th><th>How Ten Today serves them</th></tr></thead><tbody>
+<tr><td><b>Sales (Neha)</b></td><td>Fast yes so the retailer orders more</td><td>Being slowed by finance</td><td>Medium</td><td>Two-input request; everything else auto-filled</td></tr>
+<tr><td><b>Finance controller (Vikram)</b></td><td>Discount pays for itself</td><td>Money out with no proof</td><td>High · approver</td><td>Break-even and buyer record before approval</td></tr>
+<tr><td><b>Tax (Farah)</b></td><td>Valid credit notes, on time</td><td>Output tax cut reversed in audit</td><td>High</td><td>C3–C5, deadline sweep, tickets</td></tr>
+<tr><td><b>Receivables (Asha)</b></td><td>Cash ties to invoices</td><td>Unexplained short payments</td><td>Medium</td><td>C6 cash match with Every Rupee</td></tr>
+<tr><td><b>Auditor</b></td><td>Sample and re-perform</td><td>Edited records</td><td>High · external</td><td>RACM, seeded sample, sealed chain</td></tr>
+<tr><td><b>Retailer</b></td><td>Discount, ITC kept</td><td>Extra work in IMS</td><td>High · customer</td><td>Clear note, one reason per record</td></tr>
+</tbody></table></div>
+<p class="note">RACI per decision is on the <a href="./#sp-raci">case study page</a>.</p></section>
+
+<section class="bs" id="stories"><p class="k">4 · User stories with acceptance criteria</p><h2>One story per control, plus the two rules added last</h2>
+<div class="run"><button class="btn small" id="dl-stories">Download as Jira CSV</button></div>
+<div class="tw"><table><thead><tr><th>ID</th><th>Story</th><th>Acceptance criteria</th></tr></thead><tbody id="stories-b"></tbody></table></div></section>
+
+<section class="bs" id="uat"><p class="k">5 · UAT cases · run live</p><h2>Press run. Each case calls the rule engine.</h2>
+<div class="run"><button class="btn" id="run-uat">▶ Run UAT</button><button class="btn small ghost" id="dl-uat">Download UAT CSV</button><span class="sum" id="uat-sum">Not run yet</span></div>
+<div class="tw"><table><thead><tr><th>ID</th><th>Story</th><th>Given / when</th><th>Expected</th><th>Result</th></tr></thead><tbody id="uat-b"></tbody></table></div>
+<p class="note">The same rules are covered by 65 automated tests in the repo (<code>tests/controls.test.mjs</code>, <code>tests/engine.test.mjs</code>).</p></section>
+
+<section class="bs" id="trace"><p class="k">6 · Traceability matrix</p><h2>Requirement → control → story → UAT → automated test</h2>
+<div class="tw"><table><thead><tr><th>Requirement</th><th>Control</th><th>Story</th><th>UAT</th><th>Automated test</th></tr></thead><tbody id="trace-b"></tbody></table></div></section>
+
+<section class="bs" id="data"><p class="k">7 · Data dictionary</p><h2>The fields, in plain words</h2>
+<div class="tw"><table><thead><tr><th>Field</th><th>Table</th><th>Meaning</th><th>Example</th><th>Rule</th></tr></thead><tbody>
+<tr><td><code>invoice_no</code></td><td>invoices</td><td>The original sale the discount is against</td><td>INV-2603-301</td><td>Must exist; fixes the FY and deadline</td></tr>
+<tr><td><code>value</code></td><td>discounts</td><td>Order value before GST</td><td>₹16,00,000</td><td>&gt; 0</td></tr>
+<tr><td><code>baseline</code></td><td>discounts</td><td>The retailer's usual order: average of its past orders</td><td>₹13,50,000</td><td>Computed, not typed</td></tr>
+<tr><td><code>pct</code></td><td>discounts</td><td>Discount %</td><td>6</td><td>0.5–25</td></tr>
+<tr><td><code>basis</code></td><td>discounts</td><td>Whole order, or only above the usual order</td><td>above</td><td><code>all</code> | <code>above</code></td></tr>
+<tr><td><code>purpose</code></td><td>discounts</td><td>What the money is for</td><td>price</td><td><code>price</code> | <code>promo</code> | <code>damage</code> | <code>early</code></td></tr>
+<tr><td><code>route</code></td><td>credit_notes</td><td>GST credit note or financial credit note</td><td>gst</td><td>Reason required</td></tr>
+<tr><td><code>ims_status</code></td><td>credit_notes</td><td>Retailer's answer in IMS</td><td>accepted</td><td>accepted | rejected | pending</td></tr>
+<tr><td><code>utr</code></td><td>payments</td><td>Bank reference of the payment</td><td>HDFC26111301</td><td>Unique</td></tr>
+<tr><td><code>hash</code></td><td>events</td><td>Fingerprint linking each entry to the previous one</td><td>9f2c…</td><td>Append-only; tamper-evident, not tamper-proof</td></tr>
+</tbody></table></div>
+<p class="note">Full schema with row-level security: <code>db/schema.sql</code>.</p></section>
+
+<p style="text-align:center;margin-top:24px"><a class="btn" href="app.html#controls/ask">Try asking for a discount →</a></p>
+</main>
+
+<script type="module">
+import * as C from './controls.js';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ctx = (today = '2026-11-13') => ({ today, settings: C.SETTINGS, history: C.HISTORY, opened: C.OPENED });
+const ctl = (d, id) => C.evaluate(d, ctx()).controls.find(x => x.id === id);
+const desk = () => C.sampleDesk(), byId = id => desk().find(d => d.id === id);
+const throws = (f, re) => { try { f(); return false; } catch (e) { return re.test(e.message); } };
+const ord = { value: 1200000, baseline: 1000000, pct: 6, margin: 51.15, rate: 18 };
+
+const STORIES = [
+  ['US-01', 'C1', 'Vikram (finance)', 'see the break-even before I approve', 'so I only pay for discounts that earn more than they cost', 'Break-even % shown and sealed before approval; approval before it fails C1'],
+  ['US-02', 'C2', 'Vikram (finance)', 'have a second person approve, within a limit', 'so nobody approves their own discount', 'Self-approval refused; above-limit approval refused'],
+  ['US-03', 'C3', 'Farah (tax)', 'have ad payouts and damage claims kept out of discounts', 'so a service or a return is never booked as a credit note', 'Promo held for review; damage routed to a goods-return note'],
+  ['US-04', 'C4', 'Farah (tax)', 'know the credit note deadline for each invoice', 'so the GST cut is not lost', 'Deadline = earlier of 30 Nov after FY or GSTR-9 date; rule version by date'],
+  ['US-05', 'C5', 'Farah (tax)', 'track the retailer’s IMS answer', 'so a rejection becomes a ticket, not a silent loss', 'Reject fails with tax restored; pending past one period counts as accepted'],
+  ['US-06', 'C6', 'Asha (receivables)', 'match the payment to the approved net', 'so short payments are explained', 'Gap shown against approved net'],
+  ['US-07', 'C7', 'Auditor', 'see if any sealed entry was edited', 'so I can rely on the trail', 'Changing one entry breaks the chain at that entry'],
+  ['US-08', 'C1', 'Vikram (finance)', 'pay the discount only on what the retailer buys above its usual order', 'so I don’t pay for orders that were coming anyway', 'On 12 vs usual 10: discount on 2 only; below usual order pays nothing'],
+  ['US-09', 'C1', 'Neha (sales)', 'mark a discount as early payment', 'so it is judged on faster cash, not on extra boxes', 'No volume test; whole-order basis'],
+];
+const UAT = [
+  ['UAT-01', 'US-01', '6% discount at 51.15% margin', 'Needs 13.3% more sales', () => C.breakEven(6, 51.15) === 13.3],
+  ['UAT-02', 'US-02', 'Neha approves her own request', 'Refused', () => { const d = C.request({ id: 'X', buyer: 'B', invoiceNo: 'I', invoiceDate: '2026-02-01', value: 100000, baseline: 100000, pct: 9, margin: 51.15, rate: 18, purpose: 'price' }, '2026-11-10', 'Neha'); return throws(() => C.approve(d, '2026-11-10', 'Neha', 10), /requester/); }],
+  ['UAT-03', 'US-02', 'Vikram approves 9% with an 8% limit', 'Refused', () => { const d = C.request({ id: 'X', buyer: 'B', invoiceNo: 'I', invoiceDate: '2026-02-01', value: 100000, baseline: 100000, pct: 9, margin: 51.15, rate: 18, purpose: 'price' }, '2026-11-10', 'Neha'); return throws(() => C.approve(d, '2026-11-10', 'Vikram', 8), /above/); }],
+  ['UAT-04', 'US-03', 'A damage claim reaches the desk', 'C3 fails, sends to goods-return note', () => { const c = ctl(byId('D-110'), 'C3'); return c.status === 'fail' && /goods-return note/.test(c.text); }],
+  ['UAT-05', 'US-04', 'Invoice 14 Feb 2026, GSTR-9 not filed', 'Deadline 30 Nov 2026', () => C.deadline({ invoiceDate: '2026-02-14' }, C.SETTINGS).date === '2026-11-30'],
+  ['UAT-06', 'US-04', 'Same invoice, GSTR-9 filed 20 Nov', 'Deadline 20 Nov 2026', () => C.deadline({ invoiceDate: '2026-02-14' }, { gstr9Filed: { '2025-26': '2026-11-20' } }).date === '2026-11-20'],
+  ['UAT-07', 'US-04', 'Note dated 31 Oct vs 1 Nov', 'Rule v1 then v2', () => C.ruleAt('PSD', '2026-10-31').v === 1 && C.ruleAt('PSD', '2026-11-01').v === 2],
+  ['UAT-08', 'US-07', 'Someone edits sealed entry #3', 'C7 fails at #3', () => { const d = structuredClone(byId('D-101')); d.events[2].data.pct = 4; const c = ctl(d, 'C7'); return c.status === 'fail' && /#3/.test(c.text); }],
+  ['UAT-09', 'US-08', '₹12L order, usual ₹10L, 6% off', 'Whole order ₹72,000 · extra only ₹12,000', () => C.discountOf({ ...ord, basis: 'all' }) === 72000 && C.discountOf({ ...ord, basis: 'above' }) === 12000],
+  ['UAT-10', 'US-08', '₹9L order, usual ₹10L, extra-only basis', 'Nothing paid', () => C.discountOf({ ...ord, value: 900000, basis: 'above' }) === 0],
+  ['UAT-11', 'US-09', 'Early-payment request', 'No volume test; basis stays whole order', () => { const r = C.draftRequest(C.INVOICES.at(-1).no, 2, ctx(), C.INVOICES, 'early', 'above'); const c = ctl(C.request({ ...r.fields, id: 'T' }, '2026-11-13', 'Neha'), 'C1'); return r.fields.basis === 'all' && /early-payment/i.test(c.text); }],
+  ['UAT-12', 'US-01', 'Full walkthrough, request to seal', 'All seven controls pass', () => C.evaluate(C.walkthrough('2026-11-13').at(-1).d, ctx()).allPass === true],
+];
+const TRACE = [
+  ['Pay only for discounts that earn back', 'C1', 'US-01, US-08', 'UAT-01, 09, 10', 'break-even = d / (m − d); basis "above"'],
+  ['No self-approval, approval limit', 'C2', 'US-02', 'UAT-02, 03', 'C2 refuses self-approval and above-limit approval'],
+  ['Discount vs service vs return', 'C3', 'US-03', 'UAT-04', 'a damage claim is routed out of the discount flow'],
+  ['Credit note valid and on time', 'C4', 'US-04', 'UAT-05, 06, 07', 's.34(2) deadline…; rules are effective-dated'],
+  ['Retailer reverses its input tax', 'C5', 'US-05', 'automated only', 'C5: rejection fails with the tax restored'],
+  ['Cash matches approved net', 'C6', 'US-06', 'automated only', 'C6 measures the gap against the approved net'],
+  ['Trail cannot be silently edited', 'C7', 'US-07', 'UAT-08', 'C7: changing one sealed entry breaks the chain'],
+  ['Early payment judged on cash, not volume', 'C1', 'US-09', 'UAT-11', 'early payment is a fourth reason'],
+  ['End to end', 'C1–C7', 'all', 'UAT-12', 'walkthrough ends with all seven controls passing'],
+];
+
+$('#stories-b').innerHTML = STORIES.map(([id, c, who, want, why, ac]) => `<tr><td><b>${id}</b><br><span class="pill wt">${c}</span></td><td>As <b>${esc(who)}</b>, I want to ${esc(want)}, ${esc(why)}.</td><td>${esc(ac)}</td></tr>`).join('');
+const drawUat = res => { $('#uat-b').innerHTML = UAT.map(([id, us, given, exp], i) => `<tr><td style="white-space:nowrap"><b>${id}</b></td><td style="white-space:nowrap">${us}</td><td>${esc(given)}</td><td>${esc(exp)}</td><td>${res ? (res[i] ? '<span class="pill ok">Pass</span>' : '<span class="pill no">Fail</span>') : '<span class="pill wt">—</span>'}</td></tr>`).join(''); };
+drawUat(null);
+$('#trace-b').innerHTML = TRACE.map(r => `<tr>${r.map((x, i) => i === 4 ? `<td><code>${esc(x)}</code></td>` : `<td>${esc(x)}</td>`).join('')}</tr>`).join('');
+
+$('#run-uat').onclick = () => {
+  const res = UAT.map(u => { try { return !!u[4](); } catch { return false; } });
+  drawUat(res); const n = res.filter(Boolean).length;
+  $('#uat-sum').textContent = `${n} of ${UAT.length} passed · ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+};
+const csv = (name, rows) => { const b = new Blob([rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' }); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(b), download: name }); a.click(); URL.revokeObjectURL(a.href); };
+$('#dl-stories').onclick = () => csv('ten-today-user-stories.csv', [['Issue Type', 'Summary', 'Description', 'Acceptance Criteria', 'Labels'], ...STORIES.map(([id, c, who, want, why, ac]) => ['Story', `${id} ${want}`, `As ${who}, I want to ${want}, ${why}.`, ac, `ten-today ${c}`])]);
+$('#dl-uat').onclick = () => csv('ten-today-uat.csv', [['UAT ID', 'Story', 'Given / when', 'Expected'], ...UAT.map(u => u.slice(0, 4))]);
+if (new URLSearchParams(location.search).has('run')) $('#run-uat').click();
+</script>
+</body>
+</html>

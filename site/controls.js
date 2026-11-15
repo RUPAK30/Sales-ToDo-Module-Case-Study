@@ -32,7 +32,10 @@ export const RULES = [
 export const ruleAt = (id, date) => RULES.find(r => r.id === id && r.from <= date && (!r.to || date <= r.to)) ?? null;
 
 /* ---------- money ---------- */
-export const discountOf = d => Math.round(d.value * d.pct / 100);
+/* basis 'all' = discount on the whole order; 'above' = only on what the buyer takes above its usual order (the baseline). */
+export const onAll = d => Math.round(d.value * d.pct / 100);
+export const onAbove = d => Math.round(Math.max(0, d.value - d.baseline) * d.pct / 100);
+export const discountOf = d => d.basis === 'above' ? onAbove(d) : onAll(d);
 export const gstOf = d => Math.round(discountOf(d) * d.rate / 100);
 /* Break-even extra volume for a discount d at gross margin m: d / (m − d). */
 export const breakEven = (pct, margin) => Math.round(pct / (margin - pct) * 1000) / 10;
@@ -40,8 +43,9 @@ export function economics(d) {
   const m = d.margin / 100, p = d.pct / 100;
   const upliftPct = Math.round((d.value - d.baseline) / d.baseline * 1000) / 10;
   const extraMargin = Math.max(0, Math.round((d.value - d.baseline) * m));
-  const net = Math.round(d.value * (m - p) - d.baseline * m); // profit with the discount minus profit at the usual order
-  return { discount: discountOf(d), breakEvenPct: breakEven(d.pct, d.margin), upliftPct, extraMargin, net, paidBack: net >= 0, multiple: discountOf(d) ? Math.round(extraMargin / discountOf(d) * 10) / 10 : 0 };
+  const net = Math.round(d.value * m - discountOf(d) - d.baseline * m); // profit with the discount minus profit at the usual order
+  // On 'above', every extra rupee earns margin m and costs only d of it, so any uplift pays: break-even is 0.
+  return { discount: discountOf(d), onAll: onAll(d), onAbove: onAbove(d), saved: onAll(d) - onAbove(d), breakEvenPct: d.basis === 'above' ? 0 : breakEven(d.pct, d.margin), upliftPct, extraMargin, net, paidBack: net >= 0, multiple: discountOf(d) ? Math.round(extraMargin / discountOf(d) * 10) / 10 : 0 };
 }
 export const netDue = d => d.value - discountOf(d); // before GST, like every amount here
 
@@ -158,7 +162,8 @@ export function evaluate(d, ctx) {
   const set = (id, status, text, rupees = 0) => { out[id] = { id, status, text, rupees }; };
   const apv = ev(d, 'approved'), eco = ev(d, 'economics');
   // C1
-  if (!apv) set('C1', 'wait', `Waiting for approval · the buyer must buy ${e.breakEvenPct}% more than usual for this to pay for itself`);
+  if (d.purpose === 'early') { if (!apv) set('C1', 'wait', 'Waiting for approval · early-payment discount: judged on days of cash gained, not on extra sales'); else set('C1', 'pass', 'Early-payment discount: it buys faster cash, not more boxes, so no volume test applies'); }
+  else if (!apv) set('C1', 'wait', `Waiting for approval · the buyer must buy ${e.breakEvenPct}% more than usual for this to pay for itself`);
   else if (eco && eco.n < apv.n) set('C1', 'pass', `Needed ${e.breakEvenPct}% more sales, shown before approval · got ${e.upliftPct}% · ${e.paidBack ? `paid for itself (${e.multiple}× the discount in extra profit)` : `lost ${inr(-e.net)}`}`);
   else set('C1', 'fail', 'Approved before anyone checked if it was worth it', e.discount);
   // C2
@@ -374,14 +379,14 @@ export const INVOICES = [
   ['INV-2603-322', 'Shree Ganesh Agencies', '2026-03-24', 430000],
   ['INV-2603-340', 'Laxmi Wholesale', '2026-03-29', 650000],
 ].map(([no, buyer, date, value]) => ({ no, buyer, date, value }));
-export function draftRequest(invoiceNo, pct, ctx, register = INVOICES, purpose = 'price') {
+export function draftRequest(invoiceNo, pct, ctx, register = INVOICES, purpose = 'price', basis = 'all') {
   const inv = register.find(x => x.no.toLowerCase() === String(invoiceNo).trim().toLowerCase());
   if (!inv) throw new Error(`No invoice ${invoiceNo} in the register. Check the number on the bill.`);
   if (!(pct > 0 && pct <= 25)) throw new Error('Enter a discount between 0.5% and 25%.');
-  if (!['price', 'promo', 'damage'].includes(purpose)) throw new Error('Say what the money is for: a price cut, a promotion payment, or a damage claim.');
+  if (!['price', 'promo', 'damage', 'early'].includes(purpose)) throw new Error('Say what the money is for: a price cut, a promotion payment, a damage claim, or early payment.');
   const past = register.filter(x => x.buyer === inv.buyer && x.date < inv.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 3);
   const baseline = past.length ? Math.round(past.reduce((s, x) => s + x.value, 0) / past.length) : null;
-  const d = { id: null, buyer: inv.buyer, invoiceNo: inv.no, invoiceDate: inv.date, value: inv.value, baseline: baseline ?? inv.value, pct, margin: 51.15, rate: 18, purpose };
+  const d = { id: null, buyer: inv.buyer, invoiceNo: inv.no, invoiceDate: inv.date, value: inv.value, baseline: baseline ?? inv.value, pct, margin: 51.15, rate: 18, purpose, basis: purpose === 'price' ? basis : 'all' };
   const e = economics(d), dl = deadline(d, ctx.settings), br = buyerRecord(ctx, inv.buyer), ads = adOpen(inv.buyer);
   return { fields: d, invoice: inv, pastCount: past.length, hasBaseline: baseline !== null, economics: e, deadline: dl, daysLeft: daysBetween(ctx.today, dl.date), buyer: br,
     ads, adTotal: ads.reduce((s, x) => s + x.amount + x.gst, 0), purpose,

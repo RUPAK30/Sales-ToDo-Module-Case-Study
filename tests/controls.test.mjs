@@ -228,3 +228,25 @@ test('the request says what the money is for, and a damage claim is not priced a
   const netted = C.draftRequest('INV-2603-301', 6, ctx());
   assert.equal(netted.adTotal, 47200, 'the request already shows the open ad invoice');
 });
+
+test('basis "above": discount only on boxes above the usual order (₹12 vs ₹2 rule)', () => {
+  const d = { value: 12, baseline: 10, pct: 100 / 12 * 1, margin: 51.15, rate: 18 };
+  const all = { value: 1200000, baseline: 1000000, pct: 6, margin: 51.15, rate: 18, basis: 'all' };
+  const above = { ...all, basis: 'above' };
+  assert.equal(C.discountOf(all), 72000);
+  assert.equal(C.discountOf(above), 12000);
+  const e = C.economics(above);
+  assert.equal(e.saved, 60000);
+  assert.equal(e.breakEvenPct, 0);
+  assert.ok(C.economics(above).net > C.economics(all).net);
+  assert.equal(C.discountOf({ ...above, value: 900000 }), 0); // below baseline: nothing paid
+  void d;
+});
+
+test('early payment is a fourth reason: no volume test, and basis stays on the whole order', () => {
+  const r = C.draftRequest(C.INVOICES.at(-1).no, 2, ctx(), C.INVOICES, 'early', 'above');
+  assert.equal(r.fields.basis, 'all');
+  const c1 = C.evaluate(C.request({ ...r.fields, id: 'D-T' }, '2026-11-13', 'Neha'), ctx()).controls.find(x => x.id === 'C1');
+  assert.match(c1.text ?? c1.note ?? JSON.stringify(c1), /early-payment/i);
+  assert.throws(() => C.draftRequest(C.INVOICES.at(-1).no, 2, ctx(), C.INVOICES, 'gift'), /early payment/);
+});

@@ -131,18 +131,19 @@ function signHtml() {
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}
     <div class="cr-act"><button class="btn pri" data-a="sign-go" type="button">Sign as Vikram, finance controller</button></div></div>`;
 }
-function askPreview(inv, pct, purpose = 'price') {
+function askPreview(inv, pct, purpose = 'price', basis = 'above') {
   if (!inv || !pct) return '<p class="cr-s">Type an invoice number and a %, and say what the money is for. Ten Today fills in the rest from the invoice register and past orders.</p>';
-  let r; try { r = C.draftRequest(inv, +pct, ctx(), C.INVOICES, purpose); } catch (e) { return `<p class="cr-err">${esc(e.message)}</p>`; }
+  let r; try { r = C.draftRequest(inv, +pct, ctx(), C.INVOICES, purpose, basis); } catch (e) { return `<p class="cr-err">${esc(e.message)}</p>`; }
   const e = r.economics, f = r.fields, p = r.ads.length ? C.payoutSplit(f) : null;
   return `<dl class="ask-pv">
     <dt>Buyer · invoice</dt><dd><b>${esc(f.buyer)}</b> · ${fmt(f.invoiceDate)} · ${inr(f.value)}</dd>
     <dt>Discount</dt><dd><b>${inr(e.discount)}</b> before GST (${inr(r.gst)} GST)</dd>
+    ${purpose === 'price' && r.hasBaseline ? `<dt>Whole order vs extra only</dt><dd>${inr(e.onAll)} vs <b>${inr(e.onAbove)}</b> · ${e.saved > 0 ? `<span class="ok">paying only on the extra saves ${inr(e.saved)}</span>` : 'no extra over the usual order, so nothing is earned on the extra-only basis'}</dd>` : ''}
     <dt>Usual order</dt><dd>${r.hasBaseline ? `${inr(f.baseline)} (average of last ${r.pastCount})` : 'No past orders: break-even shown, extra sales unknown'}</dd>
     <dt>Worth it?</dt><dd>Needs <b>${e.breakEvenPct}%</b> more than usual${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">pays for itself</span>' : `<span class="bad">loses ${inr(-e.net)}</span>`}` : ''}</dd>
     <dt>Buyer record</dt><dd>${r.buyer.recoveryPct === null ? 'No credit notes with this buyer yet' : `Accepted ${r.buyer.accepted} of ${r.buyer.notes} credit notes`}</dd>
     <dt>Tax deadline</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
-    <dt>What it is for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the buyer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the buyer, so it needs its own GST invoice, not a discount note.' : 'A price cut on the invoice value.'}</dd>
+    <dt>What it is for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the buyer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the buyer, so it needs its own GST invoice, not a discount note.' : purpose === 'early' ? 'Early payment: judged on how many days sooner the cash arrives, not on extra sales.' : basis === 'above' ? 'A price cut, only on what the buyer takes above its usual order.' : 'A price cut on the whole invoice value.'}</dd>
   </dl>
   ${p ? `<div class="cr-py"><b>One payout, two things · ${esc(f.invoiceNo)}</b>
     <div><span>Gross sales</span><b>${inr(p.gross)}</b></div>
@@ -157,12 +158,15 @@ function askCard() {
   const p = S.ask?.purpose ?? 'price';
   const opts = [['price', 'Price cut on the bill', 'Money off the price. Nothing else changes.'],
     ['promo', 'Promotion or ad payment', 'A display, a slot, an ad. We bought something from the buyer, so it is a purchase, not a discount.'],
-    ['damage', 'Damage claim', 'Goods came back damaged. That is a return, and it needs a return note, not a discount.']];
+    ['damage', 'Damage claim', 'Goods came back damaged. That is a return, and it needs a return note, not a discount.'],
+    ['early', 'Paid us early', 'Money off for paying before the due date. It buys faster cash, not more boxes, so no volume test.']];
+  const b = S.ask?.basis ?? 'above';
   return `<section class="card ask"><h2>Ask for a discount</h2><p class="sub">Two numbers and one question: what is the money actually for? Everything else is filled in from data Ten Today already has.</p>
     <div class="ask-in"><label>Invoice number<input class="cr-in" id="ask-inv" list="ask-list" placeholder="INV-2603-301" value="${esc(S.ask?.inv ?? '')}" autocomplete="off"></label><label>Discount %<input class="cr-in" id="ask-pct" type="number" min="0.5" max="25" step="0.5" placeholder="6" value="${esc(S.ask?.pct ?? '')}"></label></div>
     <div class="ask-why" role="radiogroup" aria-label="What is the money for?">${opts.map(([v, t, s]) => `<label class="ask-o"><input type="radio" name="ask-purpose" value="${v}"${p === v ? ' checked' : ''}><b>${t}</b><span>${s}</span></label>`).join('')}</div>
+    ${p === 'price' ? `<div class="ask-why" role="radiogroup" aria-label="Discount on which part of the order?"><label class="ask-o"><input type="radio" name="ask-basis" value="above"${b === 'above' ? ' checked' : ''}><b>Only on the extra boxes</b><span>Usual order at full price. The discount applies only above it. Recommended.</span></label><label class="ask-o"><input type="radio" name="ask-basis" value="all"${b === 'all' ? ' checked' : ''}><b>On the whole order</b><span>Every box gets the discount, including the ones the buyer was going to take anyway.</span></label></div>` : ''}
     <datalist id="ask-list">${C.INVOICES.filter(x => x.date >= '2026-03-01').map(x => `<option value="${x.no}">${esc(x.buyer)}</option>`).join('')}</datalist>
-    <div id="ask-pv">${askPreview(S.ask?.inv, S.ask?.pct, p)}</div></section>`;
+    <div id="ask-pv">${askPreview(S.ask?.inv, S.ask?.pct, p, b)}</div></section>`;
 }
 function walkHtml() {
   const s = S.walk.steps[S.walk.i], r = C.evaluate(s.d, ctx()), n = S.walk.steps.length;
@@ -183,12 +187,12 @@ function render() {
   const k = C.desk(S.list, ctx()), sw = C.sweep(S.list, ctx(), '2025-26'), d = cur();
   root.innerHTML = `<div class="cr-top"><div><p class="eyebrow">Discounts given after a sale · GST rules from 1 Nov 2026</p><h1>Is the discount worth it, will the tax saving hold, and can you prove it?</h1>
       <p class="lede">Every discount given after a sale runs through seven checks. A failed check becomes a task (an exception) for a named person with a due date, and every step is sealed so an auditor can trust it. <b>Start with the red number: that is money at risk today.</b></p></div>
-      <div class="cr-tb"><button class="btn pri" data-a="walk" type="button">▶ 90-second walkthrough</button><a class="btn" href="#cover" data-tab="team">Leave &amp; cover →</a></div></div>
+      <div class="cr-tb"><button class="btn pri" data-a="walk" type="button">▶ 90-second walkthrough</button><a class="btn" href="ba.html">📋 BA pack: BRD, process, UAT →</a><a class="btn" href="#cover" data-tab="team">Leave &amp; cover →</a></div></div>
     ${head(k, sw)}
     <div class="cr-g"><div class="cr-col">${askCard()}<section class="card"><h2>Exceptions · ${k.tickets.length}</h2><p class="sub">Each failed check is a ticket, like ServiceNow or JIRA: who owns it, by when (working days), and how much money is at stake.</p>${queue(k)}</section></div>
       <section class="card"><h2>Discounts · ${k.count}</h2><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${x.d.id}</b> ${esc(x.d.buyer)}<span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section></div>
     <section class="card cr-more"><h2>For finance, tax and audit</h2>${signBlock()}<div class="cr-act">
-      <button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
+      <a class="btn" href="ba.html#uat">Run the UAT live →</a><button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
       <label class="cr-s">GSTR-9 for FY 2025-26 filed on <input type="date" class="cr-in" id="cr-g9" value="${S.settings.gstr9Filed['2025-26'] ?? ''}"></label><button class="btn ghost" data-a="reset" type="button">Reset sample</button></div>
       <p class="cr-s" style="margin:8px 0 0"><label><input type="checkbox" id="cr-ei"${S.settings.eInvoice ? ' checked' : ''}> We must report every credit note to the e-invoice system (turnover of ₹10 crore or more). Then the 30-day clock in check 4 applies.</label></p>
       <details class="cr-ru"${innerWidth > 640 ? " open" : ""}><summary>Terms in plain words</summary><dl class="cr-gl">
@@ -238,7 +242,7 @@ function act(a, el) {
     else if (a === 'pack-dl') return download(`audit-pack-${today}.json`, JSON.stringify(S.pack.packs, null, 2), 'application/json');
     else if (a === 'mis') return download(`ten-today-control-mis-${today}.csv`, C.misCsv(S.list, ctx()));
     else if (a === 'racm') return download('ten-today-risk-control-matrix.csv', C.racmCsv());
-    else if (a === 'ask-go') { const r = C.draftRequest(S.ask.inv, +S.ask.pct, ctx(), C.INVOICES, S.ask.purpose ?? 'price'); const id = `D-${101 + S.list.length}`; S.list = [...S.list, C.request({ ...r.fields, id }, today, 'Neha')]; S.sel = id; S.ask = { inv: '', pct: '' }; S.note = `${id} sent to Vikram with the break-even, buyer record and deadline filled in.`; }
+    else if (a === 'ask-go') { const r = C.draftRequest(S.ask.inv, +S.ask.pct, ctx(), C.INVOICES, S.ask.purpose ?? 'price', S.ask.basis ?? 'above'); const id = `D-${101 + S.list.length}`; S.list = [...S.list, C.request({ ...r.fields, id }, today, 'Neha')]; S.sel = id; S.ask = { inv: '', pct: '' }; S.note = `${id} sent to Vikram with the break-even, buyer record and deadline filled in.`; }
     else if (a === 'approve') put(C.approve(d, today, 'Vikram', 8));
     else if (a === 'approve-self') put(C.approve(d, today, 'Neha', 8));
     else if (a === 'sign') { S.sign = true; S.signNotes = {}; }
@@ -260,11 +264,12 @@ document.addEventListener('click', e => {
   const cs = e.target.closest('[data-cs]'); if (cs) { S.signoffs = S.signoffs.map(r => (r.week === cs.dataset.cs ? C.countersign(r, 'Arjun', C.todayIso()) : r)); save(); render(); return; }
   const b = e.target.closest('[data-a]'); if (b) { if (b.dataset.a === 'sign-go') document.querySelectorAll('[data-note]').forEach(i => { (S.signNotes ??= {})[i.dataset.note] = i.value; }); act(b.dataset.a, b); }
 });
-document.addEventListener('input', e => { if (e.target.id === 'ask-inv' || e.target.id === 'ask-pct') { S.ask = { ...(S.ask ?? {}), inv: $('#ask-inv').value, pct: $('#ask-pct').value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct, S.ask.purpose ?? 'price'); } });
+document.addEventListener('input', e => { if (e.target.id === 'ask-inv' || e.target.id === 'ask-pct') { S.ask = { ...(S.ask ?? {}), inv: $('#ask-inv').value, pct: $('#ask-pct').value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct, S.ask.purpose ?? 'price', S.ask.basis ?? 'above'); } });
 document.addEventListener('change', e => {
   if (e.target.id === 'cr-g9') { S.settings.gstr9Filed['2025-26'] = e.target.value || null; save(); render(); }
   else if (e.target.id === 'cr-ei') { S.settings.eInvoice = e.target.checked; save(); render(); }
-  else if (e.target.name === 'ask-purpose') { S.ask = { ...(S.ask ?? {}), purpose: e.target.value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct, S.ask.purpose); }
+  else if (e.target.name === 'ask-purpose') { S.ask = { ...(S.ask ?? {}), purpose: e.target.value }; render(); }
+  else if (e.target.name === 'ask-basis') { S.ask = { ...(S.ask ?? {}), basis: e.target.value }; $('#ask-pv').innerHTML = askPreview(S.ask.inv, S.ask.pct, S.ask.purpose ?? 'price', S.ask.basis); }
 });
 
 /* Deep links: app.html#controls/D-102/C5 · #controls/sweep · #controls/walk */
