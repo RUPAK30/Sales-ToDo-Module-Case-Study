@@ -12,3 +12,20 @@
 .hl-3 figcaption{font-size:.86rem;color:#57534E;line-height:1.45;margin-top:6px}
 .hl-3 figcaption b{display:block;color:#1C1917;font-size:.95rem;margin-bottom:2px}
 @media(max-width:760px){.hl-3{grid-template-columns:1fr}.hl-3 figure{flex-direction:row;gap:12px;align-items:center}.hl-3 .hl{flex:0 0 120px}}
+/* 100 coins in the money card */
+.mny-h2{display:flex;gap:14px;align-items:center}
+.mny-t{min-width:0;font-size:.86rem;color:#57534E;line-height:1.4}.mny-t b{color:#1C1917}
+.mny-k{margin:0 0 2px;font-size:.66rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#78716C}
+.mny-t .mny-big{display:block;margin:0 0 2px}
+.coins{flex:0 0 auto;display:grid;grid-template-columns:repeat(10,10px);gap:3px;padding:8px;border-radius:12px;background:#FAF8F5}
+.coins .c{width:10px;height:10px;border-radius:50%;opacity:0;transform:translateY(-14px) scale(.6);transition:opacity .35s ease var(--d),transform .5s cubic-bezier(.2,1.6,.4,1) var(--d),filter .2s,box-shadow .2s}
+.coins.in .c{opacity:1;transform:none}
+.c-l{background:#DC2626}.c-g{background:#F59E0B}.c-s{background:#FB7185}.c-k{background:#fff;box-shadow:inset 0 0 0 1.5px #86EFAC}
+.coins[data-hi] .c{opacity:.18!important}
+.coins[data-hi=l] .c-l,.coins[data-hi=g] .c-g,.coins[data-hi=s] .c-s,.coins[data-hi=k] .c-k{opacity:1!important;transform:scale(1.18)}
+.mny-g [data-seg]{position:relative;padding-left:22px!important}
+.mny-g [data-seg]::before{content:'';position:absolute;left:9px;top:15px;width:8px;height:8px;border-radius:50%}
+.mny-g [data-seg=l]::before{background:#DC2626}.mny-g [data-seg=g]::before{background:#F59E0B}.mny-g [data-seg=s]::before{background:#FB7185}.mny-g [data-seg=k]::before{background:#fff;box-shadow:inset 0 0 0 1.5px #22C55E}
+.mny-g [data-seg=g] b{color:#B45309!important}.mny-g [data-seg=s] b{color:#E11D48!important}
+@media(max-width:420px){.coins{grid-template-columns:repeat(10,8px);gap:2px;padding:6px}.coins .c{width:8px;height:8px}}
+@media(prefers-reduced-motion:reduce){.coins .c{transition:none;opacity:1;transform:none}}

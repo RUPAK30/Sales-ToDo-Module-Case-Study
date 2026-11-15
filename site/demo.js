@@ -15,6 +15,23 @@ const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
 const lakh = n => '₹' + (n / 100000).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + ' lakh';
 set('#m-spent', lakh(K.spent)); set('#m-stake', '₹' + Math.round((lostAmt + K.gstAtRisk + K.short) / K.spent * 100)); set('#m-abs', lakh(lostAmt + K.gstAtRisk + K.short)); set('#m-lost', inr(lostAmt)); set('#m-gst', inr(K.gstAtRisk)); set('#m-short', inr(K.short));
 set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
+{ // 100 coins: one per rupee of every ₹100 given back
+  const box = document.getElementById('coins');
+  if (box) {
+    const raw = { l: lostAmt / K.spent * 100, g: K.gstAtRisk / K.spent * 100, s: K.short / K.spent * 100 };
+    const n = { l: Math.round(raw.l), g: Math.round(raw.g), s: Math.round(raw.s) };
+    const stake = Math.round((lostAmt + K.gstAtRisk + K.short) / K.spent * 100); n.l += stake - (n.l + n.g + n.s);
+    const seq = [...Array(n.l).fill('l'), ...Array(n.g).fill('g'), ...Array(n.s).fill('s')]; while (seq.length < 100) seq.push('k');
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    box.innerHTML = seq.map((c, i) => `<i class="c c-${c}" style="--d:${calm ? 0 : (i % 10) * 28 + Math.floor(i / 10) * 55}ms"></i>`).join('');
+    const go = () => box.classList.add('in');
+    if (calm || !('IntersectionObserver' in window)) go(); else { const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }); io.observe(box); }
+    document.querySelectorAll('.mny-g [data-seg]').forEach(t => {
+      const on = () => box.dataset.hi = t.dataset.seg, off = () => delete box.dataset.hi;
+      t.addEventListener('mouseenter', on); t.addEventListener('mouseleave', off); t.addEventListener('focus', on); t.addEventListener('blur', off);
+    });
+  }
+}
 { const h = $('#hook'); if (h) h.addEventListener('click', () => { const back = Math.round(K.earned / K.spent * 100); h.setAttribute('aria-expanded', 'true'); h.classList.add('open');
   set('#hook-v', `₹${back}`); set('#hook-s', `On 10 sample discounts, every ₹100 given back brought only ₹${back} of extra profit. Ten Today shows this before anyone says yes.`); }); }
 
