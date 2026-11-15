@@ -26,13 +26,13 @@ function head(k, sw) {
       <div class="${k.gstAtRisk ? 'hot' : ''}"><span>Tax that may not come back</span><b>${inr(k.gstAtRisk)}</b><small>${k.nearest ? `retailers haven't accepted yet · ${k.nearest.days} days to ${fmt(k.nearest.date)}` : 'Nothing open'}</small></div>
       <div class="${k.short ? 'hot' : ''}"><span>Paid less than agreed</span><b>${inr(k.short)}</b><small>${k.passAll} of ${k.count} got "yes" to all 7 · ${k.tickets.length} tasks open</small></div>
     </div>
-    ${sw.items.length && sw.daysLeft >= 0 ? `<div class="cr-sw"><div><b>Last chance: ${inr(sw.total)} of tax on last year's bills (FY ${sw.fy}) is not safe yet. ${sw.daysLeft} day${sw.daysLeft === 1 ? '' : 's'} left, until ${fmt(sw.deadline)}.</b><span>After that date, a credit note (a "minus bill" that also lowers tax) can no longer cut tax on these bills. That cut-off has a name in the law, s.34(2). Only a financial credit note is left: the money goes back, the tax stays.</span></div><button class="btn" data-a="sweep" type="button">${S.sweep ? 'Hide' : 'See'} the ${sw.items.length}</button></div>
+    ${sw.items.length && sw.daysLeft >= 0 ? `<div class="cr-sw"><div><b>Last chance: ${inr(sw.total)} of GST on last year's bills is not safe yet. ${sw.daysLeft} day${sw.daysLeft === 1 ? '' : 's'} left (${fmt(sw.deadline)}).</b><span>After that, you can still give the money back, but you can't get the GST back on it (the law: s.34(2)).</span></div><button class="btn" data-a="sweep" type="button">${S.sweep ? 'Hide' : 'See'} the ${sw.items.length}</button></div>
     ${S.sweep ? `<div class="tbl"><table><thead><tr><th>Discount</th><th>Retailer</th><th>Invoice</th><th>GST at risk</th><th>What's blocking it</th></tr></thead><tbody>${sw.items.map(x => { const b = x.r.controls.find(c => c.status !== 'pass' && ['C2', 'C3', 'C4', 'C5'].includes(c.id)); return `<tr><td><button class="btn link" data-sel="${x.d.id}" type="button">${x.d.id}</button></td><td>${esc(x.d.buyer)}</td><td>${esc(x.d.invoiceNo)} · ${fmt(x.d.invoiceDate)}</td><td><b>${inr(x.r.gstAtRisk)}</b></td><td>${b ? `${b.id} · ${esc(b.text)}` : '—'}</td></tr>`; }).join('')}</tbody></table></div>` : ''}` : ''}
-    <div class="cr-wf" aria-label="Where the discount money went">
+    <details class="cr-more-d"><summary>How these numbers add up</summary><div class="cr-wf" aria-label="Where the discount money went">
       ${bar('Money given back', -k.spent, 'neg', '−')}${bar('Profit from extra sales', k.earned, 'pos', '+')}${bar('Tax that may not come back', -k.gstAtRisk, 'neg', '−')}${bar('Paid less than agreed', -k.short, 'neg', '−')}
       <div class="cr-wf-r tot"><span>Where you end up if every risk comes true</span><div></div><b class="${k.net - k.gstAtRisk - k.short >= 0 ? 'pos' : 'neg'}">${k.net - k.gstAtRisk - k.short >= 0 ? '+' : '−'}${inr(Math.abs(k.net - k.gstAtRisk - k.short))}</b></div>
       <p class="cr-fn">How it's worked out: profit from extra sales = (this order − the retailer's usual order) × 51.15% gross margin (HUL FY25, used as an example). Net = profit on this order after the discount − profit the usual order would have made. Sample data.</p>
-    </div>`;
+    </div></details>`;
 }
 
 function queue(k) {
@@ -65,7 +65,7 @@ function actions(d, r) {
 /* The retailer refused. Three ways out, three different rupee outcomes. */
 function routes(d) {
   if (d.ims !== 'rejected') return '';
-  return `<div class="cr-rt"><b>Three ways to fix a rejection</b><ol>${C.recoveryRoutes(d).map(([t, s]) => `<li><b>${esc(t)}</b><span>${esc(s)}</span></li>`).join('')}</ol></div>`;
+  return `<details class="cr-rt"><summary><b>Three ways to fix a rejection</b> (for the tax team)</summary><ol>${C.recoveryRoutes(d).map(([t, s]) => `<li><b>${esc(t)}</b><span>${esc(s)}</span></li>`).join('')}</ol></details>`;
 }
 
 /* One payout, two things inside it. The number an accounts person recognises from their own month. */
@@ -85,7 +85,7 @@ function detail(d, k) {
   const r = k.rows.find(x => x.d.id === d.id).r, e = r.economics, br = C.buyerRecord(ctx(), d.buyer), tk = r.tickets[0];
   const prev = tk ? (S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk)) : null;
   return `<div class="cr-d">
-    <div class="cr-dh"><div><p class="eyebrow">${d.id} · ${esc(d.invoiceNo)} · invoice ${fmt(d.invoiceDate)}</p><h3>${esc(d.buyer)}: ${d.pct}% = ${inr(e.discount)} before GST</h3>
+    <div class="cr-dh"><div><p class="eyebrow">${d.id} · ${esc(d.invoiceNo)} · invoice ${fmt(d.invoiceDate)}</p><h3>${esc(d.buyer)}: you gave ${inr(e.discount)} back (${d.pct}%)</h3>
       <p class="cr-s">To pay for itself, the retailer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}; they bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">it lost ${inr(-e.net)}</span>`}<br>
       ${br.recoveryPct === null ? 'No credit notes with this retailer yet.' : `This retailer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes on the GST portal, so expect about ${br.recoveryPct}% of the ${inr(r.gst)} tax saving to hold.`} Last date for the tax credit note: ${fmt(r.deadline.date)}.</p></div>
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
@@ -94,7 +94,7 @@ function detail(d, k) {
     ${payout(d)}
     ${routes(d)}
     ${actions(d, r)}
-    ${prev ? ticketCard(tk, prev) : ''}
+    ${prev ? `<details class="cr-more-d"><summary>See this as a ServiceNow or JIRA ticket</summary>${ticketCard(tk, prev)}</details>` : ''}
   </div>`;
 }
 
@@ -201,15 +201,16 @@ function render() {
     <p class="st1-f">If any answer is "no", it becomes a task for one named person, with a due date and the rupees at stake. Below: the same seven questions across all 10 retailers you gave money back to.</p></section>
     <h2 class="st1-h">Your 10 retailers this year</h2>
     ${head(k, sw)}
-    <div class="cr-g"><div class="cr-col">${askCard()}<section class="card"><h2>Tasks · ${k.tickets.length}</h2><p class="sub">Every "no" becomes a ticket, like ServiceNow or JIRA: who owns it, by when (working days), and the rupees at stake.</p>${queue(k)}</section></div>
-      <section class="card"><h2>Retailers · ${k.count}</h2><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${esc(x.d.buyer)}</b> <small style="color:#78716C">${x.d.id}</small><span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section></div>
+    <section class="card"><h2>Pick a retailer to see its seven answers</h2><p class="sub">Green = yes, red = no, yellow = waiting.</p><div class="cr-l">${k.rows.map(x => `<button type="button" data-sel="${x.d.id}" class="${x.d.id === d.id ? 'on' : ''}" aria-pressed="${x.d.id === d.id}"><b>${esc(x.d.buyer)}</b> <small style="color:#78716C">${x.d.id}</small><span>${x.r.controls.map(c => `<i class="${c.status}" title="${c.id} ${c.status}"></i>`).join('')}</span></button>`).join('')}</div>${detail(d, k)}</section>
+    <details class="cr-more-d card"><summary>Try it yourself: ask for a discount</summary>${askCard()}</details>
+    <details class="cr-more-d card"><summary>Every "no" as a task · ${k.tickets.length} open</summary><p class="sub">Each one has an owner, a due date in working days, and the rupees at stake, like a ServiceNow or JIRA ticket.</p>${queue(k)}</details>
     <div class="one-flow" style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:14px 0;padding:12px;border:1px solid #ECE7E1;border-radius:14px;background:#fff">
   <a href="app.html#today" style="text-decoration:none;color:#1C1917;padding:8px 10px;border-radius:10px;"><small style="display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C">① Before the sale · Today desk</small><b>Each rep's top-10 to-do.</b> A discount on the price is asked for here; the sales manager (Kavita) approves.</a>
   <a href="app.html#controls" style="text-decoration:none;color:#1C1917;padding:8px 10px;border-radius:10px;background:#F5F2EE;"><small style="display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C">② After the sale · Discount controls</small><b>Money given back later.</b> Rebates and credit notes; finance (Vikram) approves and seven checks run.</a>
   <a href="https://everyrupee-o2c.vercel.app/" style="text-decoration:none;color:#1C1917;padding:8px 10px;border-radius:10px"><small style="display:block;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C">③ When cash arrives · Every Rupee ↗</small><b>Payment matched.</b> A short payment becomes a task, and a rep with one open can't ask for a new discount.</a>
 </div>
 
-    <section class="card cr-more"><h2>For finance, tax and audit</h2>${signBlock()}<div class="cr-act">
+    <details class="cr-more-d card"><summary>For finance, tax and audit: sign-off, reports, rules</summary><section class="cr-more">${signBlock()}<div class="cr-act">
       <a class="btn" href="ba.html#uat">Run the UAT live →</a><button class="btn" data-a="sample" type="button">Pick 5 at random, like an auditor</button><button class="btn" data-a="mis" type="button">Weekly report of the checks (CSV)</button><button class="btn" data-a="racm" type="button">Risk and control matrix: what can go wrong, which check stops it (CSV)</button>
       <label class="cr-s">GSTR-9 for FY 2025-26 filed on <input type="date" class="cr-in" id="cr-g9" value="${S.settings.gstr9Filed['2025-26'] ?? ''}"></label><button class="btn ghost" data-a="reset" type="button">Reset sample</button></div>
       <p class="cr-s" style="margin:8px 0 0"><label><input type="checkbox" id="cr-ei"${S.settings.eInvoice ? ' checked' : ''}> We must report every credit note to the e-invoice system (turnover of ₹10 crore or more). Then the 30-day clock in check 4 applies.</label></p>
@@ -230,7 +231,7 @@ function render() {
       </dl></details>
       <details class="cr-ru"><summary>Rules in force, with effective dates · ${C.RULES.length}</summary><div class="tbl"><table><thead><tr><th>Rule</th><th>From</th><th>To</th><th>What it says</th><th>Source</th></tr></thead><tbody>${C.RULES.map(r => `<tr><td><b>${r.id} v${r.v}</b><br><small>${esc(r.name)}</small></td><td>${fmt(r.from)}</td><td>${r.to ? fmt(r.to) : 'in force'}</td><td>${esc(r.text)}</td><td><small>${esc(r.src)}</small></td></tr>`).join('')}</tbody></table></div><p class="cr-s">Rules change, so each decision is judged by the version in force on its date: a note issued on 28 Oct follows the old rule (v1), one issued on 2 Nov the new one (v2).</p></details>
       <details class="cr-ru"><summary>Risk and control matrix · C1–C7</summary><div class="tbl"><table><thead><tr><th>Control</th><th>Risk</th><th>Control activity</th><th>Type · frequency</th><th>Owner</th><th>Evidence</th><th>Test</th></tr></thead><tbody>${C.RACM.map(r => `<tr><td><b>${r[0]}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}<br><small>${esc(r[4])}</small></td><td>${esc(r[5])}</td><td>${esc(r[6])}</td><td>${esc(r[7])}</td></tr>`).join('')}</tbody></table></div></details>
-      <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal, ServiceNow or JIRA: finance records what the retailer did on the portal, and tickets are previews. Sample buyers and figures.</p></section>
+      <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal, ServiceNow or JIRA: finance records what the retailer did on the portal, and tickets are previews. Sample retailers and figures.</p></section></details>
     ${S.walk ? walkHtml() : ''}${S.pack ? packHtml() : ''}${S.sign ? signHtml() : ''}`;
 }
 

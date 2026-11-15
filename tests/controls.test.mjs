@@ -196,7 +196,7 @@ test('C4: an unreported credit note waits, then fails when the 30-day e-invoice 
 test('accepted by silence is a pass on C5 but leaves the audit pack short of the buyer\'s word', () => {
   const late = C.evaluate(byId('D-106'), ctx('2027-01-25'));
   assert.equal(late.controls[4].status, 'pass');
-  assert.match(late.controls[4].text, /never confirmed/);
+  assert.match(late.controls[4].text, /no written yes/);
   assert.equal(late.controls[6].status, 'wait');
   assert.match(late.controls[6].text, /accepted by silence/);
 });

@@ -41,7 +41,7 @@ if (root) {
     [['ok', 'All 7 checks pass. Every step is fingerprinted, so any later change would show.']],
   ];
   let typing = null, i = 0, timer = null, inView = false, manual = false, started = false, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const PLAIN = { C1: 'Worth it?', C2: 'Right person said yes?', C3: 'Really a discount?', C4: 'Paperwork right and on time?', C5: 'Retailer accepted?', C6: 'Right money arrived?', C7: 'Record untouched?' };
+  const PLAIN = { C1: 'Worth it?', C2: 'Right person?', C3: 'Really a price cut?', C4: 'Paperwork on time?', C5: 'Retailer accepted?', C6: 'Right money?', C7: 'Record untouched?' };
   const T = { me: '4:12 pm ✓✓', them: '4:20 pm', buyer: '4:31 pm' };
   const bubble = ([k, a, b]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}<span class="tm">${T[k] ?? ''}</span></div></div>`;
   function draw(anim) {

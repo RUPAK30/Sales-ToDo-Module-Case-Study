@@ -188,20 +188,20 @@ export function evaluate(d, ctx) {
   else if (d.cnOn > dl.date) set('C4', 'fail', `Credit note dated ${d.cnOn}, after the ${dl.date} deadline`, gst);
   else if (psd.v === 1 && !d.priorAgreement) set('C4', 'fail', `${d.cnNo} was issued on ${d.cnOn}, before the 1 Nov rule change, with no prior agreement, so it doesn't count. Reissue it now under the new rule`, gst);
   else if (ctx.settings.eInvoice && !d.reportedOn) { const by = reportBy(d.cnOn); set('C4', today > by ? 'fail' : 'wait', today > by ? `${d.cnNo} was never reported to the e-invoice system and the 30-day window closed on ${by}. The portal will reject it, so the tax cut never reaches the retailer` : `${d.cnNo} must be reported to the e-invoice system by ${by}: 30 days from ${d.cnOn}, ${daysBetween(today, by)} left`, today > by ? gst : 0); }
-  else set('C4', 'pass', `GST credit note ${d.cnNo} on ${d.cnOn}, valid under the ${psd.v === 2 ? 'new (1 Nov 2026)' : 'old'} rule${d.reportedOn ? `, reported to the e-invoice system on ${d.reportedOn}` : ''}`);
+  else set('C4', 'pass', `Credit note ${d.cnNo} sent on ${d.cnOn}, under the ${psd.v === 2 ? 'new (1 Nov 2026)' : 'old'} rule, before the deadline${d.reportedOn ? `, and reported to the e-invoice system on ${d.reportedOn}` : ''}`);
   // C5 — the retailer's clock, and what to do when they refuse
   if (d.route !== 'gst' || out.C4.status === 'fail' || !d.cnNo) set('C5', d.route === 'gst' ? 'wait' : 'pass', d.route === 'gst' ? 'Waiting for a valid credit note first' : 'Nothing for the retailer to approve');
-  else if (d.ims === 'accepted') set('C5', 'pass', `${d.buyer} accepted it on the GST portal on ${d.imsOn}: the ${inr(gst)} tax saving is safe`);
-  else if (d.ims === 'rejected') set('C5', 'fail', `${d.buyer} rejected it on the GST portal: "${d.imsRemark}". The ${inr(gst)} tax saving is lost unless you fix and reissue, or settle with a financial credit note`, gst);
+  else if (d.ims === 'accepted') set('C5', 'pass', `${d.buyer} accepted it on the GST portal on ${d.imsOn}: your ${inr(gst)} of GST is safe`);
+  else if (d.ims === 'rejected') set('C5', 'fail', `${d.buyer} rejected it on the GST portal: "${d.imsRemark}". So you lose ${inr(gst)} of GST and they keep it, unless the note is fixed and they accept it`, gst);
   else {
     const by = imsActionBy(d.cnOn), till = imsPendingExpires(d.cnOn);
-    if (today > till) set('C5', 'pass', `Nobody replied by ${till}, so it counts as accepted. But the retailer never confirmed it: legally fine, no acknowledgement in the pack`);
+    if (today > till) set('C5', 'pass', `No reply by ${till}, so the law counts it as accepted. Fine, but there's no written yes from the retailer in the file`);
     else if (today > by) set('C5', 'wait', `Kept pending past ${by}, so the retailer can still act until ${till}. Nothing is safe yet`);
     else set('C5', 'wait', `Waiting for the retailer on the GST portal until ${by} (their GSTR-3B date), and until ${till} if they mark it pending`);
   }
   // C6
   if (d.received == null) set('C6', 'wait', `Waiting for ${inr(netDue(d))} (before GST)`);
-  else if (d.received >= netDue(d)) set('C6', 'pass', `${inr(d.received)} received, exactly what was agreed`);
+  else if (d.received >= netDue(d)) set('C6', 'pass', `${inr(d.received)} received: the bill minus the agreed discount, to the rupee`);
   else set('C6', 'fail', `${inr(netDue(d) - d.received)} less than agreed`, netDue(d) - d.received);
   // C7
   const chain = verify(d), needed = ['requested', 'economics', ...(apv ? ['approved'] : []), ...(d.route ? ['route'] : []), ...(d.cnNo ? ['credit note'] : []), ...(d.received != null ? ['payment'] : [])];
@@ -209,7 +209,7 @@ export function evaluate(d, ctx) {
   if (!chain.ok) set('C7', 'fail', `Step #${chain.at} (${chain.what}) was changed after it was recorded`, e.discount);
   else if (missing.length) set('C7', 'fail', `Missing: ${missing.join(', ')}`);
   else if (d.route === 'gst' && d.cnNo && d.ims !== 'accepted' && today > imsPendingExpires(d.cnOn)) set('C7', 'wait', `${chain.count} steps recorded, none changed. But the retailer's acceptance is missing: this one was only accepted by silence, so the pack has no proof the retailer agreed`);
-  else set('C7', 'pass', `${chain.count} recorded steps, none changed`);
+  else set('C7', 'pass', `${chain.count} steps recorded, none changed since`);
 
   const controls = CONTROLS.map(([id, name, what]) => ({ ...out[id], name, what, owner: OWNERS[id] }));
   const tickets = controls.filter(c => c.status === 'fail').map(c => {
