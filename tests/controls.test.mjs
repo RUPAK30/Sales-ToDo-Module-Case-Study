@@ -31,6 +31,14 @@ test('economics are computed, not typed: net = value·(m−d) − baseline·m', 
 
 test('C1 needs the break-even sealed before the approval', () => assert.equal(st(byId('D-101'), 'C1'), 'pass'));
 
+test('C1 names the margin it assumes, so the break-even can be checked by hand', () => {
+  const d = C.approve(C.request({ id: 'M', buyer: 'B', invoiceNo: 'I', invoiceDate: '2026-02-01', value: 1200000, baseline: 1000000, pct: 6, margin: 40, rate: 18, purpose: 'price' }, '2026-11-01', 'Neha'), '2026-11-02', 'Vikram', 8);
+  const c1 = C.evaluate(d, ctx()).controls[0];
+  assert.equal(c1.status, 'pass');
+  assert.match(c1.text, /40% margin/);
+  assert.match(c1.text, /17\.6% more sales/);
+});
+
 test('C2 refuses self-approval and above-limit approval; a back-door entry still fails', () => {
   const d = C.request({ id: 'X', buyer: 'B', invoiceNo: 'I', invoiceDate: '2026-02-01', value: 100000, baseline: 100000, pct: 9, margin: 51.15, rate: 18, purpose: 'price' }, '2026-11-10', 'Neha');
   assert.throws(() => C.approve(d, '2026-11-10', 'Neha', 10), /requester/);

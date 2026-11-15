@@ -31,7 +31,7 @@ function head(k, sw) {
     <details class="cr-more-d"><summary>How these numbers add up</summary><div class="cr-wf" aria-label="Where the discount money went">
       ${bar('Money given back', -k.spent, 'neg', '−')}${bar('Profit from extra sales', k.earned, 'pos', '+')}${bar('Tax that may not come back', -k.gstAtRisk, 'neg', '−')}${bar('Paid less than agreed', -k.short, 'neg', '−')}
       <div class="cr-wf-r tot"><span>Where you end up if every risk comes true</span><div></div><b class="${k.net - k.gstAtRisk - k.short >= 0 ? 'pos' : 'neg'}">${k.net - k.gstAtRisk - k.short >= 0 ? '+' : '−'}${inr(Math.abs(k.net - k.gstAtRisk - k.short))}</b></div>
-      <p class="cr-fn">How it's worked out: profit from extra sales = (this order − the retailer's usual order) × 51.15% gross margin (HUL FY25, used as an example). Net = profit on this order after the discount − profit the usual order would have made. Sample data.</p>
+      <p class="cr-fn">How it's worked out: profit from extra sales = (this order − the retailer's usual order) × <b>51.15%</b> gross margin. That margin is an <b>assumption, not a finding</b>: it is Hindustan Unilever's FY25 gross margin (StockAnalysis, income statement), used because a sample has no P&amp;L of its own. Every retailer here is costed the same way. Change it and the bar moves — 6% off needs 13.3% more volume at 51.15%, 17.6% at 40%, 42.9% at 20%. Net = profit on this order after the discount − profit the usual order would have made. Sample data.</p>
     </div></details>`;
 }
 
@@ -91,7 +91,7 @@ function detail(d, k) {
   const prev = tk ? (S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk)) : null;
   return `<div class="cr-d">
     <div class="cr-dh"><div><p class="eyebrow">${d.id} · ${esc(d.invoiceNo)} · invoice ${fmt(d.invoiceDate)}</p><h3>${esc(d.buyer)}: you gave ${inr(e.discount)} back (${d.pct}%)</h3>
-      <p class="cr-s">To pay for itself, the retailer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}; they bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">it lost ${inr(-e.net)}</span>`}<br>
+      <p class="cr-s">To pay for itself at an assumed <b>${d.margin}%</b> margin, the retailer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}; they bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">it lost ${inr(-e.net)}</span>`}<br>
       ${br.recoveryPct === null ? 'No credit notes with this retailer yet.' : `This retailer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes on the GST portal, so expect about ${br.recoveryPct}% of the ${inr(r.gst)} tax saving to hold.`} Last date for the tax credit note: ${fmt(r.deadline.date)}.</p></div>
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
     <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this check →</a></small></li>`).join('')}</ol>
@@ -146,7 +146,7 @@ function askPreview(inv, pct, purpose = 'price', basis = 'above') {
     <dt>Discount</dt><dd><b>${inr(e.discount)}</b> before GST (${inr(r.gst)} GST)</dd>
     ${purpose === 'price' && r.hasBaseline ? `<dt>Whole order vs extra only</dt><dd>${inr(e.onAll)} vs <b>${inr(e.onAbove)}</b> · ${e.saved > 0 ? `<span class="ok">paying only on the extra saves ${inr(e.saved)}</span>` : 'no extra over the usual order, so nothing is earned on the extra-only basis'}</dd>` : ''}
     <dt>Usual order</dt><dd>${r.hasBaseline ? `${inr(f.baseline)} (average of last ${r.pastCount})` : 'No past orders: break-even shown, extra sales unknown'}</dd>
-    <dt>Worth it?</dt><dd>Needs <b>${e.breakEvenPct}%</b> more than usual${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">pays for itself</span>' : `<span class="bad">loses ${inr(-e.net)}</span>`}` : ''}</dd>
+    <dt>Worth it?</dt><dd>At an assumed <b>${f.margin}%</b> margin, needs <b>${e.breakEvenPct}%</b> more than usual${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">pays for itself</span>' : `<span class="bad">loses ${inr(-e.net)}</span>`}` : ''}</dd>
     <dt>Retailer record</dt><dd>${r.buyer.recoveryPct === null ? 'No credit notes with this retailer yet' : `Accepted ${r.buyer.accepted} of ${r.buyer.notes} credit notes`}</dd>
     <dt>Tax deadline</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
     <dt>What it is for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the retailer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the retailer, so it needs its own GST invoice, not a discount note.' : purpose === 'early' ? 'Early payment: judged on how many days sooner the cash arrives, not on extra sales.' : basis === 'above' ? 'A price cut, only on what the retailer takes above its usual order.' : 'A price cut on the whole invoice value.'}</dd>
@@ -222,7 +222,8 @@ function render() {
         <dt>E-invoice 30-day clock</dt><dd>Where e-invoicing applies, a credit note must be reported to the e-invoice system within 30 days of its date. After that the portal rejects it and the tax cut never reaches the retailer.</dd>
         <dt>Damage claim</dt><dd>Goods came back damaged. That is a return, not a discount: it needs a goods-return note and the retailer's acknowledgement, not a credit note that hides it inside a price cut.</dd>
         <dt>Last date for a tax cut (s.34(2))</dt><dd>The last date to issue a credit note that lowers tax: 30 Nov after the financial year of the bill, or the annual return date if that is earlier.</dd>
-        <dt>Break-even</dt><dd>How much more the retailer must buy for the discount to pay for itself: discount ÷ (margin − discount). 6% at a 51% margin needs about 13% more.</dd>
+        <dt>Gross margin (51.15%)</dt><dd>The share of each rupee of sales left after the goods cost. Every discount here is worked at <b>51.15%</b> — Hindustan Unilever's FY25 gross margin (StockAnalysis), an assumption standing in for a real P&amp;L, not a claim about any retailer. A thinner margin makes a discount far more expensive: 6% off needs 13.3% more volume at 51.15%, but 42.9% more at 20%.</dd>
+        <dt>Break-even</dt><dd>How much more the retailer must buy for the discount to pay for itself: discount ÷ (margin − discount). 6% at the assumed 51.15% margin needs about 13.3% more.</dd>
         <dt>Maker-checker</dt><dd>The person who asks can't be the person who approves.</dd>
         <dt>Exception / ticket</dt><dd>A failed check turned into a task with an owner, a due date and the money at stake.</dd>
         <dt>Hash chain (tamper-evident)</dt><dd>Each recorded step carries a fingerprint of the one before it, so changing any old entry breaks every fingerprint after it and shows exactly where.</dd>
