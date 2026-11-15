@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="tabs.css?v=1794600151">
+<link rel="stylesheet" href="hl.css?v=1">
 <style>
 .hero-grid{display:grid;gap:24px;align-items:center}@media(min-width:900px){.hero-grid{grid-template-columns:1.1fr .9fr}}
 .mini-ph{background:#fff;border:8px solid #111827;border-radius:28px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 24px 50px -26px rgba(17,24,39,.45);text-decoration:none;color:var(--ink);display:block}
@@ -136,8 +137,8 @@
   </section>
 
   <section id="controls" class="c7" aria-label="The seven checks">
-    <p class="eyebrow">The seven checks</p>
-    <h2>Seven questions for every rupee you give back. Tap one to see it fail.</h2>
+    <div class="hl-row"><div><p class="eyebrow">The seven checks</p>
+    <h2>Seven questions for every rupee you give back. Tap one to see it fail.</h2></div><figure class="hl-fig"><div class="hl" data-hl="relay" data-hl-label="A hub with branches: one path lights up hop by hop, like a discount passing each check in turn"></div><figcaption class="hl-cap">One path, checked hop by hop. Move your pointer over it.</figcaption></figure></div>
     <ol class="ck"><li id="c1"><span class="ck-n">C1</span><div><b>Is it worth it?</b><span>The retailer must buy enough extra to cover the money you give back. Best: pay only on the extra boxes.</span></div><a href="app.html#controls/D-102/C1">Lost ₹64,000 →</a></li><li id="c2"><span class="ck-n">C2</span><div><b>Did the right person say yes?</b><span>Not the person who asked, and not above their limit.</span></div><a href="app.html#controls/D-108/C2">12% on an 8% limit →</a></li><li id="c3"><span class="ck-n">C3</span><div><b>Is it really a price cut?</b><span>Ads and shelf space are a service you bought. Damaged goods are a return. Only a real price cut gets a discount note.</span></div><a href="app.html#controls/D-109/C3">Ad bill mixed in →</a></li><li id="c4"><span class="ck-n">C4</span><div><b>Right paperwork, on time?</b><span>The right "minus bill" (credit note), under the rule of that day, before the deadline.</span></div><a href="app.html#controls/D-103/C4">Old rule used →</a></li><li id="c5"><span class="ck-n">C5</span><div><b>Did the retailer accept it?</b><span>On ₹100 back, ₹18 is GST. If the retailer doesn't accept the note on the GST portal, you lose that ₹18 and they keep it.</span></div><a href="app.html#controls/D-102/C5">Retailer rejected →</a></li><li id="c6"><span class="ck-n">C6</span><div><b>Did the right money arrive?</b><span>What the retailer paid must match the bill minus what was approved.</span></div><a href="app.html#controls/D-106/C6">₹63,000 short →</a></li><li id="c7"><span class="ck-n">C7</span><div><b>Can anyone change the record?</b><span>Every step is fingerprinted. Change one later and it shows which.</span></div><a href="app.html#controls/D-101/C7">Try editing one →</a></li><li class="ck-hot"><span class="ck-n">!</span><div><b>Last chance: 30 Nov 2026</b><span>Last year's bills where the ₹18 isn't safe yet, biggest first.</span></div><a href="app.html#controls/sweep">Open the list →</a></li></ol>
   </section>
 
@@ -436,5 +437,6 @@ document.getElementById('sp-tabs').addEventListener('click', function(e) {
 </script>
 <script src="tabs.js?v=1794600120"></script>
 <script type="module" src="demo.js?v=1794600131"></script>
+<script type="module" src="hl.js?v=1"></script>
 </body>
 </html>

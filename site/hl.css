@@ -1,0 +1,7 @@
+/* Hairline figures, tuned to the warm palette */
+.hl{--hairline-plate:#ffffff;--hairline-hi:var(--acc-d,#2F5240);--hairline-edge:#A8A29E;--hairline-mid:#D6D3D1;--hairline-lo:#EEEAE5;--hairline-stroke:1;width:100%;max-width:260px}
+.hl-cap{font-size:.74rem;color:#78716C;text-align:center;margin:4px 0 0}
+.hl-row{display:flex;gap:18px;align-items:center;justify-content:space-between}
+.hl-row>:first-child{flex:1 1 auto;min-width:0}
+.hl-fig{flex:0 0 230px;margin:0}.hl-fig.sm{flex-basis:150px}
+@media(max-width:760px){.hl-row{flex-direction:column;align-items:stretch}.hl-fig{flex-basis:auto;align-self:center;width:200px}.hl-fig.sm{display:none}}

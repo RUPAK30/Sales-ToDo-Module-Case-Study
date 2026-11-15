@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="tabs.css?v=1794600151">
+<link rel="stylesheet" href="hl.css?v=1">
 <style>
 .ba{max-width:980px;margin:0 auto;padding:22px 18px 80px}
 .ba h1{font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.02em;margin:6px 0 8px}
@@ -45,8 +46,8 @@
 
 <main class="ba">
 <p class="k" style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78716C;margin:0">Business analysis · the paper trail behind the product</p>
-<h1>BA pack: discount controls</h1>
-<p class="lede">The same set I wrote at HDFC Bank for every release: requirement, process, stakeholders, stories, UAT, traceability, data. The UAT here isn't a static table. Press <b>Run UAT</b> and each case runs against the real rule engine in your browser.</p>
+<div class="hl-row"><div><h1>BA pack: discount controls</h1>
+<p class="lede">The same set I wrote at HDFC Bank for every release: requirement, process, stakeholders, stories, UAT, traceability, data. The UAT here isn't a static table. Press <b>Run UAT</b> and each case runs against the real rule engine in your browser.</p></div><figure class="hl-fig"><div class="hl" data-hl="format" data-hl-label="Ten crooked lines snap square as the formatter passes: loose requests becoming clear requirements"></div><figcaption class="hl-cap">Loose asks, made square.</figcaption></figure></div>
 
 <nav class="chips" aria-label="BA pack sections"><a href="#brd">1 · BRD</a><a href="#process">2 · As-is → To-be</a><a href="#people">3 · Stakeholders</a><a href="#stories">4 · User stories</a><a href="#uat">5 · UAT (live)</a><a href="#trace">6 · Traceability</a><a href="#data">7 · Data dictionary</a></nav>
 
@@ -57,7 +58,7 @@
 <p><b>Who it hurts.</b> Finance (money out without proof), tax (output tax cut that later gets reversed), receivables (short payments nobody can explain), auditors (no trail).</p></div>
 <div><p><b>Where it sits.</b> ① Today desk (before the sale: rep to-dos, price discount approved by the sales manager) → ② Discount controls (after the sale: rebates and credit notes approved by finance, seven checks) → ③ Every Rupee (cash matched). This pack covers ②.</p><p><b>In scope.</b> Request, approval, classification, tax route, recovery through IMS, cash match, sealed evidence, weekly sign-off, MIS.</p>
 <p><b>Out of scope.</b> Filing returns, e-invoice generation, live ERP or GSTN connection, pricing strategy.</p>
-<p><b>Success metric (north star).</b> Rupees recovered or justified per ₹1 of discount given. Sample desk: <b>₹0.81</b>. Guardrail: zero discounts approved by the person who asked for them.</p>
+<p><b>Success metric (north star).</b> Rupees recovered or justified per ₹1 of discount given. Sample desk: <b>₹0.85</b>. Guardrail: zero discounts approved by the person who asked for them.</p>
 <p><b>Assumptions.</b> Sample margin 51.15% (Hindustan Unilever's FY25 gross margin, StockAnalysis — a stand-in, not a fact about any retailer) and GST 18%. Owners are sample roles. A thinner margin makes a discount costlier: 6% off needs 13.3% more buying at 51.15%, 42.9% at 20%.</p></div>
 </div></section>
 
@@ -183,5 +184,6 @@ $('#dl-stories').onclick = () => csv('ten-today-user-stories.csv', [['Issue Type
 $('#dl-uat').onclick = () => csv('ten-today-uat.csv', [['UAT ID', 'Story', 'Given / when', 'Expected'], ...UAT.map(u => u.slice(0, 4))]);
 if (new URLSearchParams(location.search).has('run')) $('#run-uat').click();
 </script>
+<script type="module" src="hl.js?v=1"></script>
 </body>
 </html>
