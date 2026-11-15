@@ -66,3 +66,14 @@
 .mny-g [data-seg]::before{display:none}.mny-g [data-seg]{padding-left:12px!important}
 @media(max-width:420px){.slabs{flex-basis:150px;width:150px}}
 @media(prefers-reduced-motion:reduce){.slabs .sl{transition:none;opacity:1;transform:none}}
+/* v3 live: hairline-thin strokes, inset top outline, springy slide-out */
+.slabs .sf{stroke-width:.85}
+.slabs .sf-in{fill:none;stroke:#D6D3D1;stroke-width:.7;vector-effect:non-scaling-stroke;transition:stroke .25s}
+.slabs .sl-k .sf-in{stroke:var(--acc-line,#CFE0CF)}
+.slabs .sl{transition:opacity .35s ease,transform .6s cubic-bezier(.25,1.6,.4,1)}
+.slabs:not(.in) .sl{transition:opacity .45s ease calc(var(--i)*160ms),transform .7s cubic-bezier(.2,1.4,.4,1) calc(var(--i)*160ms)}
+.slabs[data-hi=l] .sl-l,.slabs[data-hi=g] .sl-g,.slabs[data-hi=s] .sl-s,.slabs[data-hi=k] .sl-k{transform:translate(-14px,-7px)}
+.slabs[data-hi] .sl:is(.sl-l,.sl-g,.sl-s,.sl-k) .sf-in{stroke:#44403C}
+.slabs{cursor:ns-resize;touch-action:pan-y}
+.mny-g .hot{border-color:#D6D3D1!important;box-shadow:0 4px 14px rgba(28,25,23,.08);transform:translateY(-1px)}
+.mny-g>a,.mny-g>div{transition:border-color .25s,box-shadow .25s,transform .25s}

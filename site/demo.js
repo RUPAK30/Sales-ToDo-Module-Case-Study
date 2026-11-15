@@ -29,7 +29,8 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
       const z1 = z0 + h;
       return `<path class="sf sf-l" d="M${P(0, D, z0)} L${P(W, D, z0)} L${P(W, D, z1)} L${P(0, D, z1)}Z"/>
         <path class="sf sf-r" d="M${P(W, 0, z0)} L${P(W, D, z0)} L${P(W, D, z1)} L${P(W, 0, z1)}Z"/>
-        <path class="sf sf-t" d="M${P(0, 0, z1)} L${P(W, 0, z1)} L${P(W, D, z1)} L${P(0, D, z1)}Z"/>`;
+        <path class="sf sf-t" d="M${P(0, 0, z1)} L${P(W, 0, z1)} L${P(W, D, z1)} L${P(0, D, z1)}Z"/>
+        <path class="sf-in" d="M${P(9, 9, z1)} L${P(W - 9, 9, z1)} L${P(W - 9, D - 9, z1)} L${P(9, D - 9, z1)}Z"/>`;
     };
     const order = [['k', 'comes back'], ['s', 'paid short'], ['g', 'GST waiting'], ['l', 'lost']];
     let z = 0, gap = 3, out = '';
@@ -42,10 +43,17 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
     host.className = 'slabs'; host.setAttribute('aria-label', `A block of ₹100 cut into four slabs: ₹${n.k} comes back, ₹${n.s} paid short, ₹${n.g} GST waiting, ₹${n.l} lost`);
     host.innerHTML = `<svg viewBox="0 -6 250 226" aria-hidden="true">${out}</svg>`;
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const go = () => host.classList.add('in');
+    const tiles = [...document.querySelectorAll('.mny-g [data-seg]')];
+    const setHi = c => { if (c) host.dataset.hi = c; else delete host.dataset.hi; tiles.forEach(t => t.classList.toggle('hot', t.dataset.seg === c)); };
+    const cycle = ['l', 'g', 's', 'k']; let ci = 0, timer = null, busy = false;
+    const play = () => { if (calm || timer) return; timer = setInterval(() => { if (!busy) setHi(cycle[ci++ % 4]); }, 1700); };
+    host.addEventListener('pointermove', e => { busy = true; const r = host.getBoundingClientRect(), f = (e.clientY - r.top) / r.height; setHi(f < .36 ? 'l' : f < .47 ? 'g' : f < .58 ? 's' : 'k'); });
+    host.addEventListener('pointerleave', () => { busy = false; setHi(null); });
+    tiles.forEach(t => { t.addEventListener('mouseenter', () => busy = true); t.addEventListener('mouseleave', () => busy = false); });
+    const go = () => { host.classList.add('in'); setTimeout(play, 1400); };
     if (calm || !('IntersectionObserver' in window)) go(); else { const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }); io.observe(host); }
     document.querySelectorAll('.mny-g [data-seg]').forEach(t => {
-      const hostEl = document.getElementById('coins'); const on = () => hostEl.dataset.hi = t.dataset.seg, off = () => delete hostEl.dataset.hi;
+      const hostEl = document.getElementById('coins'); const on = () => { hostEl.dataset.hi = t.dataset.seg; document.querySelectorAll('.mny-g [data-seg]').forEach(x => x.classList.toggle('hot', x === t)); }, off = () => { delete hostEl.dataset.hi; document.querySelectorAll('.mny-g .hot').forEach(x => x.classList.remove('hot')); };
       t.addEventListener('mouseenter', on); t.addEventListener('mouseleave', off); t.addEventListener('focus', on); t.addEventListener('blur', off);
     });
   }
