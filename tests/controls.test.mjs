@@ -169,7 +169,7 @@ test('C3 blocks a payout that also carries an open ad invoice until it is split 
   assert.equal(C.adTotal('Navkar Traders'), 47200);
   const c3 = C.evaluate(d, ctx()).controls[2];
   assert.equal(c3.status, 'fail');
-  assert.match(c3.text, /ad invoice/);
+  assert.match(c3.text, /bill for ads/);
   assert.equal(c3.rupees, 47200);
   assert.throws(() => C.splitRecord(d, '2026-11-13', 'Asha', ''), /how the payout was split/);
   const split = C.splitRecord(d, '2026-11-13', 'Asha', '₹60,000 discount on the invoice; ₹47,200 ad bill paid separately');

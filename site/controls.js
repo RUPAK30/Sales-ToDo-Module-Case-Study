@@ -176,7 +176,7 @@ export function evaluate(d, ctx) {
   const ads = adOpen(d.buyer), adAmt = ads.reduce((s, x) => s + x.amount + x.gst, 0);
   const adWhat = ads.map(x => `${x.no} (${inr(x.amount)} + ${inr(x.gst)} GST)`).join(', ');
   if (d.purpose === 'damage') set('C3', 'fail', `Not a discount: the goods came back damaged. This is a return against ${d.invoiceNo}, so it needs a goods-return note and the retailer's return acknowledgement. A discount credit note here would hide a return inside a price cut`);
-  else if (ads.length && !d.split) set('C3', 'fail', `${d.buyer} also has an open ad invoice ${adWhat}. One payout will arrive with both the discount and that ad bill inside it, so a credit note issued now settles against a service purchase, not a discount. Split the payout into two records first`, adAmt);
+  else if (ads.length && !d.split) set('C3', 'fail', `${d.buyer} also sent us a bill for ads ${adWhat}. Settled in one payment, the discount and that purchase get mixed together. Split it into two records first: a credit note for the discount, and their GST invoice for the ads`, adAmt);
   else if (d.purpose === 'promo' && !d.review) set('C3', 'fail', 'Linked to a shelf display or promotion: the tax team must decide if it is a discount or a paid service', gst);
   else set('C3', 'pass', service ? 'Tax team: a paid service, so the retailer bills it separately with its own GST' : d.review === 'price' ? `Tax team confirmed it is a price cut${d.split ? ' · payout split, ad invoice kept separate' : ''}` : `Price cut on the invoice value${d.split ? ' · payout split, ad invoice kept separate' : ''}`);
   // C4

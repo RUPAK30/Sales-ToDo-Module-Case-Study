@@ -68,17 +68,22 @@ function routes(d) {
   return `<details class="cr-rt"><summary><b>Three ways to fix a rejection</b> (for the tax team)</summary><ol>${C.recoveryRoutes(d).map(([t, s]) => `<li><b>${esc(t)}</b><span>${esc(s)}</span></li>`).join('')}</ol></details>`;
 }
 
-/* One payout, two things inside it. The number an accounts person recognises from their own month. */
+/* One payment, two different things inside it. The number an accounts person recognises from their own month. */
+function payoutBox(d, p, gst) {
+  return `<div class="cr-py"><b>One payment, two different things · ${esc(d.invoiceNo)}</b>
+    <p>${esc(d.buyer)} also bills us for ads or shelf space. So this one payment settles two different things: a discount we gave them, and a bill they sent us.</p>
+    <div><span>Our sale to them</span><b>${inr(p.gross)}</b></div>
+    <div><span>Discount we gave (a price cut)</span><b>−${inr(p.discount)}</b></div>
+    <div><span>Ad bill they sent us</span><b>−${inr(p.adAmount)}</b></div>
+    <div><span>GST on that ad bill</span><b>−${inr(p.adGst)}</b></div>
+    <div class="tot"><span>Net bank credit</span><b>${inr(p.net)}</b></div>
+    <p>${inr(p.deducted)} comes off, but only ${inr(p.discount)} is a discount. The other ${inr(p.adAmount + p.adGst)} is a purchase: we bought ads from them, so they bill us with their own GST invoice and we claim the ${inr(p.adGst)} back. The ${inr(gst)} GST on the discount is not taken off this payment; the credit note carries it.</p>
+    <p>Split this payment into two records before any note is issued.</p></div>`;
+}
 function payout(d) {
   const p = C.payoutSplit(d);
   if (!p.ads.length) return '';
-  return `<div class="cr-py"><b>Payout advice · ${esc(d.invoiceNo)}</b>
-    <div><span>Gross sales</span><b>${inr(p.gross)}</b></div>
-    <div><span>Trade promotion (a discount)</span><b>−${inr(p.discount)}</b></div>
-    <div><span>Ad invoice (a purchase)</span><b>−${inr(p.adAmount)}</b></div>
-    <div><span>GST on the ad invoice</span><b>−${inr(p.adGst)}</b></div>
-    <div class="tot"><span>Net bank credit</span><b>${inr(p.net)}</b></div>
-    <p>${inr(p.deducted)} was deducted. Only ${inr(p.discount)} is a discount. The other ${inr(p.adAmount + p.adGst)} is a purchase with its own GST invoice — and the payout advice shows one number.</p></div>`;
+  return payoutBox(d, p, C.gstOf(d));
 }
 
 function detail(d, k) {
@@ -146,13 +151,7 @@ function askPreview(inv, pct, purpose = 'price', basis = 'above') {
     <dt>Tax deadline</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
     <dt>What it is for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the retailer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the retailer, so it needs its own GST invoice, not a discount note.' : purpose === 'early' ? 'Early payment: judged on how many days sooner the cash arrives, not on extra sales.' : basis === 'above' ? 'A price cut, only on what the retailer takes above its usual order.' : 'A price cut on the whole invoice value.'}</dd>
   </dl>
-  ${p ? `<div class="cr-py"><b>One payout, two things · ${esc(f.invoiceNo)}</b>
-    <div><span>Gross sales</span><b>${inr(p.gross)}</b></div>
-    <div><span>Trade promotion (a discount)</span><b>−${inr(p.discount)}</b></div>
-    <div><span>Ad invoice (a purchase)</span><b>−${inr(p.adAmount)}</b></div>
-    <div><span>GST on the ad invoice</span><b>−${inr(p.adGst)}</b></div>
-    <div class="tot"><span>Net bank credit</span><b>${inr(p.net)}</b></div>
-    <p>${inr(p.deducted)} comes off. Only ${inr(p.discount)} is a discount. This retailer also has an open ad invoice, so the payout will have to be split into two records before any note is issued.</p></div>` : ''}
+  ${p ? payoutBox(f, p, r.gst) : ''}
   <button class="btn pri" data-a="ask-go" type="button">Send for approval</button>`;
 }
 function askCard() {
