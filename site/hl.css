@@ -77,3 +77,10 @@
 .slabs{cursor:ns-resize;touch-action:pan-y}
 .mny-g .hot{border-color:#D6D3D1!important;box-shadow:0 4px 14px rgba(28,25,23,.08);transform:translateY(-1px)}
 .mny-g>a,.mny-g>div{transition:border-color .25s,box-shadow .25s,transform .25s}
+/* figure tags on every page: picture + what it means */
+.hl-tag{display:flex;gap:14px;align-items:center;margin:10px 0 14px;padding:10px 14px;background:#fff;border:1px solid #ECE7E1;border-radius:16px}
+.hl-tag .hl{flex:0 0 180px;max-width:180px}
+.hl-tag figcaption{font-size:.84rem;color:#57534E;line-height:1.45}.hl-tag figcaption b{color:#1C1917}
+.bs .hl-tag{margin:8px 0 12px;background:#FCFBFA}
+.cockpit-fix{}
+@media(max-width:560px){.hl-tag .hl{flex-basis:96px;max-width:96px}.hl-tag figcaption{font-size:.8rem}}

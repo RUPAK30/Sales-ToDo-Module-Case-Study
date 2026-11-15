@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="product.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="tabs.css?v=1794600151">
-<link rel="stylesheet" href="hl.css?v=1">
+<link rel="stylesheet" href="hl.css?v=2">
 <style>
 .ba{max-width:980px;margin:0 auto;padding:22px 18px 80px}
 .ba h1{font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.02em;margin:6px 0 8px}
@@ -62,7 +62,7 @@
 <p><b>Assumptions.</b> Sample margin 51.15% (Hindustan Unilever's FY25 gross margin, StockAnalysis — a stand-in, not a fact about any retailer) and GST 18%. Owners are sample roles. A thinner margin makes a discount costlier: 6% off needs 13.3% more buying at 51.15%, 42.9% at 20%.</p></div>
 </div></section>
 
-<section class="bs" id="process"><p class="k">2 · Process map</p><h2>As-is vs to-be</h2>
+<section class="bs" id="process"><p class="k">2 · Process map</p><h2>As-is vs to-be</h2><figure class="hl-tag"><div class="hl" data-hl="relay" data-hl-label="A path that lights hop by hop"></div><figcaption><b>Hop by hop.</b> The path lights one step at a time, the way a discount passes request, approval, tax, retailer, cash.</figcaption></figure>
 <div class="g2">
 <div><p><b>As-is</b> <span class="pill no">5 gaps</span></p><ol class="flow">
 <li><b class="who">Sales</b><span>Agrees a % off with the retailer on a call</span></li>
@@ -81,7 +81,7 @@
 <li class="ctl"><b class="who">Audit</b><span>Every step sealed; weekly sign-off <span class="tag">C7</span></span></li></ol></div>
 </div></section>
 
-<section class="bs" id="people"><p class="k">3 · Stakeholder map</p><h2>Who wants what, and what each one fears</h2>
+<section class="bs" id="people"><p class="k">3 · Stakeholder map</p><h2>Who wants what, and what each one fears</h2><figure class="hl-tag"><div class="hl" data-hl="hub" data-hl-label="A hub with tiles that rise and connect"></div><figcaption><b>One desk, six people.</b> Each tile is a stakeholder; point at one and its line to the desk lights up.</figcaption></figure>
 <div class="tw"><table><thead><tr><th>Stakeholder</th><th>Wants</th><th>Fears</th><th>Influence</th><th>How Ten Today serves them</th></tr></thead><tbody>
 <tr><td><b>Sales (Neha)</b></td><td>Fast yes so the retailer orders more</td><td>Being slowed by finance</td><td>Medium</td><td>Two-input request; everything else auto-filled</td></tr>
 <tr><td><b>Finance controller (Vikram)</b></td><td>Discount pays for itself</td><td>Money out with no proof</td><td>High · approver</td><td>Break-even and buyer record before approval</td></tr>
@@ -96,15 +96,15 @@
 <div class="run"><button class="btn small" id="dl-stories">Download as Jira CSV</button></div>
 <div class="tw"><table><thead><tr><th>ID</th><th>Story</th><th>Acceptance criteria</th></tr></thead><tbody id="stories-b"></tbody></table></div></section>
 
-<section class="bs" id="uat"><p class="k">5 · UAT cases · run live</p><h2>Press run. Each case calls the rule engine.</h2>
+<section class="bs" id="uat"><p class="k">5 · UAT cases · run live</p><h2>Press run. Each case calls the rule engine.</h2><figure class="hl-tag"><div class="hl" data-hl="terminal" data-hl-label="A terminal whose line under the pointer lifts"></div><figcaption><b>Every run, on the record.</b> Move up and down to scroll through the test history; the line you point at lifts out.</figcaption></figure>
 <div class="run"><button class="btn" id="run-uat">▶ Run UAT</button><button class="btn small ghost" id="dl-uat">Download UAT CSV</button><span class="sum" id="uat-sum">Not run yet</span></div>
 <div class="tw"><table><thead><tr><th>ID</th><th>Story</th><th>Given / when</th><th>Expected</th><th>Result</th></tr></thead><tbody id="uat-b"></tbody></table></div>
 <p class="note">The same rules are covered by 66 automated tests in the repo (<code>tests/controls.test.mjs</code>, <code>tests/engine.test.mjs</code>).</p></section>
 
-<section class="bs" id="trace"><p class="k">6 · Traceability matrix</p><h2>Requirement → control → story → UAT → automated test</h2>
+<section class="bs" id="trace"><p class="k">6 · Traceability matrix</p><h2>Requirement → control → story → UAT → automated test</h2><figure class="hl-tag"><div class="hl" data-hl="rebuild" data-hl-label="A tree of tiles; the touched one and its dependents rise"></div><figcaption><b>Touch one, see what depends on it.</b> Point at a tile and everything built on it rises: a requirement, then its control, story and test.</figcaption></figure>
 <div class="tw"><table><thead><tr><th>Requirement</th><th>Control</th><th>Story</th><th>UAT</th><th>Automated test</th></tr></thead><tbody id="trace-b"></tbody></table></div></section>
 
-<section class="bs" id="data"><p class="k">7 · Data dictionary</p><h2>The fields, in plain words</h2>
+<section class="bs" id="data"><p class="k">7 · Data dictionary</p><h2>The fields, in plain words</h2><figure class="hl-tag"><div class="hl" data-hl="drawer" data-hl-label="A filing cabinet; the drawer at the pointer height slides out"></div><figcaption><b>Every field has a drawer.</b> The pointer picks a drawer and it slides out: one table, its fields, nothing loose.</figcaption></figure>
 <div class="tw"><table><thead><tr><th>Field</th><th>Table</th><th>Meaning</th><th>Example</th><th>Rule</th></tr></thead><tbody>
 <tr><td><code>invoice_no</code></td><td>invoices</td><td>The original sale the discount is against</td><td>INV-2603-301</td><td>Must exist; fixes the FY and deadline</td></tr>
 <tr><td><code>value</code></td><td>discounts</td><td>Order value before GST</td><td>₹16,00,000</td><td>&gt; 0</td></tr>
@@ -184,6 +184,6 @@ $('#dl-stories').onclick = () => csv('ten-today-user-stories.csv', [['Issue Type
 $('#dl-uat').onclick = () => csv('ten-today-uat.csv', [['UAT ID', 'Story', 'Given / when', 'Expected'], ...UAT.map(u => u.slice(0, 4))]);
 if (new URLSearchParams(location.search).has('run')) $('#run-uat').click();
 </script>
-<script type="module" src="hl.js?v=1"></script>
+<script type="module" src="hl.js?v=2"></script>
 </body>
 </html>
