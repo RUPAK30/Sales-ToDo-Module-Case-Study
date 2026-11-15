@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="tabs.css?v=1794600151">
 <link rel="stylesheet" href="hl.css?v=2">
+<link rel="stylesheet" href="viz.css?v=2">
 <style>
 .ba{max-width:980px;margin:0 auto;padding:22px 18px 80px}
 .ba h1{font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.02em;margin:6px 0 8px}
@@ -63,7 +64,7 @@
 <p><b>Assumptions.</b> Sample margin 51.15% (Hindustan Unilever's FY25 gross margin, StockAnalysis — a stand-in, not a fact about any retailer) and GST 18%. Owners are sample roles. A thinner margin makes a discount costlier: 6% off needs 13.3% more buying at 51.15%, 42.9% at 20%.</p></div>
 </div></section>
 
-<section class="bs" id="process"><p class="k">2 · Process map</p><h2>As-is vs to-be</h2><figure class="hl-tag"><div class="hl" data-hl="relay" data-hl-label="A path that lights hop by hop"></div><figcaption><b>Hop by hop.</b> The path lights one step at a time, the way a discount passes request, approval, tax, retailer, cash.</figcaption></figure>
+<section class="bs" id="process"><p class="k">2 · Process map</p><h2>As-is vs to-be</h2><figure class="vz vz-lane" id="lane"></figure>
 <div class="g2">
 <div><p><b>As-is</b> <span class="pill no">5 gaps</span></p><ol class="flow">
 <li><b class="who">Sales</b><span>Agrees a % off with the retailer on a call</span></li>
@@ -82,8 +83,8 @@
 <li class="ctl"><b class="who">Audit</b><span>Every step sealed; weekly sign-off <span class="tag">C7</span></span></li></ol></div>
 </div></section>
 
-<section class="bs" id="people"><p class="k">3 · Stakeholder map</p><h2>Who wants what, and what each one fears</h2><figure class="hl-tag"><div class="hl" data-hl="hub" data-hl-label="A hub with tiles that rise and connect"></div><figcaption><b>One desk, six people.</b> Each tile is a stakeholder; point at one and its line to the desk lights up.</figcaption></figure>
-<div class="tw"><table><thead><tr><th>Stakeholder</th><th>Wants</th><th>Fears</th><th>Influence</th><th>How Ten Today serves them</th></tr></thead><tbody>
+<section class="bs" id="people"><p class="k">3 · Stakeholder map</p><h2>Who wants what, and what each one fears</h2>
+<figure class="vz vz-grid" id="sgrid"></figure><div class="tw"><table><thead><tr><th>Stakeholder</th><th>Wants</th><th>Fears</th><th>Influence</th><th>How Ten Today serves them</th></tr></thead><tbody>
 <tr><td><b>Sales (Neha)</b></td><td>Fast yes so the retailer orders more</td><td>Being slowed by finance</td><td>Medium</td><td>Two-input request; everything else auto-filled</td></tr>
 <tr><td><b>Finance controller (Vikram)</b></td><td>Discount pays for itself</td><td>Money out with no proof</td><td>High · approver</td><td>Break-even and buyer record before approval</td></tr>
 <tr><td><b>Tax (Farah)</b></td><td>Valid credit notes, on time</td><td>Output tax cut reversed in audit</td><td>High</td><td>C3–C5, deadline sweep, tickets</td></tr>
@@ -102,8 +103,8 @@
 <div class="tw"><table><thead><tr><th>ID</th><th>Story</th><th>Given / when</th><th>Expected</th><th>Result</th></tr></thead><tbody id="uat-b"></tbody></table></div>
 <p class="note">The same rules are covered by 66 automated tests in the repo (<code>tests/controls.test.mjs</code>, <code>tests/engine.test.mjs</code>).</p></section>
 
-<section class="bs" id="trace"><p class="k">6 · Traceability matrix</p><h2>Requirement → control → story → UAT → automated test</h2><figure class="hl-tag"><div class="hl" data-hl="rebuild" data-hl-label="A tree of tiles; the touched one and its dependents rise"></div><figcaption><b>Touch one, see what depends on it.</b> Point at a tile and everything built on it rises: a requirement, then its control, story and test.</figcaption></figure>
-<div class="tw"><table><thead><tr><th>Requirement</th><th>Control</th><th>Story</th><th>UAT</th><th>Automated test</th></tr></thead><tbody id="trace-b"></tbody></table></div></section>
+<section class="bs" id="trace"><p class="k">6 · Traceability matrix</p><h2>Requirement → control → story → UAT → automated test</h2>
+<figure class="vz vz-trace" id="tgraph"></figure><div class="tw"><table><thead><tr><th>Requirement</th><th>Control</th><th>Story</th><th>UAT</th><th>Automated test</th></tr></thead><tbody id="trace-b"></tbody></table></div></section>
 
 <section class="bs" id="data"><p class="k">7 · Data dictionary</p><h2>The fields, in plain words</h2><figure class="hl-tag"><div class="hl" data-hl="drawer" data-hl-label="A filing cabinet; the drawer at the pointer height slides out"></div><figcaption><b>Every field has a drawer.</b> The pointer picks a drawer and it slides out: one table, its fields, nothing loose.</figcaption></figure>
 <div class="tw"><table><thead><tr><th>Field</th><th>Table</th><th>Meaning</th><th>Example</th><th>Rule</th></tr></thead><tbody>
@@ -183,6 +184,46 @@ $('#run-uat').onclick = () => {
 const csv = (name, rows) => { const b = new Blob([rows.map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' }); const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(b), download: name }); a.click(); URL.revokeObjectURL(a.href); };
 $('#dl-stories').onclick = () => csv('ten-today-user-stories.csv', [['Issue Type', 'Summary', 'Description', 'Acceptance Criteria', 'Labels'], ...STORIES.map(([id, c, who, want, why, ac]) => ['Story', `${id} ${want}`, `As ${who}, I want to ${want}, ${why}.`, ac, `ten-today ${c}`])]);
 $('#dl-uat').onclick = () => csv('ten-today-uat.csv', [['UAT ID', 'Story', 'Given / when', 'Expected'], ...UAT.map(u => u.slice(0, 4))]);
+
+/* ---- pictures for the BA pack ---- */
+{ // swimlane: who does what, as-is (dashed, with gaps) vs to-be (solid, with the seven checks)
+  const lanes = ['Sales', 'Finance', 'Tax', 'Retailer', 'Accounts', 'Audit'], W = 760, LH = 40, X0 = 92, H = lanes.length * LH + 30;
+  const asis = [[0, 'Agrees % on a call'], [0, 'Emails finance', 'gap'], [1, 'Approves on trust', 'gap'], [2, 'Credit note for everything', 'gap'], [3, 'Ignores in IMS', 'gap'], [4, 'Short payment, no link', 'gap']];
+  const tobe = [[0, 'C1 Worth it?'], [1, 'C2 Right person'], [2, 'C3 Price cut?'], [2, 'C4 Paperwork'], [3, 'C5 Accepted'], [4, 'C6 Right money'], [5, 'C7 Sealed']];
+  const step = (W - X0 - 30) / 7, px = i => X0 + 20 + i * step, py = l => 16 + l * LH + LH / 2;
+  const path = (pts, off) => pts.map((p, i) => `${i ? 'L' : 'M'}${px(i)},${py(p[0]) + off}`).join(' ');
+  const lane = lanes.map((n, i) => `<rect x="0" y="${16 + i * LH}" width="${W}" height="${LH}" class="ln${i % 2}"/><text x="10" y="${py(i) + 4}" class="lnm">${n}</text>`).join('');
+  const nodesA = asis.map((p, i) => `<g class="na ${p[2] || ''}" style="--d:${i * 120}ms"><circle cx="${px(i)}" cy="${py(p[0]) - 7}" r="5"/>${p[2] ? `<path d="M${px(i) - 4},${py(p[0]) - 11} l8,8 M${px(i) + 4},${py(p[0]) - 11} l-8,8"/>` : ''}<text x="${px(i)}" y="${py(p[0]) - 16}">${p[1]}</text></g>`).join('');
+  const nodesB = tobe.map((p, i) => `<g class="nb" style="--d:${900 + i * 140}ms"><rect x="${px(i) - 7}" y="${py(p[0]) + 1}" width="14" height="14" rx="4"/><path d="M${px(i) - 3.5},${py(p[0]) + 8} l2.5,2.5 l5,-5"/><text x="${px(i)}" y="${py(p[0]) + 28}">${p[1]}</text></g>`).join('');
+  document.getElementById('lane').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Swimlanes for six teams: the old process has five gaps; the new one passes seven checks">${lane}<path class="pa" d="${path(asis, -7)}"/><path class="pb" d="${path(tobe, 8)}"/>${nodesA}${nodesB}</svg>
+    <figcaption><span class="lg"><i class="sw a"></i>As-is: on email, five gaps (×)</span><span class="lg"><i class="sw b"></i>To-be: seven checks, each owned by one team</span></figcaption>`;
+}
+{ // stakeholders: interest × influence
+  const P = [['Sales', 'Neha', 80, 45], ['Finance', 'Vikram', 85, 88], ['Tax', 'Farah', 72, 80], ['Receivables', 'Asha', 65, 50], ['Auditor', '', 45, 85], ['Retailer', '', 30, 75]];
+  document.getElementById('sgrid').innerHTML = `<div class="sg"><span class="q q1">Keep satisfied</span><span class="q q2">Manage closely</span><span class="q q3">Monitor</span><span class="q q4">Keep informed</span>
+    ${P.map(([r, n, x, y], i) => `<span class="sp" style="--x:${x}%;--y:${100 - y}%;--d:${i * 90}ms"><i>${(n || r)[0]}</i><b>${r}</b>${n ? `<small>${n}</small>` : ''}</span>`).join('')}
+    <em class="ax ax-x">Interest in the outcome →</em><em class="ax ax-y">Influence →</em></div>`;
+}
+{ // traceability as connected columns; hover a requirement to light its chain
+  const cols = [['Requirement', TRACE.map(t => t[0])], ['Control', [...new Set(TRACE.map(t => t[1]))]], ['Story', [...new Set(TRACE.flatMap(t => t[2] === 'all' ? [] : t[2].split(', ')))]], ['UAT', [...new Set(TRACE.flatMap(t => t[3].startsWith('auto') ? ['automated'] : t[3].replace('UAT-', '').split(', ').map(x => 'UAT-' + x.padStart(2, '0'))))]]];
+  const W = 760, colX = [0, 300, 430, 580], rowH = 26;
+  const H = Math.max(...cols.map(c => c[1].length)) * rowH + 30;
+  const pos = cols.map((c, ci) => Object.fromEntries(c[1].map((v, i) => [v, 30 + i * (H - 40) / Math.max(1, c[1].length - 1 || 1)])));
+  const links = []; TRACE.forEach((t, ri) => {
+    const ctrl = t[1], st = t[2] === 'all' ? [] : t[2].split(', '), ua = t[3].startsWith('auto') ? ['automated'] : t[3].replace('UAT-', '').split(', ').map(x => 'UAT-' + x.padStart(2, '0'));
+    const y0 = pos[0][t[0]], y1 = pos[1][ctrl];
+    links.push([ri, 250, y0, colX[1], y1]);
+    st.forEach(sx => { links.push([ri, colX[1] + 58, y1, colX[2], pos[2][sx]]); ua.forEach(u => links.push([ri, colX[2] + 62, pos[2][sx], colX[3], pos[3][u]])); });
+  });
+  const curve = (x1, y1, x2, y2) => `M${x1},${y1} C${(x1 + x2) / 2},${y1} ${(x1 + x2) / 2},${y2} ${x2},${y2}`;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Each requirement linked to its control, story and test">
+    ${cols.map((c, ci) => `<text class="th" x="${colX[ci]}" y="12">${c[0]}</text>`).join('')}
+    ${links.map(l => `<path class="tl r${l[0]}" d="${curve(l[1], l[2], l[3], l[4])}"/>`).join('')}
+    ${cols.map((c, ci) => c[1].map(v => `<g class="tn${ci === 0 ? ' req r' + TRACE.findIndex(t => t[0] === v) : ''}" ${ci === 0 ? `data-r="${TRACE.findIndex(t => t[0] === v)}"` : ''}><circle cx="${ci === 0 ? 250 : colX[ci]}" cy="${pos[ci][v]}" r="4"/><text x="${ci === 0 ? 242 : colX[ci] + 8}" y="${pos[ci][v] + 4}" ${ci === 0 ? 'text-anchor="end"' : ''}>${v.length > 34 ? v.slice(0, 33) + '…' : v}</text></g>`).join('')).join('')}</svg>`;
+  const el = document.getElementById('tgraph'); el.innerHTML = svg + '<figcaption>Point at a requirement to light its chain.</figcaption>';
+  el.addEventListener('pointerover', e => { const g = e.target.closest('[data-r]'); el.dataset.on = g ? g.dataset.r : ''; el.querySelectorAll('.tl').forEach(p => p.classList.toggle('on', g && p.classList.contains('r' + g.dataset.r))); });
+  el.addEventListener('pointerleave', () => el.querySelectorAll('.tl').forEach(p => p.classList.remove('on')));
+}
 if (new URLSearchParams(location.search).has('run')) $('#run-uat').click();
 </script>
 <script type="module" src="hl.js?v=2"></script>
