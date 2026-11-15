@@ -562,7 +562,7 @@ function badgeCount() {
 function renderTabs() {
   document.body.dataset.tab = tab;
   const n = badgeCount();
-  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `${id === 'today' ? '<li class="bn-sep" aria-hidden="true">Approval desk, underneath</li>' : ''}<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
+  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `${id === 'today' ? '<li class="bn-sep" aria-hidden="true">Before the sale · rep to-dos</li>' : ''}<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
 }
 const UH = {
   team: {
