@@ -1,4 +1,4 @@
-import * as V from './viz.js?v=4';
+import * as V from './viz.js?v=7';
 import * as E from './engine.js?v=1794488317';
 
 const KEY = 'tentoday-product-v11';

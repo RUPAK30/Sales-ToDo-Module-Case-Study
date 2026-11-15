@@ -58,14 +58,21 @@ export function ring(pct, label, sub) {
   return `<figure class="vz vz-ring"><svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="${r}" class="bg"/><circle cx="42" cy="42" r="${r}" class="fg" style="stroke-dasharray:${(v / 100 * c).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${pct === null ? '–' : pct + '%'}</b><figcaption><strong>${esc(label)}</strong>${esc(sub)}</figcaption></figure>`;
 }
 
-/* Discount controls: ten retailers × seven checks; each cell says yes, who is working on it, or what a "no" costs. */
+/* Discount controls: each retailer is one flow line through the seven checks (like a Flow Designer path).
+   ● passed  ○ waiting on someone  ◆ stopped here: rupees at stake and who fixes it. */
 export function heatmap(rows, names, link) {
   const k = n => n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >= 1000 ? `₹${Math.round(n / 1000)}k` : `₹${n}`;
   const all = rows.flatMap(r => r.cells), yes = all.filter(c => c.s === 'pass').length, no = all.filter(c => c.s === 'fail'), wait = all.filter(c => c.s === 'wait').length;
-  const head = `<p class="vz-h"><b>${rows.length} retailers × 7 questions = ${all.length} answers.</b> <span class="ok">${yes} yes</span>, <span class="t1">${no.length} no (${k(no.reduce((a, c) => a + (c.rupees || 0), 0))} at stake)</span>, <span class="t2">${wait} waiting</span>. Each "no" is a task for the named person.</p>`;
-  const cell = c => c.s === 'pass' ? '✓' : c.s === 'fail' ? `✕ ${c.rupees ? k(c.rupees) : 'no'}<small>${esc(c.who)}</small>` : `…<small>${esc(c.who)}</small>`;
-  const th = names.map((n, i) => `<th>C${i + 1}<small>${esc(n)}</small></th>`).join('');
-  const body = rows.map(r => { const y = r.cells.filter(c => c.s === 'pass').length; return `<tr><th><b>${esc(r.name)}</b><small>${esc(r.money)} given back</small></th>${r.cells.map((c, i) => `<td><a class="${c.s}" href="${link(r.id, i)}" title="${esc(c.text)}">${cell(c)}</a></td>`).join('')}<td class="sc"><span class="${y === 7 ? 'ok' : ''}">${y}/7</span></td></tr>`; }).join('');
-  return `<figure class="vz vz-heat">${head}<div class="hs"><table><thead><tr><th></th>${th}<th>Yes</th></tr></thead><tbody>${body}</tbody></table></div>
-    <figcaption><span class="lg lg-pass">✓ yes</span><span class="lg lg-fail">✕ no: rupees at stake and who owns the fix</span><span class="lg lg-wait">… waiting on that person</span><span>Tap any cell to open that retailer at that question.</span></figcaption></figure>`;
+  const clean = rows.filter(r => r.cells.every(c => c.s === 'pass')).length;
+  const head = `<p class="vz-h"><b>${clean} of ${rows.length} retailers are cleared end to end.</b> Across all ${all.length} answers: <span class="ok">${yes} yes</span>, <span class="t1">${no.length} stopped (${k(no.reduce((a, c) => a + (c.rupees || 0), 0))} at stake)</span>, <span class="t2">${wait} waiting</span>.</p>`;
+  const W = 7, cols = names.map((n, i) => `<span><b>C${i + 1}</b>${esc(n)}</span>`).join('');
+  const line = r => {
+    const firstStop = r.cells.findIndex(c => c.s !== 'pass');
+    const segs = r.cells.slice(0, -1).map((c, i) => `<i class="sg ${firstStop === -1 || i < firstStop ? 'on' : 'off'}" style="--i:${i}"></i>`).join('');
+    const nodes = r.cells.map((c, i) => `<a class="nd ${c.s === 'wait' ? 'pend' : c.s}" style="--i:${i}" href="${link(r.id, i)}" title="C${i + 1} ${esc(names[i])}: ${esc(c.text)}"><span class="mk">${c.s === 'pass' ? '<svg viewBox="0 0 12 12"><path d="M2.6 6.3l2.2 2.2 4.6-4.9"/></svg>' : c.s === 'fail' ? '<svg viewBox="0 0 12 12"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5"/></svg>' : ''}</span>${c.s === 'fail' ? `<em>${c.rupees ? k(c.rupees) : 'stopped'}<small>${esc(c.who)} to fix</small></em>` : c.s === 'wait' ? `<em class="w">waiting<small>${esc(c.who)}</small></em>` : ''}</a>`).join('');
+    const y = r.cells.filter(c => c.s === 'pass').length;
+    return `<div class="fl"><div class="fl-n"><b>${esc(r.name)}</b><small>${esc(r.money)} given back</small></div><div class="fl-t">${segs}${nodes}</div><div class="fl-s ${y === W ? 'ok' : ''}">${y === W ? 'Cleared' : `${y}/${W}`}</div></div>`;
+  };
+  return `<figure class="vz vz-flow">${head}<div class="fl fl-h"><div></div><div class="fl-c">${cols}</div><div></div></div>${rows.map(line).join('')}
+    <figcaption><span class="lgx"><i class="nd pass"><span class="mk"></span></i>passed</span><span class="lgx"><i class="nd pend"><span class="mk"></span></i>waiting on that person</span><span class="lgx"><i class="nd fail"><span class="mk"></span></i>stopped: rupees at stake, who fixes it</span><span>Tap any point to open it.</span></figcaption></figure>`;
 }
