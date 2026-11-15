@@ -163,9 +163,9 @@ export function evaluate(d, ctx) {
   const apv = ev(d, 'approved'), eco = ev(d, 'economics');
   // C1
   if (d.purpose === 'early') { if (!apv) set('C1', 'wait', 'Waiting for approval · early-payment discount: judged on days of cash gained, not on extra sales'); else set('C1', 'pass', 'Early-payment discount: it buys faster cash, not more boxes, so no volume test applies'); }
-  else if (!apv) set('C1', 'wait', `Waiting for approval · at an assumed ${d.margin}% margin, the retailer must buy ${e.breakEvenPct}% more than usual for this to pay for itself`);
-  else if (eco && eco.n < apv.n && !e.paidBack) set('C1', 'fail', `Checked before approval, but it did not pay off: at an assumed ${d.margin}% margin it needed ${e.breakEvenPct}% more sales, got ${e.upliftPct}%, lost ${inr(-e.net)}. ${e.onAbove ? `Paying only on sales above the usual order would have cost ${inr(e.onAbove)} instead of ${inr(e.onAll)}` : `It bought nothing extra, so paying only on extra sales would have cost nothing`}`, -e.net);
-  else if (eco && eco.n < apv.n) set('C1', 'pass', `At an assumed ${d.margin}% margin, needed ${e.breakEvenPct}% more sales, shown before approval · got ${e.upliftPct}% · ${e.paidBack ? `paid for itself (${e.multiple}× the discount in extra profit)` : `lost ${inr(-e.net)}`}`);
+  else if (!apv) set('C1', 'wait', `Waiting for approval · margin assumed ${d.margin}%: the retailer must buy ${e.breakEvenPct}% more than usual for this to pay for itself`);
+  else if (eco && eco.n < apv.n && !e.paidBack) set('C1', 'fail', `Checked before approval, but it did not pay off. Margin assumed ${d.margin}%: needed ${e.breakEvenPct}% more sales, got ${e.upliftPct}%, lost ${inr(-e.net)}. ${e.onAbove ? `Paying only on sales above the usual order would have cost ${inr(e.onAbove)} instead of ${inr(e.onAll)}` : `It bought nothing extra, so paying only on extra sales would have cost nothing`}`, -e.net);
+  else if (eco && eco.n < apv.n) set('C1', 'pass', `Margin assumed ${d.margin}%. Needed ${e.breakEvenPct}% more sales, checked before approval · got ${e.upliftPct}% · ${e.paidBack ? `paid for itself (${e.multiple}× the discount in extra profit)` : `lost ${inr(-e.net)}`}`);
   else set('C1', 'fail', 'Approved before anyone checked if it was worth it', e.discount);
   // C2
   if (!apv) set('C2', 'wait', 'Not approved yet');
