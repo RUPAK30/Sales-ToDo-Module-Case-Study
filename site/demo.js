@@ -73,20 +73,20 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
 const root = $('#demo');
 if (root) {
   const steps = C.walkthrough(today);
-  const M = [
-    [['buyer', 'Navkar Traders', 'Give us 6% on the March invoice, or we move volume next quarter.'], ['me', 'Neha · commercial', 'Asking for 6% (₹60,000) as a post-sale discount.'], ['ok', 'Check: to make up for ₹60,000, Navkar must buy 13.3% more than usual. They bought 16.3% more, so it\'s worth it.']],
-    [['me', 'Neha · commercial', 'It\'s urgent, approving it myself.'], ['bad', 'Blocked: you can\'t approve your own request.']],
-    [['them', 'Vikram · finance controller', 'Approved 6%, within my 8% limit.'], ['ok', 'Recorded. The "is it worth it" check was done before the yes.']],
-    [['them', 'Farah · tax desk', 'Tax credit note CN-26-041 sent to the retailer.'], ['warn', '₹10,800 tax saving now waits for Navkar to approve it on the GST site. Deadline 30 Nov 2026.']],
-    [['buyer', 'GST site · Navkar Traders', 'Rejected: "Wrong invoice reference".'], ['bad', 'Rejected, so the ₹10,800 tax saving is lost for now. A task opens for Asha, due in 2 working days.']],
-    [['them', 'Farah · tax desk', 'Sent a corrected note, CN-26-042.'], ['buyer', 'GST site · Navkar Traders', 'Accepted.'], ['ok', 'Tax saving is safe. Task closed.']],
-    [['day', '3 weeks later'], ['ok', '₹9,40,000 received, exactly what was agreed.']],
-    [['ok', 'All 7 checks pass. Every step is fingerprinted, so any later change would show.']],
+  const M = [ // one group per walkthrough step; [kind, who, text, time]
+    [['buyer', 'Navkar Traders', 'Give us 6% on the March invoice, or we move volume next quarter.', '10:02 am'], ['me', 'Neha · sales', 'Asking for 6% (₹60,000) back on the ₹10 lakh bill.', '10:05 am ✓✓'], ['bad', 'Hold on: Navkar also billed you ₹40,000 for ads. That\'s a service, not a discount. Split it first.']],
+    [['me', 'Neha · sales', 'It\'s urgent, approving it myself.', '10:07 am ✓✓'], ['bad', 'Blocked: the person who asks can\'t say yes.']],
+    [['them', 'Vikram · finance', 'Approved 6%, within my 8% limit.', '11:40 am'], ['ok', 'Worth it: Navkar must buy 13.3% more than usual. It bought 16.3% more.']],
+    [['them', 'Farah · tax', 'Split: ad bill paid separately with its own GST. The ₹60,000 stays a price cut.', '12:15 pm'], ['ok', 'Really a price cut. Cleared.']],
+    [['them', 'Farah · tax', 'GST credit note CN-26-041 sent to Navkar.', '2:30 pm'], ['warn', '₹10,800 of GST now waits for Navkar to accept it on the GST portal.']],
+    [['day', '2 days later'], ['buyer', 'GST portal · Navkar Traders', 'Rejected: "Wrong invoice reference".', '9:10 am'], ['bad', 'You lose ₹10,800 of GST unless it\'s fixed. Task opened for Asha, due in 2 working days.']],
+    [['them', 'Farah · tax', 'Corrected note CN-26-042 sent.', '11:20 am'], ['buyer', 'GST portal · Navkar Traders', 'Accepted.', '4:05 pm'], ['ok', '₹10,800 of GST is safe. Task closed.']],
+    [['day', '3 weeks later'], ['buyer', 'Bank · Navkar Traders', '₹9,40,000 received.', '10:45 am'], ['ok', 'The bill minus ₹60,000, to the rupee.']],
+    [['ok', 'All 7 answered yes. Every step is fingerprinted: change one later and it shows.']],
   ];
   let typing = null, i = 0, timer = null, inView = false, manual = false, started = false, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const PLAIN = { C1: 'Worth it?', C2: 'Right person?', C3: 'Really a price cut?', C4: 'Paperwork on time?', C5: 'Retailer accepted?', C6: 'Right money?', C7: 'Record untouched?' };
-  const T = { me: '4:12 pm ✓✓', them: '4:20 pm', buyer: '4:31 pm' };
-  const bubble = ([k, a, b]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}<span class="tm">${T[k] ?? ''}</span></div></div>`;
+    const bubble = ([k, a, b, m3]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}<span class="tm">${m3 ?? ''}</span></div></div>`;
   function draw(anim) {
     const s = steps[i], r = C.evaluate(s.d, { today, settings: C.SETTINGS, history: {}, opened: {} }), e = r.economics;
     const refused = s.t.startsWith('Self');
@@ -101,13 +101,25 @@ if (root) {
       typing = setTimeout(() => { box.innerHTML = past + now; box.scrollTop = box.scrollHeight; }, 750);
     } else { box.innerHTML = past + now; box.scrollTop = box.scrollHeight; }
     $('.ph-tap').textContent = i === steps.length - 1 ? '↺ Tap to replay' : 'Tap for the next step →';
-    $('#dm-c').innerHTML = r.controls.map(c => { const st = refused && c.id === 'C2' ? 'fail' : c.status; return `<li class="${st}"><i></i><b>${c.id} · ${PLAIN[c.id]}</b><span>${st === 'pass' ? 'Pass' : st === 'fail' ? 'Fail' : 'Waiting'}</span></li>`; }).join('');
-    $('#ph-cs').innerHTML = r.controls.map(c => { const st = refused && c.id === 'C2' ? 'fail' : c.status; return `<span class="${st}"><i></i>${c.id}</span>`; }).join('');
-    const c5 = r.controls[4].status, gst = r.gst, cash = r.controls[5].status;
-    const gstState = !s.d.cnNo ? ['wait', 'Not started'] : c5 === 'fail' ? ['bad', `${inr(gst)} comes back`] : c5 === 'pass' ? ['ok', `${inr(gst)} secured`] : ['wait', `${inr(gst)} waiting on the retailer`];
-    $('#dm-m').innerHTML = `<div><span>Discount</span><b>${inr(e.discount)}</b></div><div><span>Extra profit from extra sales</span><b class="ok">${inr(e.extraMargin)}</b><small>net ${e.net >= 0 ? '+' : '−'}${inr(Math.abs(e.net))}</small></div><div><span>Tax saving</span><b class="${gstState[0]}">${gstState[1]}</b></div><div><span>Cash</span><b class="${cash === 'pass' ? 'ok' : 'wait'}">${cash === 'pass' ? `${inr(s.d.received)} matched` : `${inr(C.netDue(s.d))} due`}</b></div>`;
+    const prev = i > 0 ? C.evaluate(steps[i - 1].d, { today, settings: C.SETTINGS, history: {}, opened: {} }).controls : null;
+    const OWN = { C1: 'Vikram', C2: 'Vikram', C3: 'Farah', C4: 'Farah', C5: 'Asha', C6: 'Asha', C7: 'Audit' };
+    const stOf = (c, d) => refused && c.id === 'C2' ? 'fail' : c.id === 'C5' && !d.cnNo ? 'idle' : c.status;
+    const ICON = { pass: '<svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg>', fail: '<svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg>', wait: '<i></i>', idle: '' };
+    const LBL = { pass: 'Yes', fail: 'No', wait: 'Waiting', idle: 'Not yet' };
+    $('#dm-c').innerHTML = r.controls.map((c, k) => { const st = stOf(c, s.d), was = prev ? (i - 1 === 1 && c.id === 'C2' ? 'fail' : stOf(prev[k], steps[i - 1].d)) : st, ch = prev && st !== was;
+      return `<li class="${st}${ch ? ' ch' : ''}"><span class="dn">${ICON[st]}</span><b>${PLAIN[c.id]}</b><em>${OWN[c.id]}</em><span class="dl">${LBL[st]}</span>${ch || (st === 'fail') ? `<small>${(c.text.split(' · ')[0].match(/^.*?\.(?=\s|$)/) || [c.text.split(' · ')[0]])[0]}</small>` : ''}</li>`; }).join('');
+    $('#ph-cs').innerHTML = r.controls.map(c => { const st = stOf(c, s.d); return `<span class="${st}"><i></i>${c.id}</span>`; }).join('');
+    const c5 = r.controls[4].status, gst = r.gst, cash = r.controls[5].status, max = Math.max(e.discount, e.extraMargin);
+    const gstState = !s.d.cnNo ? ['idle', 'Not sent yet', 0] : c5 === 'fail' ? ['bad', 'Rejected: at risk', 35] : c5 === 'pass' ? ['ok', 'Accepted: safe', 100] : ['wait', 'Waiting on Navkar', 60];
+    const due = C.netDue(s.d), got = cash === 'pass' ? s.d.received : 0;
+    $('#dm-m').innerHTML = `<div class="lg"><p class="lg-k">Worth it?</p>
+        <div class="lg-r"><span>Given back</span><i class="out" style="--w:${e.discount / max * 100}%"></i><b>${inr(e.discount)}</b></div>
+        <div class="lg-r"><span>Extra profit</span><i class="in" style="--w:${e.approvedBy || i >= 2 ? e.extraMargin / max * 100 : 0}%"></i><b class="ok">${i >= 2 ? inr(e.extraMargin) : '—'}</b></div>
+        <p class="lg-n">${i >= 2 ? `Net <span class="${e.net >= 0 ? 'ok' : 'bad'}">${e.net >= 0 ? '+' : '−'}${inr(Math.abs(e.net))}</span>: it paid for itself` : 'Shown before anyone says yes'}</p></div>
+      <div class="lg2"><div class="g ${gstState[0]}"><p class="lg-k">GST on it</p><b>${inr(gst)}</b><span class="mt"><i style="--w:${gstState[2]}%"></i></span><small>${gstState[1]}</small></div>
+      <div class="g ${got ? 'ok' : 'idle'}"><p class="lg-k">Cash</p><b>${inr(due)}</b><span class="mt"><i style="--w:${got ? 100 : 0}%"></i></span><small>${got ? 'Received, to the rupee' : 'Due from Navkar'}</small></div></div>`;
     const tk = r.tickets.find(t => t.control === 'C5');
-    $('#dm-tk').innerHTML = tk ? `<div class="dm-t"><span class="dm-tl">now</span><b>Incident · C5 Recovery failed · Navkar Traders</b><small>Assigned to ${tk.owner.who}, ${tk.owner.role} · due ${new Date(tk.due + 'T00:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · ₹${tk.rupees.toLocaleString('en-IN')} at stake</small></div>` : '';
+    $('#dm-tk').innerHTML = tk ? `<div class="dm-t"><span class="dm-tl">Ticket</span><b>INC · Retailer rejected the credit note · Navkar Traders</b><small>Asha, receivables · due ${new Date(tk.due + 'T00:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · ₹${tk.rupees.toLocaleString('en-IN')} at stake</small></div>` : '';
     $('#dm-play').textContent = playing ? '❚❚ Pause' : i === steps.length - 1 ? '↺ Replay' : '▶ Play';
   }
   const go = (n, anim = true) => { i = Math.max(0, Math.min(steps.length - 1, n)); draw(anim); };

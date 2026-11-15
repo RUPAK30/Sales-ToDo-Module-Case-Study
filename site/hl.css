@@ -84,3 +84,43 @@
 .bs .hl-tag{margin:8px 0 12px;background:#FCFBFA}
 .cockpit-fix{}
 @media(max-width:560px){.hl-tag{flex-direction:column;align-items:center;text-align:center}.hl-tag .hl{flex-basis:auto;width:190px;max-width:190px}.hl-tag figcaption{font-size:.82rem}}
+/* ===== Phone demo, right side: a real control rail + money ledger ===== */
+.dm-c{position:relative;gap:2px!important}
+.dm-c::before{content:'';position:absolute;left:19px;top:16px;bottom:16px;width:1px;background:#E7E5E4}
+.dm-c li{position:relative;grid-template-columns:22px 1fr auto auto!important;gap:4px 10px!important;padding:8px 10px!important;border:1px solid transparent!important;background:transparent!important;border-radius:12px!important;transition:background .35s,border-color .35s}
+.dm-c li b{font-weight:600;font-size:.86rem;color:#1C1917}
+.dm-c li em{font-style:normal;font-size:.7rem;color:#A8A29E;padding:2px 7px;border-radius:999px;background:#F5F2EE}
+.dm-c li .dl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#A8A29E;min-width:52px;text-align:right}
+.dm-c li small{grid-column:2/-1;font-size:.76rem;color:#57534E;line-height:1.4}
+.dm-c .dn{position:relative;z-index:1;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1.5px solid #D6D3D1;transition:all .35s cubic-bezier(.2,1.4,.4,1)}
+.dm-c .dn svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dm-c li.pass .dn{background:#15803D;border-color:#15803D}.dm-c li.pass .dl{color:#15803D}
+.dm-c li.fail .dn{background:#B91C1C;border-color:#B91C1C}.dm-c li.fail .dl{color:#B91C1C}.dm-c li.fail{background:#FEF2F2!important;border-color:#FECACA!important}
+.dm-c li.wait .dn{border-color:#D97706}.dm-c li.wait .dn i{width:8px;height:8px;border-radius:50%;background:#F59E0B;animation:dmp 1.6s ease-in-out infinite}.dm-c li.wait .dl{color:#B45309}
+.dm-c li.idle .dn{border-style:dashed}.dm-c li.idle b{color:#A8A29E}
+.dm-c li.ch{background:#FFFBEB!important;border-color:#FDE68A!important}.dm-c li.ch.pass{background:#F0FDF4!important;border-color:#BBF7D0!important}.dm-c li.ch.fail{background:#FEF2F2!important}
+.dm-c li.ch .dn{animation:dmpop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes dmp{50%{transform:scale(.55);opacity:.5}}@keyframes dmpop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+.dm-m{display:block!important}
+.dm-m .lg,.dm-m .g{border:1px solid #F0EFED!important;border-radius:14px!important;padding:10px 12px!important;background:#fff}
+.lg-k{margin:0 0 6px;font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#78716C}
+.lg-r{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:center;font-size:.8rem;color:#57534E;margin:4px 0}
+.lg-r i{height:10px;border-radius:6px;background:#F5F2EE;position:relative;overflow:hidden}
+.lg-r i::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--w);border-radius:6px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.lg-r i.out::after{background:#FCA5A5}.lg-r i.in::after{background:#86EFAC}
+.lg-r b{font-size:.9rem;color:#1C1917;min-width:70px;text-align:right}
+.lg-n{margin:6px 0 0;font-size:.78rem;color:#78716C}.lg-n .ok,.lg-r .ok{color:#15803D!important}.lg-n .bad{color:#B91C1C}
+.lg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.dm-m .g b{display:block;font-size:1rem;color:#1C1917}.dm-m .g small{font-size:.74rem;color:#78716C}
+.mt{display:block;height:5px;border-radius:4px;background:#F5F2EE;margin:6px 0 4px;overflow:hidden}.mt i{display:block;height:100%;width:var(--w);border-radius:4px;background:#D6D3D1;transition:width .8s cubic-bezier(.2,.8,.2,1),background .3s}
+.g.ok .mt i{background:#22C55E}.g.wait .mt i{background:#F59E0B}.g.bad .mt i{background:#EF4444}.g.ok small{color:#15803D}.g.bad small{color:#B91C1C}.g.wait small{color:#B45309}
+.ph-cs span.idle i{background:transparent!important;border:1.5px dashed #D6D3D1}
+.dm-c li{align-items:center!important;min-height:0!important;height:auto!important}
+.dm-c li>*{margin:0!important;align-self:center}
+.dm-m .lg2{border:0!important;padding:0!important;background:none!important}
+.lg-n span{font-weight:700}
+.dm-g{align-items:start!important}
+.dm .ph{align-self:start}
+.dm .ph-fr{display:flex;flex-direction:column;height:auto!important}
+.dm .dm-msgs{height:420px}
+.dm-m .lg-n span{display:inline!important;font-size:inherit!important}.dm-m .lg-r span{display:inline!important}
