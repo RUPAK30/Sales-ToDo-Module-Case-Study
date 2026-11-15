@@ -1,0 +1,99 @@
+/* polish.css — the last stylesheet on every page.
+   Small, invisible details: motion that feels right, keyboard focus you can see,
+   numbers that line up, and the same feedback on a phone as on a desktop.
+   Loaded after product.css / app.css / tabs.css / tt.css so it can only refine. */
+
+:root{
+  /* Custom easing. Never linear, never the default ease for UI. */
+  --ease-out:cubic-bezier(.23,1,.32,1);      /* enters: quick start, soft landing */
+  --ease-in-out:cubic-bezier(.65,0,.35,1);   /* moves on screen */
+  --ease-press:cubic-bezier(.2,.8,.2,1);
+  --dur-press:140ms;
+  --dur-ui:180ms;
+  --focus:var(--acc,#3F6B4F);
+}
+
+/* ---------- press: 140ms, small, always in the same direction ---------- */
+:is(button,a.cta,.x-cta a,.btn,.hook,.ph-tap,.mini-ph,[role="button"],summary){
+  transition:transform var(--dur-press) var(--ease-press),
+             opacity var(--dur-ui) var(--ease-out),
+             background-color var(--dur-ui) var(--ease-out),
+             border-color var(--dur-ui) var(--ease-out),
+             color var(--dur-ui) var(--ease-out),
+             box-shadow var(--dur-ui) var(--ease-out);
+  transform-origin:center;
+}
+:is(button,a.cta,.x-cta a,.btn,.hook,.mini-ph,[role="button"]):active{
+  transform:scale(.97);
+  transition-duration:var(--dur-press);
+}
+/* A whole card that is clickable dips less, so it doesn't look like it shrank. */
+:is(.mini-ph,.hook):active{transform:scale(.985)}
+
+/* ---------- keyboard focus: visible on every page, never removed ---------- */
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{
+  outline:2.5px solid var(--focus);
+  outline-offset:2px;
+  border-radius:6px;
+}
+/* Keep the ring inside bars and cards that clip their children. */
+:where(.appbar,.sx-bar,.tabs2,.sheet,.cr-pv,.cr-ru,.cr-pk) :where(a,button,summary):focus-visible{
+  outline-offset:-3px;
+  border-radius:10px;
+}
+/* Inputs get the ring plus a soft halo, because a thin line is easy to miss. */
+:where(input,select,textarea):focus-visible{box-shadow:0 0 0 4px rgba(63,107,79,.14)}
+
+/* ---------- type: no lonely words, no ragged money ---------- */
+:where(h1,h2,h3){text-wrap:balance}
+:where(p,li,dd,blockquote){text-wrap:pretty}
+::selection{background:rgba(63,107,79,.2);color:inherit}
+/* The tap highlight is a grey box on top of our own press feedback. */
+:where(a,button,input,select,textarea,summary,[role="button"]){
+  -webkit-tap-highlight-color:transparent;
+}
+:where(button,[aria-disabled="true"]):disabled{
+  cursor:not-allowed;
+  opacity:.55;
+  transform:none!important;
+}
+
+/* ---------- money lines up: digits share a width ---------- */
+:where(.mny-big,.mny-g b,.mny-g small,.cr-py b,.cr-s b,.ask-pv dd,.facts b,.val,#dm-m b,
+       .dm-c li,.ck li,.src1 b,.x-ba b,table td,table th){
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1;
+}
+
+/* ---------- things that open, open from where you clicked ---------- */
+:where(details,.cr-pv,.cr-ru,.cr-pk){transform-origin:top center}
+:where(details[open] > :not(summary)){animation:polish-open var(--dur-ui) var(--ease-out) both}
+@keyframes polish-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+:where(dialog[open]){animation:polish-dialog var(--dur-ui) var(--ease-out) both}
+@keyframes polish-dialog{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+
+/* Hover is a promise only a mouse can keep. On touch it sticks after a tap. */
+@media (hover:none),(pointer:coarse){
+  :where(.mini-ph,.c7-g a,.preview,.skills a,.hook,.mny-g>a,.ck a,.task,.ask):hover{
+    transform:none;
+    box-shadow:none;
+  }
+  :where(.mini-ph,.preview):hover{border-color:inherit}
+}
+
+/* ---------- reduced motion: remove the movement, keep the feedback ---------- */
+@media (prefers-reduced-motion:reduce){
+  /* Override the global "turn everything off" rule: colour and opacity still
+     change, so a tap or a state change is never silent. */
+  :where(a,button,input,select,textarea,summary,[role="button"],.sheet,.task,.ask,.hook,
+         .mny-g>a,.ck a,.c7-g a,.mini-ph,.preview){
+    transition-property:opacity,background-color,color,border-color,box-shadow!important;
+    transition-duration:150ms!important;
+    transition-timing-function:var(--ease-out)!important;
+  }
+  :where(button,a.cta,.x-cta a,.btn,.hook,.mini-ph,[role="button"]):active{
+    transform:none!important;
+    opacity:.78;
+  }
+  :where(details[open] > :not(summary),dialog[open]){animation:none!important}
+}
