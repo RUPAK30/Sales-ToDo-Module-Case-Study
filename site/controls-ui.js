@@ -47,7 +47,7 @@ function actions(d, r) {
   if (!d.approvedBy) b.push('<button class="btn pri" data-a="approve" type="button">Approve as Vikram (limit 8%)</button><button class="btn" data-a="approve-self" type="button">Try approving as Neha (the requester)</button>');
   if (c('C3').status === 'fail') {
     if (d.purpose === 'damage') b.push('<span class="cr-h">This is a return, not a discount. It stays stuck here until someone moves it onto a goods-return note against the invoice, with the retailer\'s return acknowledgement.</span>');
-    else if (netted) b.push(`<input class="cr-in" id="cr-note" placeholder="Split it: e.g. &#8377;60,000 discount on the invoice; &#8377;47,200 ad bill paid separately"><button class="btn pri" data-a="split" type="button">Split the payout into two records</button>`);
+    else if (netted) b.push(`<input class="cr-in" id="cr-note" aria-label="How you split the payout" placeholder="e.g. ₹60,000 discount; ₹47,200 ad bill"><button class="btn pri" data-a="split" type="button">Split the payout into two records</button>`);
     else b.push(`<input class="cr-in" id="cr-note" placeholder="Tax desk note: what was paid for, and is there a written agreement?"><button class="btn" data-a="rv-price" type="button">Tax team: it is a price cut</button><button class="btn" data-a="rv-service" type="button">Tax team: it is a paid service</button>`);
   }
   else if (d.review === 'service' && d.route !== 'service') b.push('<button class="btn" data-a="route-service" type="button">Settle against the retailer\'s service invoice</button>');
@@ -71,14 +71,14 @@ function routes(d) {
 /* One payment, two different things inside it. The number an accounts person recognises from their own month. */
 function payoutBox(d, p, gst) {
   return `<div class="cr-py"><b>One payment, two different things · ${esc(d.invoiceNo)}</b>
-    <p>${esc(d.buyer)} also bills us for ads or shelf space. So this one payment settles two different things: a discount we gave them, and a bill they sent us.</p>
-    <div><span>Our sale to them</span><b>${inr(p.gross)}</b></div>
-    <div><span>Discount we gave (a price cut)</span><b>−${inr(p.discount)}</b></div>
-    <div><span>Ad bill they sent us</span><b>−${inr(p.adAmount)}</b></div>
-    <div><span>GST on that ad bill</span><b>−${inr(p.adGst)}</b></div>
-    <div class="tot"><span>Net bank credit</span><b>${inr(p.net)}</b></div>
-    <p>${inr(p.deducted)} comes off, but only ${inr(p.discount)} is a discount. The other ${inr(p.adAmount + p.adGst)} is a purchase: we bought ads from them, so they bill us with their own GST invoice and we claim the ${inr(p.adGst)} back. The ${inr(gst)} GST on the discount is not taken off this payment; the credit note carries it.</p>
-    <p>Split this payment into two records before any note is issued.</p></div>`;
+    <p>${esc(d.buyer)} also sends us bills for ads or shelf space. So this one payment settles two different things: a discount we gave them, and a bill they sent us.</p>
+    <div><span>The bill we raised</span><b>${inr(p.gross)}</b></div>
+    <div><span>Discount we gave</span><b>−${inr(p.discount)}</b></div>
+    <div><span>Bill they sent us for ads</span><b>−${inr(p.adAmount)}</b></div>
+    <div><span>GST on their ad bill</span><b>−${inr(p.adGst)}</b></div>
+    <div class="tot"><span>Net amount paid</span><b>${inr(p.net)}</b></div>
+    <p>${inr(p.deducted)} comes off, but only ${inr(p.discount)} is a discount. The other ${inr(p.adAmount + p.adGst)} is a purchase: they sold us ads, so they bill us with their own GST and we claim the ${inr(p.adGst)} back. The ${inr(gst)} GST on the discount sits on the credit note, not here.</p>
+    <p>Record the split first, then issue any note.</p></div>`;
 }
 function payout(d) {
   const p = C.payoutSplit(d);
@@ -91,7 +91,7 @@ function detail(d, k) {
   const prev = tk ? (S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk)) : null;
   return `<div class="cr-d">
     <div class="cr-dh"><div><p class="eyebrow">${d.id} · ${esc(d.invoiceNo)} · invoice ${fmt(d.invoiceDate)}</p><h3>${esc(d.buyer)}: you gave ${inr(e.discount)} back (${d.pct}%)</h3>
-      <p class="cr-s">Margin assumed: <b>${d.margin}%</b>. At that margin the retailer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}. They bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">so it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">so it lost ${inr(-e.net)}</span>`}<br>
+      <p class="cr-s">We assume the brand keeps <b>₹${Math.round(d.margin)}</b> of every ₹100 (<b>${d.margin}%</b> margin). At that margin the retailer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}. They bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">so it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">so it lost ${inr(-e.net)}</span>`}<br>
       ${br.recoveryPct === null ? 'No credit notes with this retailer yet.' : `This retailer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes on the GST portal, so expect about ${br.recoveryPct}% of the ${inr(r.gst)} tax saving to hold.`} Last date for the tax credit note: ${fmt(r.deadline.date)}.</p></div>
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
     <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this check →</a></small></li>`).join('')}</ol>
@@ -142,14 +142,14 @@ function askPreview(inv, pct, purpose = 'price', basis = 'above') {
   let r; try { r = C.draftRequest(inv, +pct, ctx(), C.INVOICES, purpose, basis); } catch (e) { return `<p class="cr-err">${esc(e.message)}</p>`; }
   const e = r.economics, f = r.fields, p = r.ads.length ? C.payoutSplit(f) : null;
   return `<dl class="ask-pv">
-    <dt>Buyer · invoice</dt><dd><b>${esc(f.buyer)}</b> · ${fmt(f.invoiceDate)} · ${inr(f.value)}</dd>
+    <dt>Retailer and bill</dt><dd><b>${esc(f.buyer)}</b> · ${fmt(f.invoiceDate)} · ${inr(f.value)}</dd>
     <dt>Discount</dt><dd><b>${inr(e.discount)}</b> before GST (${inr(r.gst)} GST)</dd>
-    ${purpose === 'price' && r.hasBaseline ? `<dt>Whole order vs extra only</dt><dd>${inr(e.onAll)} vs <b>${inr(e.onAbove)}</b> · ${e.saved > 0 ? `<span class="ok">paying only on the extra saves ${inr(e.saved)}</span>` : 'no extra over the usual order, so nothing is earned on the extra-only basis'}</dd>` : ''}
-    <dt>Usual order</dt><dd>${r.hasBaseline ? `${inr(f.baseline)} (average of last ${r.pastCount})` : 'No past orders: break-even shown, extra sales unknown'}</dd>
-    <dt>Worth it?</dt><dd>Margin assumed <b>${f.margin}%</b>. Needs <b>${e.breakEvenPct}%</b> more than usual${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">pays for itself</span>' : `<span class="bad">loses ${inr(-e.net)}</span>`}` : ''}</dd>
-    <dt>Retailer record</dt><dd>${r.buyer.recoveryPct === null ? 'No credit notes with this retailer yet' : `Accepted ${r.buyer.accepted} of ${r.buyer.notes} credit notes`}</dd>
-    <dt>Tax deadline</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
-    <dt>What it is for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the retailer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the retailer, so it needs its own GST invoice, not a discount note.' : purpose === 'early' ? 'Early payment: judged on how many days sooner the cash arrives, not on extra sales.' : basis === 'above' ? 'A price cut, only on what the retailer takes above its usual order.' : 'A price cut on the whole invoice value.'}</dd>
+    ${purpose === 'price' && r.hasBaseline ? `<dt>On all of it, or only the extra?</dt><dd>${inr(e.onAll)} vs <b>${inr(e.onAbove)}</b> · ${e.saved > 0 ? `<span class="ok">paying only on the extra saves ${inr(e.saved)}</span>` : 'no extra over the usual order, so nothing is earned on the extra-only basis'}</dd>` : ''}
+    <dt>What they usually buy</dt><dd>${r.hasBaseline ? `${inr(f.baseline)} (average of last ${r.pastCount})` : 'No past orders: break-even shown, extra sales unknown'}</dd>
+    <dt>Does it pay for itself?</dt><dd>We assume the brand keeps ₹${Math.round(f.margin)} of every ₹100 (${f.margin}% margin). Needs <b>${e.breakEvenPct}%</b> more buying${r.hasBaseline ? ` · got <b>${e.upliftPct}%</b> · ${e.paidBack ? '<span class="ok">yes</span>' : `<span class="bad">no, loses ${inr(-e.net)}</span>`}` : ''}</dd>
+    <dt>Past notes with them</dt><dd>${r.buyer.recoveryPct === null ? 'No credit notes with this retailer yet' : `Accepted ${r.buyer.accepted} of ${r.buyer.notes} credit notes`}</dd>
+    <dt>Last date for the tax cut</dt><dd>${r.late ? '<span class="bad">Passed: only a financial credit note is possible</span>' : `${fmt(r.deadline.date)} · ${r.daysLeft} days`}</dd>
+    <dt>What is this money for</dt><dd>${purpose === 'damage' ? '<span class="bad">A damage claim is not a discount. It needs a goods-return note and the retailer\'s return acknowledgement.</span>' : purpose === 'promo' ? 'A promotion or ad payment: we are buying something from the retailer, so it needs its own GST invoice, not a discount note.' : purpose === 'early' ? 'Early payment: judged on how many days sooner the cash arrives, not on extra sales.' : basis === 'above' ? 'A price cut, only on what the retailer takes above its usual order.' : 'A price cut on the whole bill.'}</dd>
   </dl>
   ${p ? payoutBox(f, p, r.gst) : ''}
   <button class="btn pri" data-a="ask-go" type="button">Send for approval</button>`;
@@ -217,8 +217,8 @@ function render() {
         <dt>Post-sale discount</dt><dd>Money given back to a retailer after the bill, for example a 6% rebate for hitting a target.</dd>
         <dt>Credit note</dt><dd>A "minus bill". A <b>GST credit note</b> also lowers the tax on the sale; a <b>financial credit note</b> returns money but leaves the tax as billed.</dd>
         <dt>GST portal reply page (IMS)</dt><dd>The page on the GST portal where the retailer accepts or rejects your credit note. They can act until they file their own GSTR-3B, usually the 20th of the next month, and one more tax period if they mark it Pending. Rejected means your tax saving is lost; silence after that counts as accepted, but nobody has confirmed it.</dd>
-        <dt>Netting</dt><dd>One payment carrying two different things: a discount you gave, and a bill the retailer sent you (an ad, a slot, a display). One bank credit, one payout advice, two separate tax questions. If they are never split, nobody can say which rupee was which.</dd>
-        <dt>Ad invoice</dt><dd>The retailer's own bill to you for advertising or display space, with its own GST. It is a purchase you make, not a discount you give, so it must not be settled with a discount credit note.</dd>
+        <dt>Netting</dt><dd>One payment carrying two things: a discount you gave, and a bill the retailer sent you. The bank shows one amount; the tax needs two records.</dd>
+        <dt>Ad invoice</dt><dd>The retailer's bill to you for an ad, a slot or a display. It carries its own GST. It is a purchase you make, not a discount you give, so it must never be settled with a discount note.</dd>
         <dt>E-invoice 30-day clock</dt><dd>Where e-invoicing applies, a credit note must be reported to the e-invoice system within 30 days of its date. After that the portal rejects it and the tax cut never reaches the retailer.</dd>
         <dt>Damage claim</dt><dd>Goods came back damaged. That is a return, not a discount: it needs a goods-return note and the retailer's acknowledgement, not a credit note that hides it inside a price cut.</dd>
         <dt>Last date for a tax cut (s.34(2))</dt><dd>The last date to issue a credit note that lowers tax: 30 Nov after the financial year of the bill, or the annual return date if that is earlier.</dd>
