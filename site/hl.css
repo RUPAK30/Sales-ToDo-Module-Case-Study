@@ -29,3 +29,21 @@
 .mny-g [data-seg=g] b{color:#B45309!important}.mny-g [data-seg=s] b{color:#E11D48!important}
 @media(max-width:420px){.coins{grid-template-columns:repeat(10,8px);gap:2px;padding:6px}.coins .c{width:8px;height:8px}}
 @media(prefers-reduced-motion:reduce){.coins .c{transition:none;opacity:1;transform:none}}
+/* three pictures under the money card */
+.hx-r{display:flex;flex-direction:column;gap:10px;min-width:0}
+.hl-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hl-mini figure{margin:0;background:rgba(255,255,255,.75);border:1px solid #ECE7E1;border-radius:14px;padding:6px 8px 9px;text-align:center;backdrop-filter:blur(8px)}
+.hl-mini .hl{max-width:120px;margin:0 auto}
+.hl-mini figcaption{font-size:.7rem;color:#78716C;line-height:1.3}.hl-mini figcaption b{display:block;font-size:.8rem;color:#1C1917}
+@media(max-width:760px){.hl-mini .hl{max-width:96px}}
+/* coins v2: real coins, consistent size, story in two beats */
+.coins{grid-template-columns:repeat(10,13px)!important;gap:3px!important;padding:9px!important;background:linear-gradient(160deg,#FBF7EE,#F4EEE2)!important;border:1px solid #EFE6D3}
+.coins .c{width:13px!important;height:13px!important;background:radial-gradient(circle at 35% 30%,#FFF7D6 0 18%,#F2C94C 45%,#B8860B 100%)!important;box-shadow:inset 0 0 0 1px rgba(120,80,0,.35)!important;transition:opacity .3s ease var(--d),transform .55s cubic-bezier(.2,1.5,.4,1) var(--d),background .5s ease var(--d2,0ms),filter .5s ease var(--d2,0ms)}
+.coins.sorted .c-l{background:radial-gradient(circle at 35% 30%,#FECACA 0 15%,#EF4444 50%,#991B1B 100%)!important;transform:translateY(1px)}
+.coins.sorted .c-g{background:radial-gradient(circle at 35% 30%,#FEF3C7 0 15%,#F59E0B 50%,#B45309 100%)!important}
+.coins.sorted .c-s{background:radial-gradient(circle at 35% 30%,#FFE4E6 0 15%,#FB7185 50%,#BE123C 100%)!important}
+.coins.sorted .c-k{filter:saturate(1.2)}
+.coins[data-hi] .c{opacity:.2!important}
+.coins[data-hi=l] .c-l,.coins[data-hi=g] .c-g,.coins[data-hi=s] .c-s,.coins[data-hi=k] .c-k{opacity:1!important;transform:translateY(-2px) scale(1.12)!important}
+.mny-g [data-seg=k]::before{background:radial-gradient(circle at 35% 30%,#FFF7D6 0 18%,#F2C94C 45%,#B8860B 100%)!important;box-shadow:none!important}
+@media(max-width:420px){.coins{grid-template-columns:repeat(10,10px)!important;gap:2px!important}.coins .c{width:10px!important;height:10px!important}}

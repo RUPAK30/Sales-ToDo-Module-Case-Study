@@ -23,8 +23,8 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
     const stake = Math.round((lostAmt + K.gstAtRisk + K.short) / K.spent * 100); n.l += stake - (n.l + n.g + n.s);
     const seq = [...Array(n.l).fill('l'), ...Array(n.g).fill('g'), ...Array(n.s).fill('s')]; while (seq.length < 100) seq.push('k');
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    box.innerHTML = seq.map((c, i) => `<i class="c c-${c}" style="--d:${calm ? 0 : (i % 10) * 28 + Math.floor(i / 10) * 55}ms"></i>`).join('');
-    const go = () => box.classList.add('in');
+    box.innerHTML = seq.map((c, i) => `<i class="c c-${c}" style="--d:${calm ? 0 : (i % 10) * 22 + Math.floor(i / 10) * 45}ms;--d2:${calm ? 0 : (99 - i) * 9}ms"></i>`).join('');
+    const go = () => { box.classList.add('in'); setTimeout(() => box.classList.add('sorted'), calm ? 0 : 1300); };
     if (calm || !('IntersectionObserver' in window)) go(); else { const io = new IntersectionObserver(e => { if (e[0].isIntersecting) { go(); io.disconnect(); } }, { threshold: .4 }); io.observe(box); }
     document.querySelectorAll('.mny-g [data-seg]').forEach(t => {
       const on = () => box.dataset.hi = t.dataset.seg, off = () => delete box.dataset.hi;
