@@ -23,7 +23,7 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
   const cr = n => '₹' + (n >= 1 ? n.toLocaleString('en-IN', { maximumFractionDigits: 1 }) + ' crore' : Math.round(n * 100).toLocaleString('en-IN') + ' lakh');
   const calc = () => { const v = id => +$(id).value || 0, rev = v('#w-rev'), tr = v('#w-trade'), b = v('#w-bad'), po = v('#w-post'), spend = rev * tr / 100;
     set('#w-rev-v', cr(rev)); set('#w-trade-v', tr + '% of sales'); set('#w-bad-v', b + '%'); set('#w-post-v', po + '%');
-    $('#w-ans').innerHTML = `A <b>${cr(rev)}</b> company spends about <b>${cr(spend)}</b> a year on discounts. Roughly <b class="bad">${cr(spend * b / 100)}</b> of it doesn't pay for itself.`;
+    $('#w-ans').innerHTML = `A <b>${cr(rev)}</b> company gives about <b>${cr(spend)}</b> a year back to retailers. Roughly <b class="bad">${cr(spend * b / 100)}</b> of it never comes back as extra sales.`;
     $('#w-b1').style.width = (100 - b) + '%'; $('#w-b2').style.width = b + '%'; set('#w-o3', cr(spend * po / 100 * 0.18)); };
   document.querySelectorAll('.wk-sl input').forEach(i => i.addEventListener('input', calc)); if ($('#w-rev')) calc(); }
 
@@ -34,14 +34,14 @@ if (root) {
     [['buyer', 'Navkar Traders', 'Give us 6% on the March invoice, or we move volume next quarter.'], ['me', 'Neha · commercial', 'Asking for 6% (₹60,000) as a post-sale discount.'], ['ok', 'Check: to make up for ₹60,000, Navkar must buy 13.3% more than usual. They bought 16.3% more, so it\'s worth it.']],
     [['me', 'Neha · commercial', 'It\'s urgent, approving it myself.'], ['bad', 'Blocked: you can\'t approve your own request.']],
     [['them', 'Vikram · finance controller', 'Approved 6%, within my 8% limit.'], ['ok', 'Recorded. The "is it worth it" check was done before the yes.']],
-    [['them', 'Farah · tax desk', 'Tax credit note CN-26-041 sent to the buyer.'], ['warn', '₹10,800 tax saving now waits for Navkar to approve it on the GST site. Deadline 30 Nov 2026.']],
+    [['them', 'Farah · tax desk', 'Tax credit note CN-26-041 sent to the retailer.'], ['warn', '₹10,800 tax saving now waits for Navkar to approve it on the GST site. Deadline 30 Nov 2026.']],
     [['buyer', 'GST site · Navkar Traders', 'Rejected: "Wrong invoice reference".'], ['bad', 'Rejected, so the ₹10,800 tax saving is lost for now. A task opens for Asha, due in 2 working days.']],
     [['them', 'Farah · tax desk', 'Sent a corrected note, CN-26-042.'], ['buyer', 'GST site · Navkar Traders', 'Accepted.'], ['ok', 'Tax saving is safe. Task closed.']],
     [['day', '3 weeks later'], ['ok', '₹9,40,000 received, exactly what was agreed.']],
     [['ok', 'All 7 checks pass. Every step is fingerprinted, so any later change would show.']],
   ];
   let typing = null, i = 0, timer = null, inView = false, manual = false, started = false, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const PLAIN = { C1: 'Worth it?', C2: 'Right person said yes?', C3: 'Really a discount?', C4: 'Paperwork right and on time?', C5: 'Buyer accepted?', C6: 'Right money arrived?', C7: 'Record untouched?' };
+  const PLAIN = { C1: 'Worth it?', C2: 'Right person said yes?', C3: 'Really a discount?', C4: 'Paperwork right and on time?', C5: 'Retailer accepted?', C6: 'Right money arrived?', C7: 'Record untouched?' };
   const T = { me: '4:12 pm ✓✓', them: '4:20 pm', buyer: '4:31 pm' };
   const bubble = ([k, a, b]) => k === 'day' ? `<div class="td">${a}</div>` : ['ok', 'bad', 'warn'].includes(k) ? `<div class="ts ${k}"><span>${a}</span></div>` : `<div class="tb ${k}"><p class="tb-w">${a}</p><div class="tb-m">${b}<span class="tm">${T[k] ?? ''}</span></div></div>`;
   function draw(anim) {
@@ -61,7 +61,7 @@ if (root) {
     $('#dm-c').innerHTML = r.controls.map(c => { const st = refused && c.id === 'C2' ? 'fail' : c.status; return `<li class="${st}"><i></i><b>${c.id} · ${PLAIN[c.id]}</b><span>${st === 'pass' ? 'Pass' : st === 'fail' ? 'Fail' : 'Waiting'}</span></li>`; }).join('');
     $('#ph-cs').innerHTML = r.controls.map(c => { const st = refused && c.id === 'C2' ? 'fail' : c.status; return `<span class="${st}"><i></i>${c.id}</span>`; }).join('');
     const c5 = r.controls[4].status, gst = r.gst, cash = r.controls[5].status;
-    const gstState = !s.d.cnNo ? ['wait', 'Not started'] : c5 === 'fail' ? ['bad', `${inr(gst)} comes back`] : c5 === 'pass' ? ['ok', `${inr(gst)} secured`] : ['wait', `${inr(gst)} waiting on buyer`];
+    const gstState = !s.d.cnNo ? ['wait', 'Not started'] : c5 === 'fail' ? ['bad', `${inr(gst)} comes back`] : c5 === 'pass' ? ['ok', `${inr(gst)} secured`] : ['wait', `${inr(gst)} waiting on the retailer`];
     $('#dm-m').innerHTML = `<div><span>Discount</span><b>${inr(e.discount)}</b></div><div><span>Extra profit from extra sales</span><b class="ok">${inr(e.extraMargin)}</b><small>net ${e.net >= 0 ? '+' : '−'}${inr(Math.abs(e.net))}</small></div><div><span>Tax saving</span><b class="${gstState[0]}">${gstState[1]}</b></div><div><span>Cash</span><b class="${cash === 'pass' ? 'ok' : 'wait'}">${cash === 'pass' ? `${inr(s.d.received)} matched` : `${inr(C.netDue(s.d))} due`}</b></div>`;
     const tk = r.tickets.find(t => t.control === 'C5');
     $('#dm-tk').innerHTML = tk ? `<div class="dm-t"><span class="dm-tl">now</span><b>Incident · C5 Recovery failed · Navkar Traders</b><small>Assigned to ${tk.owner.who}, ${tk.owner.role} · due ${new Date(tk.due + 'T00:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · ₹${tk.rupees.toLocaleString('en-IN')} at stake</small></div>` : '';

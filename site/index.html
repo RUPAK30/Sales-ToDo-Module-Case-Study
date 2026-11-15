@@ -71,10 +71,10 @@
 <header class="wrap hero" data-sec="overview">
   <div class="hx-grid"><div class="hx2">
     <p class="eyebrow">Product &amp; BA case study · Rupak Ghanpathi, ex-HDFC Bank BA</p>
-    <h1>Companies give money back to buyers after a sale. Most of it is never checked.</h1>
+    <h1>Brands give money back to retailers after a sale. Most of it is never checked.</h1>
     <p class="x-prom">Ten Today checks every one: is it worth it, did the tax saving go through, did the money arrive, and can you prove it?</p>
     <p class="x-pat" style="margin:6px 0 0;font-size:.86rem;color:#78716C">The pattern: who asks, who approves, what gets refused, what becomes a ticket, how it's proved. Live example: brand discounts under the new GST rules. A working prototype, not a shipped product.</p>
-    <button type="button" class="hook" id="hook" aria-expanded="false"><span class="hook-q">You give a buyer <b>₹100</b> back after a sale. How much comes back to you?</span><span class="hook-a" aria-live="polite"><b id="hook-v">Tap to find out</b><small id="hook-s"></small></span></button>
+    <button type="button" class="hook" id="hook" aria-expanded="false"><span class="hook-q">You give a retailer <b>₹100</b> back after a sale. How much comes back to you?</span><span class="hook-a" aria-live="polite"><b id="hook-v">Tap to find out</b><small id="hook-s"></small></span></button>
     <p class="x-cta"><a class="x-pri" href="app.html#controls">Try the live product →</a><a class="x-sec" href="#demo">▶ Watch one discount</a><a class="x-sec" href="mailto:rupakr2g@gmail.com?subject=Ten%20Today">Let's talk</a></p>
   </div>
     <div class="mny" id="money" aria-label="What it found in the sample">
@@ -82,7 +82,7 @@
       <div class="mny-g">
         <a href="app.html#controls/D-102/C1"><b id="m-lost">—</b><span><i class="dk">given on discounts that didn't bring enough extra sales</i><i class="mb">discounts that didn't pay back</i></span></a>
         <a href="app.html#controls/sweep"><b id="m-gst">—</b><span><i class="dk">of tax savings that may not go through</i><i class="mb">tax savings at risk</i></span></a>
-        <a href="app.html#controls/D-106/C6"><b id="m-short">—</b><span><i class="dk">paid less by buyers than agreed</i><i class="mb">paid short</i></span></a>
+        <a href="app.html#controls/D-106/C6"><b id="m-short">—</b><span><i class="dk">paid less by retailers than agreed</i><i class="mb">paid short</i></span></a>
         <div class="ns"><b id="m-ns">—</b><span><i class="dk">earned back for every ₹1 given as discount. Below ₹1 means discounts lose money. This is the one number Ten Today tries to raise.</i><i class="mb">back per ₹1 given</i></span></div>
       </div>
       <p class="mny-f">Computed live by the same engine as the app, from sample data. <a href="#worth">What it's worth at your scale ↓</a></p>
@@ -99,14 +99,14 @@
     <p class="eyebrow">What it could be worth</p>
     <p class="wk-ans" id="w-ans">—</p>
     <div class="wk-bar" aria-hidden="true"><i class="ok" id="w-b1"></i><i class="bad" id="w-b2"></i></div>
-    <div class="wk-leg"><span><i class="ok"></i>pays for itself</span><span><i class="bad"></i>doesn't: worth checking before anyone says yes</span><span id="w-o3l">tax savings waiting on buyers: <b id="w-o3">—</b></span></div>
+    <div class="wk-leg"><span><i class="ok"></i>pays for itself</span><span><i class="bad"></i>doesn't: check before anyone says yes</span><span id="w-o3l">GST waiting on retailers to accept: <b id="w-o3">—</b></span></div>
     <div class="wk-sl">
       <label><span>Yearly sales <b id="w-rev-v"></b></span><input type="range" id="w-rev" min="50" max="5000" step="50" value="500"></label>
-      <label><span>Spent on discounts <b id="w-trade-v"></b></span><input type="range" id="w-trade" min="1" max="20" step="0.5" value="8"></label>
-      <label><span>Don't pay for themselves <b id="w-bad-v"></b></span><input type="range" id="w-bad" min="0" max="100" step="1" value="40"></label>
-      <label><span>Given after the sale with a tax credit note <b id="w-post-v"></b></span><input type="range" id="w-post" min="0" max="100" step="5" value="30"></label>
+      <label><span>Given back to retailers <b id="w-trade-v"></b></span><input type="range" id="w-trade" min="1" max="20" step="0.5" value="8"></label>
+      <label><span>Didn't bring enough extra sales <b id="w-bad-v"></b></span><input type="range" id="w-bad" min="0" max="100" step="1" value="40"></label>
+      <label><span>Given back with a GST credit note <b id="w-post-v"></b></span><input type="range" id="w-post" min="0" max="100" step="5" value="30"></label>
     </div>
-    <p class="wk-f" id="w-f">Defaults: 8% discount spend (McKinsey's 8–11% for consumer goods), 40% not paying back (this sample; McKinsey found 72% of US trade promotions lose money), 18% GST. An estimate to size the problem, not a promise of savings.</p>
+    <p class="wk-f" id="w-f">Defaults: 8% discount spend (McKinsey's 8–11% for consumer goods), the share that didn't pay back in this sample (McKinsey found 72% of US trade promotions lose money), 18% GST. An estimate to size the problem, not a promise of savings.</p>
   </section>
 
   <section id="demo" class="dm" aria-label="One discount, end to end">
@@ -131,8 +131,8 @@
 
   <section id="controls" class="c7" aria-label="The seven checks">
     <p class="eyebrow">The seven checks</p>
-    <h2>Every discount answers seven questions. Tap an example to see one fail.</h2>
-    <ol class="ck"><li id="c1"><span class="ck-n">C1</span><div><b>Is it worth it?</b><span>Shows how much extra the buyer must buy before anyone says yes.</span></div><a href="app.html#controls/D-102/C1">Lost ₹64,000 →</a></li><li id="c2"><span class="ck-n">C2</span><div><b>Is the right person saying yes?</b><span>No approving your own request, or above your limit.</span></div><a href="app.html#controls/D-108/C2">12% on an 8% limit →</a></li><li id="c3"><span class="ck-n">C3</span><div><b>Is it really a discount?</b><span>Money for a shelf display is a service. A damaged return is not a discount. And if the same buyer also bills you for ads, one payout carries both — so it gets split before anyone issues a note.</span></div><a href="app.html#controls/D-109/C3">Net payout, not split →</a></li><li id="c4"><span class="ck-n">C4</span><div><b>Is the paperwork right and on time?</b><span>Right credit note, before the deadline, under the rule of that day — and reported to the e-invoice system within 30 days.</span></div><a href="app.html#controls/D-103/C4">Issued under old rule →</a></li><li id="c5"><span class="ck-n">C5</span><div><b>Did the buyer accept it?</b><span>The buyer approves on the GST portal, until they file their own return — usually the 20th. Rejected means the tax saving is lost, and there are three ways back.</span></div><a href="app.html#controls/D-102/C5">Buyer rejected →</a></li><li id="c6"><span class="ck-n">C6</span><div><b>Did the right money arrive?</b><span>What the buyer paid must match what was approved.</span></div><a href="app.html#controls/D-106/C6">₹63,000 short →</a></li><li id="c7"><span class="ck-n">C7</span><div><b>Can anyone change the record?</b><span>Every step is fingerprinted; a later edit shows exactly where.</span></div><a href="app.html#controls/D-101/C7">Try editing one →</a></li><li class="ck-hot"><span class="ck-n">!</span><div><b>Last chance: 30 Nov 2026</b><span>Last year's bills whose tax saving isn't safe yet, biggest first.</span></div><a href="app.html#controls/sweep">Open the list →</a></li></ol>
+    <h2>Seven questions for every rupee you give back. Tap one to see it fail.</h2>
+    <ol class="ck"><li id="c1"><span class="ck-n">C1</span><div><b>Is it worth it?</b><span>The retailer must buy enough extra to cover the money you give back. Best: pay only on the extra boxes.</span></div><a href="app.html#controls/D-102/C1">Lost ₹64,000 →</a></li><li id="c2"><span class="ck-n">C2</span><div><b>Did the right person say yes?</b><span>Not the person who asked, and not above their limit.</span></div><a href="app.html#controls/D-108/C2">12% on an 8% limit →</a></li><li id="c3"><span class="ck-n">C3</span><div><b>Is it really a price cut?</b><span>Ads and shelf space are a service you bought. Damaged goods are a return. Only a real price cut gets a discount note.</span></div><a href="app.html#controls/D-109/C3">Net payout, not split →</a></li><li id="c4"><span class="ck-n">C4</span><div><b>Right paperwork, on time?</b><span>The right "minus bill" (credit note), under the rule of that day, before the deadline.</span></div><a href="app.html#controls/D-103/C4">Issued under old rule →</a></li><li id="c5"><span class="ck-n">C5</span><div><b>Did the retailer accept it?</b><span>On ₹100 back, ₹18 is GST. If the retailer doesn't accept the note on the GST portal, you lose that ₹18 and they keep it.</span></div><a href="app.html#controls/D-102/C5">Retailer rejected →</a></li><li id="c6"><span class="ck-n">C6</span><div><b>Did the right money arrive?</b><span>What the retailer paid must match the bill minus what was approved.</span></div><a href="app.html#controls/D-106/C6">₹63,000 short →</a></li><li id="c7"><span class="ck-n">C7</span><div><b>Can anyone change the record?</b><span>Every step is fingerprinted. Change one later and it shows which.</span></div><a href="app.html#controls/D-101/C7">Try editing one →</a></li><li class="ck-hot"><span class="ck-n">!</span><div><b>Last chance: 30 Nov 2026</b><span>Last year's bills where the ₹18 isn't safe yet, biggest first.</span></div><a href="app.html#controls/sweep">Open the list →</a></li></ol>
   </section>
 
   <p class="eyebrow" style="margin:22px 0 0">One flow, three screens</p>
@@ -151,8 +151,8 @@
     <ol>
       <li><b>No AI deciding the discount.</b> The rules decide and the numbers are shown; an approver can follow every one. AI only explains.</li>
       <li><b>No clawback from anyone's pay.</b> Taking back pay already earned runs into wage-law trouble. Pay is earned on cash received, so there is nothing to claw back.</li>
-      <li><b>No blocking the buyer's next order.</b> Whether the buyer accepts a credit note is between them and finance. Ten Today raises a ticket; it doesn't hold the business hostage.</li>
-      <li><b>No GST filing.</b> Nothing is sent to the portal. Finance records what the buyer did on the GST portal, so the tool never claims a status it can't see.</li>
+      <li><b>No blocking the retailer's next order.</b> Whether the retailer accepts a credit note is between them and finance. Ten Today raises a ticket; it doesn't hold the business hostage.</li>
+      <li><b>No GST filing.</b> Nothing is sent to the portal. Finance records what the retailer did on the GST portal, so the tool never claims a status it can't see.</li>
     </ol>
   </section>
 </header>
@@ -204,7 +204,7 @@
         <div class="wwh-c">
           <b>The order the list is picked in (4 rules)</b>
           <ol>
-            <li><b>A call booked for a fixed time</b> comes first, at the buyer's time</li>
+            <li><b>A call booked for a fixed time</b> comes first, at the retailer's time</li>
             <li><b>How late it is:</b> 5+ days late → 1–4 days late → due today</li>
             <li><b>Is money waiting on it:</b> a quote sent or a price being negotiated</li>
             <li><b>Days overdue</b>, then <b>deal size</b>, only to break a tie</li>
@@ -216,7 +216,7 @@
         </div>
         <div class="wwh-c">
           <b>The link to Every Rupee, both ways</b>
-          <p>Every approved discount carries a fingerprint (<code>contractSeal</code>, SHA-256) across to <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>. If a buyer later pays short without that approval, the difference comes back as a task for the rep, and it blocks new discount asks until it is settled.</p>
+          <p>Every approved discount carries a fingerprint (<code>contractSeal</code>, SHA-256) across to <a href="https://everyrupee-o2c.vercel.app/">Every Rupee</a>. If a retailer later pays short without that approval, the difference comes back as a task for the rep, and it blocks new discount asks until it is settled.</p>
         </div>
       </div>
       <p style="margin:0;font-size:.84rem;color:var(--muted)"><b>Downloads:</b> <a href="Sales_ToDo_Module_Case_Study.pdf" style="font-weight:600;color:var(--acc-d,#2F5240)">Full Case Study (PDF, 4 pages)</a> · <a href="Sales_ToDo_Module_One_Pager.pdf" style="font-weight:600;color:var(--acc-d,#2F5240)">One-Pager (PDF)</a> · <a href="app.html" style="font-weight:600;color:var(--acc-d,#2F5240)">Open Live Product →</a></p>
