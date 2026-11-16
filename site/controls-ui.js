@@ -87,6 +87,25 @@ function payout(d) {
   return payoutBox(d, p, C.gstOf(d));
 }
 
+/* Live link: send this discount to the ServiceNow app and show what ServiceNow did with it. */
+const SN = {};
+function snCard(d) {
+  const st = SN[d.id];
+  const head = `<div class="sn-c"><div class="sn-h"><div><p class="eyebrow">Live in ServiceNow</p><b>Send this discount to the ServiceNow app</b><span>The same rule runs there natively: up to 10% goes to Sales Managers, above 10% to Sales Heads, and every step is logged on the record.</span></div>
+    <button class="btn pri" data-sn="${d.id}" type="button"${st?.busy ? ' disabled' : ''}>${st?.busy ? 'Sending…' : '↗ Send to ServiceNow'}</button></div>`;
+  if (!st || st.busy) return head + '</div>';
+  if (st.error) return head + `<p class="sn-r bad">${esc(st.error)}</p></div>`;
+  const r = st.res, req = `<details class="sn-req"><summary>The exact request</summary><pre>${esc(r.request.method + ' ' + r.request.endpoint + '\n' + JSON.stringify(r.request.body, null, 2))}</pre></details>`;
+  if (!r.live) {
+    const why = { not_configured: 'The live connection is not switched on yet.', asleep: 'The ServiceNow demo instance is asleep (free developer instances pause when idle).', refused: 'ServiceNow refused the request.' }[r.why] ?? 'ServiceNow did not answer.';
+    return head + `<p class="sn-r wait">${why} Here is exactly what it would receive.</p>${req}</div>`;
+  }
+  return head + `<ol class="sn-steps">
+      <li class="ok"><b>${esc(r.number)}</b> created in ServiceNow</li>
+      <li class="${r.approval_state ? 'ok' : 'wait'}">Routed to <b>${esc(r.routed_to)}</b>${r.reason ? `: “${esc(r.reason)}”` : ' (approval being routed)'}</li>
+      <li class="wait">Waiting for a person to approve. Nobody can approve their own request.</li></ol>${req}</div>`;
+}
+
 function detail(d, k) {
   const r = k.rows.find(x => x.d.id === d.id).r, e = r.economics, br = C.buyerRecord(ctx(), d.buyer), tk = r.tickets[0];
   const prev = tk ? (S.view === 'jira' ? C.jiraIssue(tk) : C.serviceNowIncident(tk)) : null;
@@ -100,6 +119,7 @@ function detail(d, k) {
     ${payout(d)}
     ${routes(d)}
     ${actions(d, r)}
+    ${snCard(d)}
     ${prev ? `<details class="cr-more-d"><summary>See this as a ServiceNow or JIRA ticket</summary>${ticketCard(tk, prev)}</details>` : ''}
   </div>`;
 }
@@ -277,6 +297,10 @@ function act(a, el) {
 }
 
 document.addEventListener('click', e => {
+  const snb = e.target.closest('[data-sn]'); if (snb) { const id = snb.dataset.sn; SN[id] = { busy: true }; render();
+    fetch('/api/servicenow', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
+      .then(async r => { const j = await r.json().catch(() => ({})); SN[id] = r.ok ? { res: j } : { error: j.error ?? 'Could not reach the server.' }; })
+      .catch(() => { SN[id] = { error: 'Could not reach the server.' }; }).finally(render); return; }
   const root = $('#ctrl-room'); if (!root || !root.contains(e.target)) return;
   const sel = e.target.closest('[data-sel]'); if (sel) { S.focus = null; S.sel = sel.dataset.sel; S.err = ''; S.note = ''; save(); render(); root.querySelector('.cr-d')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
   const v = e.target.closest('[data-view]'); if (v) { S.view = v.dataset.view; save(); render(); root.querySelector('.tk')?.scrollIntoView({ block: 'nearest' }); return; }
