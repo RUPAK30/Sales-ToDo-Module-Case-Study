@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-const mod = await import('../api/servicenow.js');
+const mod = await import('../site/api/servicenow.js');
 const call = async (body, ip = String(Math.random())) => { let out; const res = { code: 200, status(c) { this.code = c; return this; }, json(j) { out = { code: this.code, ...j }; } }; await mod.default({ method: 'POST', body, headers: { 'x-forwarded-for': ip } }, res); return out; };
 const env = () => Object.assign(process.env, { SN_INSTANCE: 'https://dev.example.com', SN_USER: 'svc', SN_PASSWORD: 'x' });
 const json = (status, body) => ({ status, headers: { get: () => 'application/json' }, json: async () => body });

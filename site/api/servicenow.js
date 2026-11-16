@@ -3,7 +3,7 @@
 // (table x_2315670_ten_to_0_discount_request), lets the approval flow route it, then reads the result back.
 // Credentials live only in Vercel env vars: SN_INSTANCE, SN_USER, SN_PASSWORD. Never in the browser.
 // The browser can only name a sample discount; the server builds the record, so visitors cannot write free text.
-import { sampleDesk, discountOf } from '../site/controls.js';
+import { sampleDesk, discountOf } from '../controls.js';
 
 const TABLE = 'x_2315670_ten_to_0_discount_request';
 const COOLDOWN_MS = 30_000, TIMEOUT_MS = 6_000;
