@@ -5,7 +5,7 @@
 // The browser can only name a sample discount; the server builds the record, so visitors cannot write free text.
 import { sampleDesk, discountOf } from '../controls.js';
 
-const TABLE = 'x_2315670_ten_to_0_discount_request';
+export const TABLE = 'x_2315670_ten_to_0_discount_request';
 const COOLDOWN_MS = 30_000, TIMEOUT_MS = 6_000;
 const recent = new Map(); // ip -> last send (resets on cold start; ServiceNow-side duplicate rule is the real guard)
 const REASON = { price: 'Price cut', promo: 'Promotion', damage: 'Damage', early: 'Early payment' };
@@ -30,7 +30,7 @@ export function buildRecord(d) {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function sn(path, init = {}) {
+export async function sn(path, init = {}) {
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {
     const auth = Buffer.from(`${process.env.SN_USER}:${process.env.SN_PASSWORD}`).toString('base64');
