@@ -47,6 +47,8 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 .tl li.sn::before{background:#3F2A22}.tl li.tt::before{background:#B45309}.tl li.er::before{background:#0F766E}
 .tl small{display:block;color:#78716C;font-size:.72rem}
 .note{font-size:.78rem;color:#78716C}
+.acts{display:grid;gap:8px;margin-top:10px}.acts div{display:grid;grid-template-columns:170px 1fr auto auto;gap:8px;align-items:center;border:1px solid #F0EBE5;border-radius:12px;padding:8px 10px;font-size:.86rem}
+@media(max-width:640px){.acts div{grid-template-columns:1fr 1fr}.acts div b,.acts div span{grid-column:1/3}}
 @media print{.noprint{display:none!important}body{background:#fff}.bs{break-inside:avoid;border-color:#ddd}}
 </style>
 </head>
@@ -59,6 +61,17 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
   <div class="row noprint"><input id="n" value="TTD0001002" aria-label="Case ID" spellcheck="false"><button class="pri" id="go" type="button">Verify this case</button><button id="print" type="button">Print or save the case file</button></div>
   <p class="note noprint" id="status">Loading…</p>
   <div id="out"></div>
+  <section class="bs noprint" id="room"><p class="k">Case Room · press it yourself</p>
+    <h2>Don't take my word for it. Break a control, then fix it.</h2>
+    <p>You get your own copy of the Meera File in ServiceNow, approved by Vikram and sealed. Each button below makes ServiceNow do the real thing: refuse, open an incident for a named owner with a 48-hour SLA, break the seal. Each fix runs the real recovery. Then the file reloads from ServiceNow so you can read what happened. For a case where everything passes, open <a href="?case=TTD0001001">Krishna Marketing, TTD0001001</a>.</p>
+    <div class="row"><button class="pri" id="r-start" type="button">Start my copy</button><span class="note" id="r-status"></span></div>
+    <div id="r-acts" class="acts" hidden>
+      <div><b>C2 · Right person?</b><span>Neha approves her own request.</span><button data-r="self" type="button">Break it</button><button data-r="fix_self" type="button">Fix it</button></div>
+      <div><b>C5 · Retailer accepted?</b><span>Meera rejects the credit note on the GST portal.</span><button data-r="reject" type="button">Break it</button><button data-r="fix_reject" type="button">Fix it</button></div>
+      <div><b>C7 · Record untouched?</b><span>Someone changes ₹64,000 to ₹74,000 after approval.</span><button data-r="tamper" type="button">Break it</button><button data-r="fix_tamper" type="button">Fix it</button></div>
+      <div><b>C6 · Right money?</b><span>Meera pays ₹36,000 short.</span><button data-r="short" type="button">Break it</button><button data-r="fix_short" type="button">Fix it</button></div>
+    </div>
+  </section>
   <section class="bs">
     <p class="k">How the fingerprint works</p>
     <h2>One string, defined once, hashed in three places</h2>
@@ -67,6 +80,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section>
 </main>
-<script type="module" src="case.js?v=1"></script>
+<script type="module" src="case.js?v=2"></script>
 </body>
 </html>

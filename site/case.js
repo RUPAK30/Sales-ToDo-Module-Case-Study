@@ -51,4 +51,24 @@ async function load(number) {
 $('#go').addEventListener('click', () => load($('#n').value.trim().toUpperCase()));
 $('#n').addEventListener('keydown', e => e.key === 'Enter' && $('#go').click());
 $('#print').addEventListener('click', () => print());
+let mine = null;
+const say = t => { $('#r-status').textContent = t; };
+async function room(action) {
+  const btns = document.querySelectorAll('#room button'); btns.forEach(b => b.disabled = true);
+  say(action === 'start' ? 'Creating your copy in ServiceNow…' : 'ServiceNow is working…');
+  try {
+    const r = await fetch('/api/room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, number: mine }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    if (!j.live) throw new Error(WHY[j.why] ?? (j.detail || 'ServiceNow refused it.'));
+    mine = j.number; $('#n').value = mine; $('#r-acts').hidden = false;
+    await new Promise(t => setTimeout(t, action === 'reject' ? 3500 : 1200)); // the flow that opens the C5 incident runs a moment later
+    await load(mine);
+    say(`Your copy is ${mine}. Read it above.`);
+    document.querySelector('#out').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) { say(e.message || 'Could not reach the server.'); }
+  finally { btns.forEach(b => b.disabled = false); }
+}
+$('#r-start').addEventListener('click', () => room('start'));
+$('#r-acts').addEventListener('click', e => { const a = e.target.closest('[data-r]')?.dataset.r; if (a) room(a); });
 load(new URLSearchParams(location.search).get('case')?.toUpperCase() || 'TTD0001002');
