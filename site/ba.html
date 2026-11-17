@@ -157,7 +157,7 @@ const UAT = [
   ['UAT-09', 'US-08', '₹12L order, usual ₹10L, 6% off', 'Whole order ₹72,000 · extra only ₹12,000', () => C.discountOf({ ...ord, basis: 'all' }) === 72000 && C.discountOf({ ...ord, basis: 'above' }) === 12000],
   ['UAT-10', 'US-08', '₹9L order, usual ₹10L, extra-only basis', 'Nothing paid', () => C.discountOf({ ...ord, value: 900000, basis: 'above' }) === 0],
   ['UAT-11', 'US-09', 'Early-payment request', 'No volume test; basis stays whole order', () => { const r = C.draftRequest(C.INVOICES.at(-1).no, 2, ctx(), C.INVOICES, 'early', 'above'); const c = ctl(C.request({ ...r.fields, id: 'T' }, '2026-11-13', 'Neha'), 'C1'); return r.fields.basis === 'all' && /early-payment/i.test(c.text); }],
-  ['UAT-12', 'US-01', 'Full walkthrough, request to seal', 'All seven controls pass', () => C.evaluate(C.walkthrough('2026-11-13').at(-1).d, ctx()).allPass === true],
+  ['UAT-12', 'US-01', 'The Meera File, request to close', 'C1 fails (no extra sales), the other six pass after recovery', () => { const r = C.evaluate(C.walkthrough('2026-11-13').at(-1).d, ctx()); return r.controls.map(c => c.status).join() === 'fail,pass,pass,pass,pass,pass,pass'; }],
 ];
 const TRACE = [
   ['Pay only for discounts that earn back', 'C1', 'US-01, US-08', 'UAT-01, 09, 10', 'break-even = d / (m − d); basis "above"'],
@@ -168,7 +168,7 @@ const TRACE = [
   ['Cash matches approved net', 'C6', 'US-06', 'automated only', 'C6 measures the gap against the approved net'],
   ['Trail cannot be silently edited', 'C7', 'US-07', 'UAT-08', 'C7: changing one sealed entry breaks the chain'],
   ['Early payment judged on cash, not volume', 'C1', 'US-09', 'UAT-11', 'early payment is a fourth reason'],
-  ['End to end', 'C1–C7', 'all', 'UAT-12', 'walkthrough ends with all seven controls passing'],
+  ['End to end', 'C1–C7', 'all', 'UAT-12', 'the Meera File ends with C1 failing (the lesson) and the other six passing'],
 ];
 
 $('#stories-b').innerHTML = STORIES.map(([id, c, who, want, why, ac]) => `<tr><td><b>${id}</b><br><span class="pill wt">${c}</span></td><td>As <b>${esc(who)}</b>, I want to ${esc(want)}, ${esc(why)}.</td><td>${esc(ac)}</td></tr>`).join('');
