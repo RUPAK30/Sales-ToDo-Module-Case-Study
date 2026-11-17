@@ -51,6 +51,21 @@ async function load(number) {
 $('#go').addEventListener('click', () => load($('#n').value.trim().toUpperCase()));
 $('#n').addEventListener('keydown', e => e.key === 'Enter' && $('#go').click());
 $('#print').addEventListener('click', () => print());
+async function deskView() {
+  let j; try { j = await (await fetch('/api/desk')).json(); } catch { j = {}; }
+  if (!j.live) { $('#desk-out').innerHTML = `<p class="note">${WHY[j.why] ?? 'ServiceNow did not answer.'}</p>`; return; }
+  const R = j.rows, sum = f => R.reduce((s, r) => s + f(r), 0), clean = R.filter(r => r.checks.every(c => c === 'yes')).length;
+  const sym = { yes: '✓', no: '✗', waiting: '…', not_yet: '·' };
+  const open = R.filter(r => r.deadline && !r.deadline.safe && r.gst).sort((a, b) => a.deadline.daysLeft - b.deadline.daysLeft);
+  const max = Math.max(...open.map(r => r.deadline.daysLeft), 1);
+  $('#desk-out').innerHTML = `<div class="money"><div><small>All seven checks pass</small><b class="ok">${clean} of ${R.length}</b></div><div><small>Incidents open, with an owner</small><b class="bad">${sum(r => r.open)}</b></div><div><small>Incidents recovered</small><b class="ok">${sum(r => r.resolved)}</b></div><div><small>Money at risk</small><b class="bad">${rs(sum(r => r.at_risk))}</b></div></div>
+    <div style="overflow-x:auto;margin-top:12px"><table class="mx"><thead><tr><th>Case</th><th>Retailer</th>${CHECKS.map(c => `<th title="${c[2]}">${c[1]}</th>`).join('')}<th>At risk</th><th>Open</th></tr></thead><tbody>${R.map(r => `<tr><td><a href="?case=${r.number}">${r.number}</a></td><td>${esc(r.retailer)}</td>${r.checks.map(c => `<td class="c"><span class="${c}">${sym[c] ?? esc(c)}</span></td>`).join('')}<td>${r.at_risk ? rs(r.at_risk) : '—'}</td><td>${r.open || '—'}</td></tr>`).join('')}</tbody></table></div>
+    <p class="note">✓ yes · ✗ no, routed to its owner with a 48-hour SLA · … waiting on a named person. Click a case to open its file.</p>
+    <h2 style="margin-top:16px">The deadline window: tax savings that expire</h2>
+    <p class="note">Each bar is a credit note whose GST is not yet safe, sorted by the clock. The deadline is the real one from Ten Today's rules (30 Nov after the financial year, under s.34(2) of the GST Act). Per day left is the GST at stake divided by the days remaining: what each day of waiting puts on the line.</p>
+    <div class="dw">${open.map(r => `<div class="${r.deadline.daysLeft < 0 ? 'past' : ''}"><span><b>${esc(r.retailer)}</b><small class="note" style="display:block">${r.deadline.date} · ${r.deadline.daysLeft < 0 ? 'passed' : r.deadline.daysLeft + ' days left'}</small></span><i style="width:${Math.max(6, 100 - r.deadline.daysLeft / max * 94)}%"></i><span>${rs(r.deadline.gst)} GST<small class="note" style="display:block">${r.deadline.daysLeft > 0 ? rs(r.deadline.gst / r.deadline.daysLeft) + ' per day left' : 'deadline passed'}</small></span></div>`).join('') || '<p class="note">No GST waiting: every credit note is safe.</p>'}</div>`;
+}
+deskView();
 let mine = null;
 const say = t => { $('#r-status').textContent = t; };
 async function room(action) {

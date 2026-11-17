@@ -122,6 +122,27 @@
 <p class="note">Full schema with row-level security: <code>db/schema.sql</code>.</p></section>
 
 <p style="text-align:center;margin-top:24px"><a class="btn" href="app.html#controls/ask">Try asking for a discount →</a></p>
+<section class="bs" id="atf"><p class="k">ServiceNow · automated tests (ATF)</p><h2>The same rules, tested inside ServiceNow</h2>
+<div class="tw"><table><thead><tr><th>ATF test</th><th>Control</th><th>Requirement</th><th>What it proves</th></tr></thead><tbody>
+<tr><td>ATF-01</td><td>C2</td><td>US-02 · UAT-02</td><td>The requester's own approval is refused and C2 fails</td></tr>
+<tr><td>ATF-02</td><td>C2</td><td>US-02 · UAT-03</td><td>12% goes up to the CFO; 6% goes to Vikram</td></tr>
+<tr><td>ATF-03</td><td>C5</td><td>US-05</td><td>No new discount for a retailer with an open rejection</td></tr>
+<tr><td>ATF-04</td><td>C7</td><td>US-07 · UAT-08</td><td>A change after approval breaks the seal; a correcting entry restores it</td></tr>
+<tr><td>ATF-05</td><td>C7</td><td>US-07</td><td>ServiceNow's fingerprint is standard SHA-256, the same as Ten Today's and the browser's</td></tr>
+<tr><td>ATF-06</td><td>C6</td><td>US-06</td><td>A short payment fails C6 and opens an incident for Asha</td></tr>
+</tbody></table></div><p>Suite "Ten Today discount controls" in the ServiceNow app. Every change a test makes is rolled back after the run. Live result for any case: <a href="case.html">the Meera File</a>.</p></section>
+<section class="bs" id="signoff"><p class="k">Maker sign-off</p><h2>This pack signs its own work</h2>
+<p>Ten Today asks a checker to verify a maker's work by fingerprint. This pack is held to the same rule. The maker signed the file below on the date shown; your browser fingerprints the page you are reading now and compares.</p>
+<p id="so-out" class="note">Checking…</p></section>
+<script type="module">
+import { sha256 } from './engine.js';
+const out = document.getElementById('so-out');
+try {
+  const [page, signed] = await Promise.all([fetch('ba.html', { cache: 'no-store' }).then(r => r.text()), fetch('ba-signoff.json', { cache: 'no-store' }).then(r => r.json())]);
+  const now = sha256(page), ok = now === signed.sha256;
+  out.innerHTML = `Maker: <b>${signed.maker}</b>, ${signed.role} · signed ${signed.signed_on}<br>Signed fingerprint <code>${signed.sha256}</code><br>This page now <code>${now}</code><br><b style="color:${ok ? '#15803D' : '#B91C1C'}">${ok ? '✓ Unchanged since it was signed.' : '✗ Changed since it was signed: the maker must re-sign.'}</b> A checker (a second person) has not countersigned yet; the maker cannot countersign their own work.`;
+} catch { out.textContent = 'Could not check the fingerprint.'; }
+</script>
 </main>
 
 <script type="module">
