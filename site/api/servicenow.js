@@ -62,6 +62,13 @@ export default async function handler(req, res) {
 
   const made = await sn(`/api/now/table/${TABLE}?sysparm_fields=sys_id,number,approval`, { method: 'POST', body: JSON.stringify(record) });
   if (made.asleep) return fallback('asleep');
+  if (made.status === 403) {
+    // A business rule in ServiceNow aborts new discounts for a retailer with an open credit-note rejection (C5).
+    const q = encodeURIComponent(`retailer=${record.retailer}^ims_status=rejected^lifecycle_stageINims_rejected,escalated`);
+    const open = await sn(`/api/now/table/${TABLE}?sysparm_query=${q}&sysparm_fields=number&sysparm_limit=1`);
+    const blockedBy = open.body?.result?.[0]?.number;
+    if (blockedBy) return res.status(200).json({ live: true, blocked: true, blocked_by: blockedBy, retailer: record.retailer, request: { method: 'POST', endpoint: `/api/now/table/${TABLE}`, body: record } });
+  }
   if (made.status !== 201) return fallback('refused', { status: made.status, detail: made.body?.error?.message ?? null });
   const { sys_id, number } = made.body.result;
 

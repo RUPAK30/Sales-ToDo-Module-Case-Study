@@ -42,3 +42,19 @@ test('one send per visitor every 30 seconds', async () => {
   env(); globalThis.fetch = async () => ({ status: 200, headers: { get: () => 'text/html' } });
   await call({ id: 'D-102' }, '9.9.9.9'); assert.equal((await call({ id: 'D-102' }, '9.9.9.9')).code, 429);
 });
+
+test('a 403 caused by the open-rejection block is reported as blocked, with the record that blocks it', async () => {
+  process.env.SN_INSTANCE = 'https://x.service-now.com'; process.env.SN_USER = 'u'; process.env.SN_PASSWORD = 'p';
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push(url);
+    const json = b => ({ status: b.s, headers: { get: () => 'application/json' }, json: async () => b.body });
+    if (init?.method === 'POST') return json({ s: 403, body: { error: { message: 'Operation Failed' } } });
+    return json({ s: 200, body: { result: [{ number: 'TTD0001002' }] } });
+  };
+  const res = { code: 0, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+  await mod.default({ method: 'POST', body: { id: 'D-102' }, headers: { 'x-forwarded-for': '9.9.9.40' } }, res);
+  assert.equal(res.body.blocked, true);
+  assert.equal(res.body.blocked_by, 'TTD0001002');
+  assert.ok(decodeURIComponent(calls[1]).includes('retailer=Meera Trading^ims_status=rejected'));
+});

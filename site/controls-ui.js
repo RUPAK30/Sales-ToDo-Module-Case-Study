@@ -100,6 +100,9 @@ function snCard(d) {
     const why = { not_configured: 'The live connection is not switched on yet.', asleep: 'The ServiceNow demo instance is asleep (free developer instances pause when idle).', refused: 'ServiceNow refused the request.' }[r.why] ?? 'ServiceNow did not answer.';
     return head + `<p class="sn-r wait">${why} Here is exactly what it would receive.</p>${req}</div>`;
   }
+  if (r.blocked) return head + `<ol class="sn-steps">
+      <li class="bad">ServiceNow <b>blocked</b> this request: ${esc(r.retailer)} still has an open credit-note rejection on <b>${esc(r.blocked_by)}</b>.</li>
+      <li class="wait">No new discount for this retailer until Receivables resolves it (C5). The block runs inside ServiceNow, not in this page.</li></ol>${req}</div>`;
   return head + `<ol class="sn-steps">
       <li class="ok"><b>${esc(r.number)}</b> created in ServiceNow</li>
       <li class="${r.approval_state ? 'ok' : 'wait'}">Routed to <b>${esc(r.routed_to)}</b>${r.reason ? `: “${esc(r.reason)}”` : ' (approval being routed)'}</li>
@@ -252,7 +255,7 @@ function render() {
       </dl></details>
       <details class="cr-ru"><summary>Rules in force, with effective dates · ${C.RULES.length}</summary><div class="tbl"><table><thead><tr><th>Rule</th><th>From</th><th>To</th><th>What it says</th><th>Source</th></tr></thead><tbody>${C.RULES.map(r => `<tr><td><b>${r.id} v${r.v}</b><br><small>${esc(r.name)}</small></td><td>${fmt(r.from)}</td><td>${r.to ? fmt(r.to) : 'in force'}</td><td>${esc(r.text)}</td><td><small>${esc(r.src)}</small></td></tr>`).join('')}</tbody></table></div><p class="cr-s">Rules change, so each decision is judged by the version in force on its date: a note issued on 28 Oct follows the old rule (v1), one issued on 2 Nov the new one (v2).</p></details>
       <details class="cr-ru"><summary>Risk and control matrix · C1–C7</summary><div class="tbl"><table><thead><tr><th>Control</th><th>Risk</th><th>Control activity</th><th>Type · frequency</th><th>Owner</th><th>Evidence</th><th>Test</th></tr></thead><tbody>${C.RACM.map(r => `<tr><td><b>${r[0]}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}<br><small>${esc(r[4])}</small></td><td>${esc(r[5])}</td><td>${esc(r[6])}</td><td>${esc(r[7])}</td></tr>`).join('')}</tbody></table></div></details>
-      <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal, ServiceNow or JIRA: finance records what the retailer did on the portal, and tickets are previews. Sample retailers and figures.</p></section></details>
+      <p class="cr-fn">Not tax advice. Nothing is sent to the GST portal: finance records what the retailer did there. “Send to ServiceNow” creates a real record in a ServiceNow developer instance; JIRA tickets are previews. Sample retailers and figures.</p></section></details>
     ${S.walk ? walkHtml() : ''}${S.pack ? packHtml() : ''}${S.sign ? signHtml() : ''}`;
 }
 
