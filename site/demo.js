@@ -73,16 +73,15 @@ set('#m-ns', '₹' + (K.earned / K.spent).toFixed(2));
 const root = $('#demo');
 if (root) {
   const steps = C.walkthrough(today);
-  const M = [ // one group per walkthrough step; [kind, who, text, time]
-    [['buyer', 'Navkar Traders', 'Give us 6% on the March invoice, or we move volume next quarter.', '10:02 am'], ['me', 'Neha · sales', 'Asking for 6% (₹60,000) back on the ₹10 lakh bill.', '10:05 am ✓✓'], ['bad', 'Hold on: Navkar also billed you ₹40,000 for ads. That\'s a service, not a discount. Split it first.']],
+  const M = [ // one group per walkthrough step; [kind, who, text, time]. The Meera File.
+    [['buyer', 'Meera Trading', 'Give us 8% on the March invoice. We\'ll push your range this quarter.', '10:02 am'], ['me', 'Neha · sales', 'Asking for 8% (₹64,000) back on the ₹8 lakh bill.', '10:05 am ✓✓'], ['warn', 'To be worth it, Meera must buy 18.5% more than usual.']],
     [['me', 'Neha · sales', 'It\'s urgent, approving it myself.', '10:07 am ✓✓'], ['bad', 'Blocked: the person who asks can\'t say yes.']],
-    [['them', 'Vikram · finance', 'Approved 6%, within my 8% limit.', '11:40 am'], ['ok', 'Worth it: Navkar must buy 13.3% more than usual. It bought 16.3% more.']],
-    [['them', 'Farah · tax', 'Split: ad bill paid separately with its own GST. The ₹60,000 stays a price cut.', '12:15 pm'], ['ok', 'Really a price cut. Cleared.']],
-    [['them', 'Farah · tax', 'GST credit note CN-26-041 sent to Navkar.', '2:30 pm'], ['warn', '₹10,800 of GST now waits for Navkar to accept it on the GST portal.']],
-    [['day', '2 days later'], ['buyer', 'GST portal · Navkar Traders', 'Rejected: "Wrong invoice reference".', '9:10 am'], ['bad', 'You lose ₹10,800 of GST unless it\'s fixed. Task opened for Asha, due in 2 working days.']],
-    [['them', 'Farah · tax', 'Corrected note CN-26-042 sent.', '11:20 am'], ['buyer', 'GST portal · Navkar Traders', 'Accepted.', '4:05 pm'], ['ok', '₹10,800 of GST is safe. Task closed.']],
-    [['day', '3 weeks later'], ['buyer', 'Bank · Navkar Traders', '₹9,40,000 received.', '10:45 am'], ['ok', 'The bill minus ₹60,000, to the rupee.']],
-    [['ok', 'All 7 answered yes. Every step is fingerprinted: change one later and it shows.']],
+    [['them', 'Vikram · finance', 'Approved 8%, exactly my limit. I saw the break-even.', '11:40 am'], ['ok', 'Right person, within limit.']],
+    [['them', 'Farah · tax', 'GST credit note CN-26-032 sent and reported.', '2:30 pm'], ['warn', '₹11,520 of GST now waits for Meera to accept it on the GST portal.']],
+    [['day', '2 days later'], ['buyer', 'GST portal · Meera Trading', 'Rejected: "Slab not met: 180 cases billed, slab starts at 200".', '9:10 am'], ['bad', '₹11,520 of GST at risk. Incident for Asha, 48 hours. Meera blocked from new discounts.']],
+    [['day', '3 days later'], ['buyer', 'Bank · Meera Trading', '₹7,36,000 received.', '10:45 am'], ['ok', 'Every Rupee: the bill minus ₹64,000, to the rupee.']],
+    [['them', 'Farah · tax', 'Meera is right, she never hit the slab. Settling it as a financial credit note.', '11:20 am'], ['warn', 'Closed. The ₹11,520 tax cut is given up on the record, not hidden.']],
+    [['bad', 'One question still says no: Meera bought nothing extra. ₹64,000 bought no sales.'], ['ok', 'Every step is fingerprinted: change one later and it shows.']],
   ];
   let typing = null, i = 0, timer = null, inView = false, manual = false, started = false, playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const PLAIN = { C1: 'Worth it?', C2: 'Right person?', C3: 'Really a price cut?', C4: 'Paperwork on time?', C5: 'Retailer accepted?', C6: 'Right money?', C7: 'Record untouched?' };
@@ -110,16 +109,16 @@ if (root) {
       return `<li class="${st}${ch ? ' ch' : ''}"><span class="dn">${ICON[st]}</span><b>${PLAIN[c.id]}</b><em>${OWN[c.id]}</em><span class="dl">${LBL[st]}</span>${ch || (st === 'fail') ? `<small>${(c.text.split(' · ')[0].match(/^.*?\.(?=\s|$)/) || [c.text.split(' · ')[0]])[0]}</small>` : ''}</li>`; }).join('');
     $('#ph-cs').innerHTML = r.controls.map(c => { const st = stOf(c, s.d); return `<span class="${st}"><i></i>${c.id}</span>`; }).join('');
     const c5 = r.controls[4].status, gst = r.gst, cash = r.controls[5].status, max = Math.max(e.discount, e.extraMargin);
-    const gstState = !s.d.cnNo ? ['idle', 'Not sent yet', 0] : c5 === 'fail' ? ['bad', 'Rejected: at risk', 35] : c5 === 'pass' ? ['ok', 'Accepted: safe', 100] : ['wait', 'Waiting on Navkar', 60];
+    const gstState = !s.d.cnNo ? ['idle', 'Not sent yet', 0] : c5 === 'fail' ? ['bad', 'Rejected: at risk', 35] : c5 === 'pass' ? ['ok', 'Accepted: safe', 100] : ['wait', 'Waiting on Meera', 60];
     const due = C.netDue(s.d), got = cash === 'pass' ? s.d.received : 0;
     $('#dm-m').innerHTML = `<div class="lg"><p class="lg-k">Worth it?</p>
         <div class="lg-r"><span>Given back</span><i class="out" style="--w:${e.discount / max * 100}%"></i><b>${inr(e.discount)}</b></div>
         <div class="lg-r"><span>Extra profit</span><i class="in" style="--w:${e.approvedBy || i >= 2 ? e.extraMargin / max * 100 : 0}%"></i><b class="ok">${i >= 2 ? inr(e.extraMargin) : '—'}</b></div>
         <p class="lg-n">${i >= 2 ? `Net <span class="${e.net >= 0 ? 'ok' : 'bad'}">${e.net >= 0 ? '+' : '−'}${inr(Math.abs(e.net))}</span>: it paid for itself` : 'Shown before anyone says yes'}</p></div>
       <div class="lg2"><div class="g ${gstState[0]}"><p class="lg-k">GST on it</p><b>${inr(gst)}</b><span class="mt"><i style="--w:${gstState[2]}%"></i></span><small>${gstState[1]}</small></div>
-      <div class="g ${got ? 'ok' : 'idle'}"><p class="lg-k">Cash</p><b>${inr(due)}</b><span class="mt"><i style="--w:${got ? 100 : 0}%"></i></span><small>${got ? 'Received, to the rupee' : 'Due from Navkar'}</small></div></div>`;
+      <div class="g ${got ? 'ok' : 'idle'}"><p class="lg-k">Cash</p><b>${inr(due)}</b><span class="mt"><i style="--w:${got ? 100 : 0}%"></i></span><small>${got ? 'Received, to the rupee' : 'Due from Meera'}</small></div></div>`;
     const tk = r.tickets.find(t => t.control === 'C5');
-    $('#dm-tk').innerHTML = tk ? `<div class="dm-t"><span class="dm-tl">Ticket</span><b>INC · Retailer rejected the credit note · Navkar Traders</b><small>Asha, receivables · due ${new Date(tk.due + 'T00:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · ₹${tk.rupees.toLocaleString('en-IN')} at stake</small></div>` : '';
+    $('#dm-tk').innerHTML = tk ? `<div class="dm-t"><span class="dm-tl">Ticket</span><b>INC · Retailer rejected the credit note · Meera Trading</b><small>Asha, receivables · due ${new Date(tk.due + 'T00:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })} · ₹${tk.rupees.toLocaleString('en-IN')} at stake</small></div>` : '';
     $('#dm-play').textContent = playing ? '❚❚ Pause' : i === steps.length - 1 ? '↺ Replay' : '▶ Play';
   }
   const go = (n, anim = true) => { i = Math.max(0, Math.min(steps.length - 1, n)); draw(anim); };

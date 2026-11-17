@@ -131,10 +131,14 @@ test('MIS, RACM and audit sample are consistent', () => {
   assert.equal(C.auditPack(byId('D-101'), ctx()).chain, 'intact');
 });
 
-test('walkthrough ends with all seven controls passing', () => {
-  const s = C.walkthrough('2026-11-13');
-  assert.equal(C.evaluate(s.at(-1).d, ctx()).allPass, true);
+test('the Meera File walkthrough: refused self-approval, rejection recovered as a financial note, C1 still fails and stays on the record', () => {
+  const s = C.walkthrough('2026-11-13'), r = C.evaluate(s.at(-1).d, ctx());
+  assert.equal(s[0].d.buyer, 'Meera Trading');
   assert.ok(s.some(x => /refused|requester/i.test(x.t + x.s)));
+  assert.ok(s.some(x => x.t === 'Retailer rejects it'));
+  const st = Object.fromEntries(r.controls.map(c => [c.id, c.status]));
+  assert.deepEqual(st, { C1: 'fail', C2: 'pass', C3: 'pass', C4: 'pass', C5: 'pass', C6: 'pass', C7: 'pass' });
+  assert.equal(C.discountOf(s[0].d) + C.gstOf(s[0].d), 75520);
 });
 
 test('weekly sign-off: every open item needs a note, the signer cannot countersign, later edits show', () => {

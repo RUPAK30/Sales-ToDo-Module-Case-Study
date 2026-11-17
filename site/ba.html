@@ -146,7 +146,7 @@ const STORIES = [
   ['US-09', 'C1', 'Neha (sales)', 'mark a discount as early payment', 'so it is judged on faster cash, not on extra boxes', 'No volume test; whole-order basis'],
 ];
 const UAT = [
-  ['UAT-01', 'US-01', '6% discount at 51.15% margin', 'Needs 13.3% more sales', () => C.breakEven(6, 51.15) === 13.3],
+  ['UAT-01', 'US-01', '8% discount at 51.15% margin (Meera)', 'Needs 18.5% more sales', () => C.breakEven(8, 51.15) === 18.5],
   ['UAT-02', 'US-02', 'Neha approves her own request', 'Refused', () => { const d = C.request({ id: 'X', buyer: 'B', invoiceNo: 'I', invoiceDate: '2026-02-01', value: 100000, baseline: 100000, pct: 9, margin: 51.15, rate: 18, purpose: 'price' }, '2026-11-10', 'Neha'); return throws(() => C.approve(d, '2026-11-10', 'Neha', 10), /requester/); }],
   ['UAT-03', 'US-02', 'Vikram approves 9% with an 8% limit', 'Refused', () => { const d = C.request({ id: 'X', buyer: 'B', invoiceNo: 'I', invoiceDate: '2026-02-01', value: 100000, baseline: 100000, pct: 9, margin: 51.15, rate: 18, purpose: 'price' }, '2026-11-10', 'Neha'); return throws(() => C.approve(d, '2026-11-10', 'Vikram', 8), /above/); }],
   ['UAT-04', 'US-03', 'A damage claim reaches the desk', 'C3 fails, sends to goods-return note', () => { const c = ctl(byId('D-110'), 'C3'); return c.status === 'fail' && /goods-return note/.test(c.text); }],
