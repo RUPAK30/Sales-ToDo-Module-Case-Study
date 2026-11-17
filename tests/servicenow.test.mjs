@@ -29,14 +29,14 @@ test('live: creates the record and reads back the routing reason', async () => {
   env(); let n = 0;
   globalThis.fetch = async (url, init) => { n++;
     if (init?.method === 'POST') { assert.match(init.headers.Authorization, /^Basic /); return json(201, { result: { sys_id: 'abc', number: 'TTD0001099', approval: 'not requested' } }); }
-    if (url.includes('sysapproval_approver')) return json(200, { result: [{ state: 'requested', approval_reason: "Discount within the sales manager's 10% limit" }] });
+    if (url.includes('sysapproval_approver')) return json(200, { result: [{ state: 'requested', approval_reason: "Within Vikram's 8% limit" }] });
     return json(200, { result: { approval: 'requested' } }); };
   const r = await call({ id: 'D-102' });
-  assert.equal(r.live, true); assert.equal(r.number, 'TTD0001099'); assert.equal(r.routed_to, 'Sales Managers'); assert.match(r.reason, /10% limit/); assert.equal(r.approval, 'requested');
+  assert.equal(r.live, true); assert.equal(r.number, 'TTD0001099'); assert.equal(r.routed_to, 'Vikram (finance)'); assert.match(r.reason, /8% limit/); assert.equal(r.approval, 'requested');
 });
-test('above 10% routes to Sales Heads', async () => {
-  env(); globalThis.fetch = async (url, init) => init?.method === 'POST' ? json(201, { result: { sys_id: 'p', number: 'TTD1', approval: 'x' } }) : json(200, { result: url.includes('sysapproval') ? [{ state: 'requested', approval_reason: 'Above 10%' }] : { approval: 'requested' } });
-  assert.equal((await call({ id: 'D-108' })).routed_to, 'Sales Heads');
+test('above 8% is routed up to the CFO', async () => {
+  env(); globalThis.fetch = async (url, init) => init?.method === 'POST' ? json(201, { result: { sys_id: 'p', number: 'TTD1', approval: 'x' } }) : json(200, { result: url.includes('sysapproval') ? [{ state: 'requested', approval_reason: "12% is above Vikram's 8% limit: routed up to the CFO" }] : { approval: 'requested' } });
+  assert.equal((await call({ id: 'D-108' })).routed_to, 'the CFO');
 });
 test('one send per visitor every 30 seconds', async () => {
   env(); globalThis.fetch = async () => ({ status: 200, headers: { get: () => 'text/html' } });

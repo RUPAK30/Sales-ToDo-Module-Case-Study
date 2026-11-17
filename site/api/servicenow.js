@@ -81,5 +81,5 @@ export default async function handler(req, res) {
     if (r.body?.result) approval = r.body.result.approval;
     if (a.body?.result?.[0]) { reason = a.body.result[0].approval_reason || null; state = a.body.result[0].state; break; }
   }
-  return res.status(200).json({ live: true, number, approval, approval_state: state, reason, routed_to: d.pct <= 10 ? 'Sales Managers' : 'Sales Heads', request: { method: 'POST', endpoint: `/api/now/table/${TABLE}`, body: record } });
+  return res.status(200).json({ live: true, number, approval, approval_state: state, reason, routed_to: d.pct <= 8 ? 'Vikram (finance)' : 'the CFO', request: { method: 'POST', endpoint: `/api/now/table/${TABLE}`, body: record } });
 }

@@ -91,7 +91,7 @@ function payout(d) {
 const SN = {};
 function snCard(d) {
   const st = SN[d.id];
-  const head = `<div class="sn-c"><div class="sn-h"><div><p class="eyebrow">Live in ServiceNow</p><b>Send this discount to the ServiceNow app</b><span>The same rule runs there natively: up to 10% goes to Sales Managers, above 10% to Sales Heads, and every step is logged on the record.</span></div>
+  const head = `<div class="sn-c"><div class="sn-h"><div><p class="eyebrow">Live in ServiceNow</p><b>Send this discount to the ServiceNow app</b><span>The same rule runs there natively: Vikram (finance) approves up to his 8% limit, anything above is routed up to the CFO, nobody approves their own request, and every step is logged on the record.</span></div>
     <button class="btn pri" data-sn="${d.id}" type="button"${st?.busy ? ' disabled' : ''}>${st?.busy ? 'Sending…' : '↗ Send to ServiceNow'}</button></div>`;
   if (!st || st.busy) return head + '</div>';
   if (st.error) return head + `<p class="sn-r bad">${esc(st.error)}</p></div>`;
