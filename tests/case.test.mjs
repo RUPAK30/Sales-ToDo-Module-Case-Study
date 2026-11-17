@@ -16,3 +16,7 @@ test('bad case IDs are refused before anything is read', async () => {
   await mod.default({ query: { number: "x' OR 1=1" } }, res);
   assert.equal(res.code, 400);
 });
+test('every browser script parses (guards against a broken page)', async () => {
+  const { execFileSync } = await import('node:child_process');
+  for (const f of ['case.js', 'controls-ui.js', 'demo.js', 'app.js', 'viz.js']) execFileSync(process.execPath, ['--check', `site/${f}`]);
+});
