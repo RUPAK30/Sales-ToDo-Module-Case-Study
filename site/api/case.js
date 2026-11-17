@@ -20,15 +20,12 @@ export default async function handler(req, res) {
   if (got.asleep) return res.status(200).json({ live: false, why: 'asleep' });
   const rec = got.body?.result?.[0];
   if (!rec) return res.status(404).json({ error: `No case ${number}.` });
-  const [incs, notes] = await Promise.all([
-    sn(`/api/now/table/incident?sysparm_query=parent=${rec.sys_id}^ORDERBYsys_created_on&sysparm_fields=number,short_description,state,assigned_to,assignment_group,sys_created_on&sysparm_display_value=true`),
-    sn(`/api/now/table/sys_journal_field?sysparm_query=element_id=${rec.sys_id}^element=work_notes^ORDERBYsys_created_on&sysparm_fields=value,sys_created_on&sysparm_limit=60`),
-  ]);
+  const act = await sn(`/api/x_2315670_ten_to_0/discount/activity?number=${number}`);
   const canon = canonical(rec);
   return res.status(200).json({
     live: true, record: rec, canonical: canon,
     engine_hash: sha256(canon),
-    incidents: (incs.body?.result ?? []).map(i => ({ number: i.number, title: i.short_description, state: i.state, owner: i.assigned_to, group: i.assignment_group, opened: i.sys_created_on })),
-    activity: notes.body?.result ? notes.body.result.map(n => ({ on: n.sys_created_on, text: n.value })) : null,
+    incidents: act.body?.result?.incidents ?? [],
+    activity: act.body?.result?.activity ?? null,
   });
 }
