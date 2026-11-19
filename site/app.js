@@ -564,7 +564,7 @@ function badgeCount() {
 function renderTabs() {
   document.body.dataset.tab = tab;
   const n = badgeCount();
-  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `${id === 'today' ? '<li class="bn-sep" aria-hidden="true">Before the sale · rep to-dos</li>' : ''}<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
+  $('#bn').innerHTML = `<ul>${TABS.map(([id, label, d]) => `${id === 'today' ? '<li><a href="case.html" class="bn-x"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>The Meera File</span></a></li><li><a href="ba.html" class="bn-x"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6"/></svg><span>BA pack</span></a></li><li class="bn-sep" aria-hidden="true">Where it started · sales to-dos</li>' : ''}<li><a href="#${id}" data-tab="${id}" ${id === tab ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="bn-l">${label}</span>${id === 'approvals' && n ? `<span class="bn-b" data-rip="badge" aria-label="${n} waiting on you">${n}</span>` : ''}</a></li>`).join('')}</ul>`;
 }
 const UH = {
   team: {
