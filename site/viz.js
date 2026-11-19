@@ -61,18 +61,15 @@ export function ring(pct, label, sub) {
 /* Discount controls: each retailer is one flow line through the seven checks (like a Flow Designer path).
    ● passed  ○ waiting on someone  ◆ stopped here: rupees at stake and who fixes it. */
 export function heatmap(rows, names, link) {
+  // Compact matrix: one short row per retailer, one cell per check. Same facts as before:
+  // status, rupees on every "no", who acts, and the plain-English reason (hover or tap).
   const k = n => n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >= 1000 ? `₹${Math.round(n / 1000)}k` : `₹${n}`;
   const all = rows.flatMap(r => r.cells), yes = all.filter(c => c.s === 'pass').length, no = all.filter(c => c.s === 'fail'), wait = all.filter(c => c.s === 'wait').length;
   const clean = rows.filter(r => r.cells.every(c => c.s === 'pass')).length;
-  const head = `<p class="vz-h"><b>${clean} of ${rows.length} retailers are cleared end to end.</b> Across all ${all.length} answers: <span class="ok">${yes} yes</span>, <span class="t1">${no.length} stopped (${k(no.reduce((a, c) => a + (c.rupees || 0), 0))} at stake)</span>, <span class="t2">${wait} waiting</span>.</p>`;
-  const W = 7, cols = names.map((n, i) => `<span><b>C${i + 1}</b>${esc(n)}</span>`).join('');
-  const line = r => {
-    const firstStop = r.cells.findIndex(c => c.s !== 'pass');
-    const segs = r.cells.slice(0, -1).map((c, i) => `<i class="sg ${firstStop === -1 || i < firstStop ? 'on' : 'off'}" style="--i:${i}"></i>`).join('');
-    const nodes = r.cells.map((c, i) => `<a class="nd ${c.s === 'wait' ? 'pend' : c.s}" style="--i:${i}" href="${link(r.id, i)}" title="C${i + 1} ${esc(names[i])}: ${esc(c.text)}"><span class="mk">${c.s === 'pass' ? '<svg viewBox="0 0 12 12"><path d="M2.6 6.3l2.2 2.2 4.6-4.9"/></svg>' : c.s === 'fail' ? '<svg viewBox="0 0 12 12"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5"/></svg>' : ''}</span>${c.s === 'fail' ? `<em>${c.rupees ? k(c.rupees) : 'stopped'}<small>${esc(c.who)} to fix</small></em>` : c.s === 'wait' ? `<em class="w">waiting<small>${esc(c.who)}</small></em>` : ''}</a>`).join('');
-    const y = r.cells.filter(c => c.s === 'pass').length;
-    return `<div class="fl"><div class="fl-n"><b>${esc(r.name)}</b><small>${esc(r.money)} given back</small></div><div class="fl-t">${segs}${nodes}</div><div class="fl-s ${y === W ? 'ok' : ''}">${y === W ? 'Cleared' : `${y}/${W}`}</div></div>`;
-  };
-  return `<figure class="vz vz-flow">${head}<div class="fl fl-h"><div></div><div class="fl-c">${cols}</div><div></div></div>${rows.map(line).join('')}
-    <figcaption><span class="lgx"><i class="nd pass"><span class="mk"></span></i>passed</span><span class="lgx"><i class="nd pend"><span class="mk"></span></i>waiting on that person</span><span class="lgx"><i class="nd fail"><span class="mk"></span></i>stopped: rupees at stake, who fixes it</span><span>Tap any point to open it.</span></figcaption></figure>`;
+  const head = `<p class="vz-h"><b>${clean} of ${rows.length} retailers cleared end to end.</b> ${all.length} answers: <span class="ok">${yes} yes</span>, <span class="t1">${no.length} stopped (${k(no.reduce((s, c) => s + (c.rupees || 0), 0))} at stake)</span>, <span class="t2">${wait} waiting</span>.</p>`;
+  const who = [...new Set(rows[0].cells.map((c, i) => c.who && `C${i + 1} ${c.who}`).filter(Boolean))];
+  const cell = (r, c, i) => `<a class="mx-c ${c.s}" href="${link(r.id, i)}" title="C${i + 1} ${esc(names[i])}: ${esc(c.text)}${c.who && c.s !== 'pass' ? ' · ' + esc(c.who) + (c.s === 'fail' ? ' to fix' : ' to act') : ''}">${c.s === 'pass' ? '✓' : c.s === 'fail' ? (c.rupees ? k(c.rupees) : '✗') : '…'}</a>`;
+  const row = r => { const y = r.cells.filter(c => c.s === 'pass').length; return `<div class="mx-r"><span class="mx-n"><b>${esc(r.name)}</b><small>${esc(r.money)}</small></span>${r.cells.map((c, i) => cell(r, c, i)).join('')}<span class="mx-s ${y === r.cells.length ? 'ok' : ''}">${y === r.cells.length ? 'Cleared' : y + '/7'}</span></div>`; };
+  return `<figure class="vz vz-mx">${head}<div class="mx-r mx-hd"><span></span>${names.map((n, i) => `<span title="${esc(n)}">C${i + 1}<small>${esc(n)}</small></span>`).join('')}<span></span></div>${rows.map(row).join('')}
+    <figcaption>✓ yes · red: no, with the money at stake · … waiting. Hover or tap a cell for the reason. Who acts on a "no" or a wait: ${who.length ? esc(who.join(' · ')) : 'the named owner'}.</figcaption></figure>`;
 }

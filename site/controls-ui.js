@@ -1,5 +1,5 @@
 import * as C from './controls.js';
-import * as V from './viz.js?v=7';
+import * as V from './viz.js?v=8';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
