@@ -47,6 +47,7 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 .tl li.sn::before{background:#3F2A22}.tl li.tt::before{background:#B45309}.tl li.er::before{background:#0F766E}
 .tl small{display:block;color:#78716C;font-size:.72rem}
 .note{font-size:.78rem;color:#78716C}
+.beats,.dec{margin:6px 0 0;padding-left:20px}.beats li,.dec li{margin:6px 0;font-size:.92rem;line-height:1.5}.ev>summary{cursor:pointer;font-size:.95rem;padding:2px 0}.ev[open]>summary{margin-bottom:8px}
 .mx td.c{text-align:center;font-weight:700}.mx .yes{color:#15803D}.mx .no{color:#fff;background:#DC2626;border-radius:6px}.mx .waiting,.mx .not_yet{color:#B45309}
 .dw{display:grid;gap:6px;margin-top:8px}.dw div{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;font-size:.84rem}.dw i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,#B45309,#FCD34D)}.dw .past i{background:#DC2626}
 .acts{display:grid;gap:8px;margin-top:10px}.acts div{display:grid;grid-template-columns:170px 1fr auto auto;gap:8px;align-items:center;border:1px solid #F0EBE5;border-radius:12px;padding:8px 10px;font-size:.86rem}
@@ -62,9 +63,15 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
   <p class="lede">One ₹64,000 discount, followed from the sales ask in Ten Today to the record in ServiceNow and the payment in Every Rupee. Everything below is read from ServiceNow just now, and one fingerprint lets you check that nobody changed the approved deal.</p>
   <div class="row noprint"><input id="n" value="TTD0001002" aria-label="Case ID" spellcheck="false"><button class="pri" id="go" type="button">Verify this case</button><button id="print" type="button">Print or save the case file</button></div>
   <p class="note noprint" id="status">Loading…</p>
-  <div id="out"></div>
-  <section class="bs" id="desk"><p class="k">The desk behind the file · live from ServiceNow</p>
-    <h2>Meera is one of ten. Here is every discount, every check, every owner.</h2><div id="desk-out"><p class="note">Loading…</p></div></section>
+  <section class="bs story"><p class="k">The story · 5 beats</p>
+    <ol class="beats">
+      <li><b>₹64,000 given back.</b> Neha in sales asks to give Meera Trading 8% back on an ₹8 lakh March bill. To pay for itself, Meera has to buy 18.5% more than usual.</li>
+      <li><b>Approved by the right person.</b> Neha tries to approve it herself and is refused. Vikram in finance approves it, at exactly his 8% limit. The approved terms are sealed.</li>
+      <li><b>Rejected on the GST portal.</b> Meera rejects the credit note: "slab not met". ₹11,520 of tax relief is at risk, ₹75,520 in total.</li>
+      <li><b>Caught, owned, on a clock.</b> ServiceNow opens an incident for Asha in Receivables with a 48-hour SLA and blocks new discounts to Meera. The cash, ₹7,36,000, matched to the rupee.</li>
+      <li><b>Today it is still open with Asha.</b> The way it closes: Meera was right, so the note is settled as a financial credit note and the ₹11,520 is given up on the record, not hidden. Run that ending yourself in the Case Room below. And the lesson stays: Meera bought nothing extra, so the ₹64,000 bought no sales.</li>
+    </ol></section>
+  <div id="vbox"></div>
   <section class="bs noprint" id="room"><p class="k">Case Room · press it yourself</p>
     <h2>Don't take my word for it. Break a control, then fix it.</h2>
     <p>You get your own copy of the Meera File in ServiceNow, approved by Vikram and sealed. Each button below makes ServiceNow do the real thing: refuse, open an incident for a named owner with a 48-hour SLA, break the seal. Each fix runs the real recovery. Then the file reloads from ServiceNow so you can read what happened. For a case where everything passes, open <a href="?case=TTD0001001">Krishna Marketing, TTD0001001</a>.</p>
@@ -76,6 +83,32 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
       <div><b>C6 · Right money?</b><span>Meera pays ₹36,000 short.</span><button data-r="short" type="button">Break it</button><button data-r="fix_short" type="button">Fix it</button></div>
     </div>
   </section>
+  <section class="bs"><p class="k">My decisions</p><h2>Five calls I made, and what each one cost</h2>
+    <ul class="dec">
+      <li><b>Finance approves, up to 8%.</b> Post-sale money is finance's call, so Vikram approves, not a sales manager. The limit lives in a ServiceNow decision table finance can change without a developer. Cost: one more hand-off for sales.</li>
+      <li><b>Tamper-evident, not tamper-proof.</b> The seal can't stop an edit; it makes every edit visible. I won't claim more than it does.</li>
+      <li><b>No back-dated history.</b> Every entry carries the time it really happened, marked "Sample walkthrough". The demo would look smoother with a March-to-November timeline; it would also be fiction.</li>
+      <li><b>Pivoted on the rule change.</b> Ten Today began as a sales rep's top-ten to-do list. When the GST rules changed on 1 Nov 2026, the real risk moved to money given back after the sale, so the product moved with it.</li>
+      <li><b>Native first, code where it earns its place.</b> Approvals, SLAs, incidents, UI policies and tests use ServiceNow's own features. Custom code is kept for the seal and the endpoints other systems call.</li>
+    </ul></section>
+  <section class="bs"><p class="k">What I built in ServiceNow</p><h2>The checks run inside the platform, not beside it</h2>
+    <div style="overflow-x:auto"><table><thead><tr><th>Built</th><th>Why</th></tr></thead><tbody>
+    <tr><td>Scoped app; the discount table extends Task</td><td>Approvals, work notes, audit history and SLAs come with the platform instead of being rebuilt</td></tr>
+    <tr><td>Decision table: up to 8% → Vikram, above → CFO</td><td>The business owns the rule; finance changes a limit without a developer</td></tr>
+    <tr><td>Self-approval refused</td><td>Maker-checker, the first thing an auditor tests</td></tr>
+    <tr><td>Every failed check becomes an incident: named owner, 48-hour SLA, email</td><td>Nothing ages silently, and someone is accountable</td></tr>
+    <tr><td>New discounts blocked while a rejection is open</td><td>Stops the same leak repeating</td></tr>
+    <tr><td>SHA-256 seal on approval; UI policy locks the sealed terms; C7 fails on any change</td><td>Prevent where possible, detect the rest, and show both</td></tr>
+    <tr><td>Nightly sweep at 01:00</td><td>Re-checks every seal and warns 7 days before each 30 Nov GST deadline, without anyone pressing a button</td></tr>
+    <tr><td>Service Catalog item "Request a post-sale discount"</td><td>The requester's front door inside ServiceNow</td></tr>
+    <tr><td>6 REST endpoints and an integration user with minimum access</td><td>Ten Today and Every Rupee talk to it; the password stays on the server</td></tr>
+    <tr><td>6 ATF tests in one suite, all passing, each traced to a requirement</td><td>Requirement → control → test, the BA's job in one line</td></tr>
+    </tbody></table></div><p class="note">A free ServiceNow developer instance with sample data. It sleeps when idle, which is why this file can be printed.</p></section>
+  <details class="bs ev" open><summary><b>The evidence</b> · money, checks, owners, the full record, and the desk of ten</summary>
+  <div id="out"></div>
+  <section class="bs" id="desk"><p class="k">The desk behind the file · live from ServiceNow</p>
+    <h2>Meera is one of ten. Here is every discount, every check, every owner.</h2><div id="desk-out"><p class="note">Loading…</p></div></section>
+  </details>
   <section class="bs">
     <p class="k">How the fingerprint works</p>
     <h2>One string, defined once, hashed in three places</h2>
@@ -84,6 +117,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section>
 </main>
-<script type="module" src="case.js?v=5"></script>
+<script type="module" src="case.js?v=6"></script>
 </body>
 </html>
