@@ -47,6 +47,8 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 .tl li.sn::before{background:#3F2A22}.tl li.tt::before{background:#B45309}.tl li.er::before{background:#0F766E}
 .tl small{display:block;color:#78716C;font-size:.72rem}
 .note{font-size:.78rem;color:#78716C}
+[hidden]{display:none!important}
+#n,#go{display:none}#status,.bs .note,.bs p{background:none}#status{padding:0}
 .steps{display:flex;gap:6px;list-style:none;padding:0;margin:8px 0 12px;flex-wrap:wrap;counter-reset:s}.steps li{counter-increment:s;font-size:.8rem;padding:5px 10px;border-radius:999px;background:#F5F2EE;color:#78716C}.steps li::before{content:counter(s) " · "}.steps li.on{background:#1C1917;color:#fff}.steps li.done{background:#DCFCE7;color:#15803D}
 .pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.pick button{text-align:left;padding:12px;border-radius:12px;display:grid;gap:3px}.pick button span{font-size:.75rem;color:#78716C;font-weight:500}.pick button:hover{border-color:#1C1917}
 .strip{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;border:1px solid #F0EBE5;border-radius:12px;padding:10px 12px;margin-bottom:10px}.strip small{display:block;font-size:.68rem;color:#78716C;text-transform:uppercase;letter-spacing:.06em}.strip b{font-variant-numeric:tabular-nums}
@@ -55,7 +57,7 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 .lane ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}.lane li{font-size:.78rem;line-height:1.4;background:#fff;border:1px solid #F0EBE5;border-radius:9px;padding:7px 8px;animation:pop .5s ease}.lane li.new{border-color:#1C1917;box-shadow:0 0 0 2px #1C191714}.lane li small{display:block;color:#A8A29E;font-size:.68rem;margin-top:2px}
 @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media(max-width:720px){.lanes{grid-template-columns:1fr}.strip{grid-template-columns:1fr}}
-.beats,.dec{margin:6px 0 0;padding-left:20px}.beats li,.dec li{margin:6px 0;font-size:.92rem;line-height:1.5}.ev>summary{cursor:pointer;font-size:.95rem;padding:2px 0}.ev[open]>summary{margin-bottom:8px}
+.beats,.dec{margin:6px 0 0;padding-left:20px}.beats li,.dec li{margin:6px 0;font-size:.92rem;line-height:1.5}.ev>summary{cursor:pointer;font-size:.95rem;padding:4px 0;list-style:none}.ev>summary::after{content:" +";color:#A8A29E}.ev[open]>summary::after{content:" −"}.ev[open]>summary{margin-bottom:8px}
 .mx td.c{text-align:center;font-weight:700}.mx .yes{color:#15803D}.mx .no{color:#fff;background:#DC2626;border-radius:6px}.mx .waiting,.mx .not_yet{color:#B45309}
 .dw{display:grid;gap:6px;margin-top:8px}.dw div{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;font-size:.84rem}.dw i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,#B45309,#FCD34D)}.dw .past i{background:#DC2626}
 .acts{display:grid;gap:8px;margin-top:10px}.acts div{display:grid;grid-template-columns:170px 1fr auto auto;gap:8px;align-items:center;border:1px solid #F0EBE5;border-radius:12px;padding:8px 10px;font-size:.86rem}
@@ -97,15 +99,15 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     </div>
     <p class="note">For a case where everything passes, open <a href="?case=TTD0001001">Krishna Marketing, TTD0001001</a>.</p>
   </section>
-  <section class="bs"><p class="k">My decisions</p><h2>Five calls I made, and what each one cost</h2>
+  <details class="bs ev"><summary><b>My decisions</b> · five calls I made, and what each one cost</summary><section style="border:0;padding:0;margin:0"><h2>Five calls I made, and what each one cost</h2>
     <ul class="dec">
       <li><b>Finance approves, up to 8%.</b> Post-sale money is finance's call, so Vikram approves, not a sales manager. The limit lives in a ServiceNow decision table finance can change without a developer. Cost: one more hand-off for sales.</li>
       <li><b>Tamper-evident, not tamper-proof.</b> The seal can't stop an edit; it makes every edit visible. I won't claim more than it does.</li>
       <li><b>No back-dated history.</b> Every entry carries the time it really happened, marked "Sample walkthrough". The demo would look smoother with a March-to-November timeline; it would also be fiction.</li>
       <li><b>Pivoted on the rule change.</b> Ten Today began as a sales rep's top-ten to-do list. When the GST rules changed on 1 Nov 2026, the real risk moved to money given back after the sale, so the product moved with it.</li>
       <li><b>Native first, code where it earns its place.</b> Approvals, SLAs, incidents, UI policies and tests use ServiceNow's own features. Custom code is kept for the seal and the endpoints other systems call.</li>
-    </ul></section>
-  <section class="bs"><p class="k">What I built in ServiceNow</p><h2>The checks run inside the platform, not beside it</h2>
+    </ul></section></details>
+  <details class="bs ev"><summary><b>What I built in ServiceNow</b> · the checks run inside the platform</summary><section style="border:0;padding:0;margin:0"><h2>The checks run inside the platform, not beside it</h2>
     <div style="overflow-x:auto"><table><thead><tr><th>Built</th><th>Why</th></tr></thead><tbody>
     <tr><td>Scoped app; the discount table extends Task</td><td>Approvals, work notes, audit history and SLAs come with the platform instead of being rebuilt</td></tr>
     <tr><td>Decision table: up to 8% → Vikram, above → CFO</td><td>The business owns the rule; finance changes a limit without a developer</td></tr>
@@ -117,20 +119,19 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <tr><td>Service Catalog item "Request a post-sale discount"</td><td>The requester's front door inside ServiceNow</td></tr>
     <tr><td>6 REST endpoints and an integration user with minimum access</td><td>Ten Today and Every Rupee talk to it; the password stays on the server</td></tr>
     <tr><td>6 ATF tests in one suite, all passing, each traced to a requirement</td><td>Requirement → control → test, the BA's job in one line</td></tr>
-    </tbody></table></div><p class="note">A free ServiceNow developer instance with sample data. It sleeps when idle, which is why this file can be printed.</p></section>
-  <details class="bs ev" open><summary><b>The evidence</b> · money, checks, owners, the full record, and the desk of ten</summary>
+    </tbody></table></div><p class="note">A free ServiceNow developer instance with sample data. It sleeps when idle, which is why this file can be printed.</p></section></details>
+  <details class="bs ev"><summary><b>The evidence</b> · money, checks, owners, the full record, and the desk of ten</summary>
   <div id="out"></div>
   <section class="bs" id="desk"><p class="k">The desk behind the file · live from ServiceNow</p>
     <h2>Meera is one of ten. Here is every discount, every check, every owner.</h2><div id="desk-out"><p class="note">Loading…</p></div></section>
   </details>
-  <section class="bs">
-    <p class="k">How the fingerprint works</p>
+  <details class="bs ev"><summary><b>How the fingerprint works</b></summary><section style="border:0;padding:0;margin:0">
     <h2>One string, defined once, hashed in three places</h2>
     <p>The approved deal is written as one line, in this exact order, joined with <code>|</code>: <code>TT1 | case number | retailer | invoice number | invoice date | bill value | discount % | discount amount | approved by | approved on</code>. Numbers have no separators, dates are YYYY-MM-DD, text is UTF-8. That line is run through SHA-256.</p>
     <ul><li><b>ServiceNow</b> hashed it with GlideDigest at the moment of approval, and stored the seal on the record.</li><li><b>Ten Today's engine</b> rebuilds the line from the live record and hashes it with its own SHA-256 code (no crypto library).</li><li><b>Your browser</b> rebuilds the line again and hashes it with Web Crypto.</li></ul>
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
-  </section>
+  </section></details>
 </main>
-<script type="module" src="case.js?v=7"></script>
+<script type="module" src="case.js?v=8"></script>
 </body>
 </html>

@@ -44,6 +44,16 @@
  .tt-head nav.l{order:-1} .tt-head .in{grid-template-columns:auto 1fr auto!important;flex-wrap:nowrap!important}.tt-head nav.l{grid-column:1!important;grid-row:1!important}.tt-head .logo{grid-column:2!important;grid-row:1!important;justify-self:center}.tt-head nav.r{grid-column:3!important;grid-row:1!important}}
 </style>
 <link rel="stylesheet" href="polish.css?v=1">
+<style>
+.mf-card{display:block;text-decoration:none;color:#1C1917;background:#fff;border:1px solid #ECE7E1;border-radius:20px;padding:26px;box-shadow:0 10px 30px #1c19170d}
+.mf-card small{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#78716C}
+.mf-big{display:block;font-size:3rem;letter-spacing:-.03em;margin:8px 0 4px}
+.mf-card>span{color:#57534E;font-size:.95rem;line-height:1.5}
+.mf-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 14px;border-top:1px solid #F0EBE5;padding-top:14px}
+.mf-row b{display:block;font-size:1.05rem}.mf-row span{font-size:.75rem;color:#78716C}
+.mf-card em{font-style:normal;font-weight:700;color:#3F2A22}
+.mf-card:hover{border-color:#D6D3D1}
+</style>
 </head>
 <body>
 <header class="appbar tt-head">
@@ -77,30 +87,15 @@
     <h1>Brands give money back after the sale. Nobody checks if it paid off, was approved by the right person, or survives GST.</h1>
     <p class="x-prom">I built the check. Here is one ₹64,000 discount that failed it, followed through Ten Today, ServiceNow and Every Rupee.</p>
     <p class="x-pat" style="margin:6px 0 0;font-size:.86rem;color:#78716C">Live in ServiceNow · 86 automated tests + 6 ServiceNow tests passing · one fingerprint checked in three systems</p>
-    <button type="button" class="hook" id="hook" aria-expanded="false"><span class="hook-q">You give a retailer <b>₹100</b> back after a sale. How much comes back to you?</span><span class="hook-a" aria-live="polite"><b id="hook-v">Tap to find out</b><small id="hook-s"></small></span></button>
     <p class="x-cta"><a class="x-pri" href="case.html">Read the Meera File · 2 min →</a><a class="x-sec" href="#demo">▶ Watch it · 75 sec</a><a class="x-sec" href="app.html#controls">Try the app</a></p>
   </div>
-    <div class="hx-r"><div class="mny" id="money" aria-label="What it found in the sample">
-      <div class="mny-h2">
-        <div class="coins" id="coins" role="img" aria-label="A block of ₹100 cut into four slabs"></div>
-        <div class="mny-t"><p class="mny-k">Where ₹100 given back ends up</p><b class="mny-big" id="m-stake">—</b><span>is lost, paid short, or waiting on a retailer. On 10 sample discounts worth <b id="m-spent">—</b>, that's <b id="m-abs">—</b>.</span></div>
-      </div>
-      <div class="mny-g">
-        <a href="app.html#controls/D-102/C1" data-seg="l"><b id="m-lost">—</b><span><i class="dk">lost: no extra sales</i><i class="mb">discounts that didn't pay back</i></span></a>
-        <a href="app.html#controls/sweep" data-seg="g"><b id="m-gst">—</b><span><i class="dk">GST waiting on retailers</i><i class="mb">GST at risk</i></span></a>
-        <a href="app.html#controls/D-106/C6" data-seg="s"><b id="m-short">—</b><span><i class="dk">paid short</i><i class="mb">paid short</i></span></a>
-        <div class="ns" data-seg="k" tabindex="0"><b id="m-ns">—</b><span><i class="dk">back per ₹1 given. Below ₹1 = losing.</i><i class="mb">back per ₹1 given</i></span></div>
-      </div>
-      <p class="mny-f">Move over the block or a box: each slab slides out. Live from the app's engine, sample data.</p>
-    </div>
-    </div>
+    <div class="hx-r"><a class="mf-card" href="case.html">
+      <small>The Meera File · live in ServiceNow</small>
+      <b class="mf-big">₹64,000</b><span>given back to one retailer, approved by the right person, then rejected on the GST portal.</span>
+      <div class="mf-row"><div><b>₹75,520</b><span>at risk</span></div><div><b>INC0010001</b><span>owner: Asha · 48h SLA</span></div><div><b>3 of 3</b><span>fingerprints match</span></div></div>
+      <em>Open it, verify it, break it →</em></a></div>
   </div>
-    <div class="strip3" role="list">
-      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>1 Nov 2026</b><span>New GST rules: the retailer must accept each credit note, or you lose the GST on it.</span></div>
-      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><b>7 questions</b><span>For every rupee given back. A "no" goes to a named person with a due date.</span></div>
-      <div role="listitem"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg><b><span id="cd-days">—</span> days</b><span id="cd-text">left to fix last year's tax paperwork (30 Nov 2026).</span></div>
-    </div>
-    <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: I wrote the rules, tested them, and shipped a product that runs.</p>
+        <p class="hx-by">Built by <b>Rupak Ghanpathi</b>, ex-HDFC Bank BA: I wrote the rules, tested them, and shipped a product that runs.</p>
 
 
   <section id="worth" class="wk" hidden aria-label="What it could be worth">
