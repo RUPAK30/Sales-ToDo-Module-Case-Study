@@ -80,7 +80,7 @@ async function deskView() {
 deskView();
 let mine = null, seen = new Set(), lastBreak = null;
 const FIX = { self: 'fix_self', reject: 'fix_reject', tamper: 'fix_tamper', short: 'fix_short' };
-const say = t => { $('#r-status').textContent = t; };
+const say = (t, busy) => { $('#r-status').innerHTML = (busy ? '<span class="spin"></span>' : '') + esc(t); };
 const step = n => ['#st1', '#st2', '#st3', '#st4'].forEach((s, i) => { $(s).className = i < n - 1 ? 'done' : i === n - 1 ? 'on' : ''; });
 const lane = t => t.startsWith('[Every Rupee]') ? '#l-er' : t.startsWith('[Ten Today]') ? '#l-tt' : '#l-sn';
 const clean = t => esc(t.replace(/^\[[^\]]+\]\s*/, '').replace(/ Sample walkthrough\.?$/, ''));
@@ -89,7 +89,7 @@ function sla(opened) {
   if (left <= 0) return 'SLA breached';
   return `${Math.floor(left / 3600e3)}h ${Math.floor(left % 3600e3 / 60e3)}m left`;
 }
-async function watch(rounds) {
+async function watch(rounds, done) {
   for (let k = 0; k < rounds; k++) {
     let j; try { j = await (await fetch(`/api/case?number=${mine}`)).json(); } catch { j = {}; }
     if (j.live) {
@@ -105,12 +105,14 @@ async function watch(rounds) {
       }
       if (j.incidents.length) for (const i of j.incidents) { const key = 'inc' + i.number + i.state; if (seen.has(key)) continue; seen.add(key); $('#l-sn').insertAdjacentHTML('beforeend', `<li class="new">Incident <b>${esc(i.number)}</b> · ${esc(i.title)} · ${esc(i.owner)} · <b>${esc(i.state)}</b></li>`); }
     }
+      if (done && done(j)) return;
     await new Promise(t => setTimeout(t, 2000));
   }
 }
 async function act(action) {
   document.querySelectorAll('#room button').forEach(b => b.disabled = true);
-  say(action === 'start' ? 'Creating your copy in ServiceNow…' : 'Sent. Watching the three systems…');
+  const WAIT = { start: 'Getting your copy from ServiceNow. Usually seconds; up to a minute or two if the free instance is waking.', self: 'ServiceNow is checking who is approving…', reject: 'Recording the rejection; ServiceNow is opening an incident for Asha…', tamper: 'Changing the amount; ServiceNow is re-checking the seal…', short: 'Every Rupee is matching the payment…', fix_self: 'Restoring the valid approval…', fix_reject: 'Settling it as a financial credit note…', fix_tamper: 'Reversing the change with a correcting entry…', fix_short: 'Every Rupee is matching the balance…' };
+  say(WAIT[action] ?? 'Working…', true);
   try {
     const r = await fetch('/api/room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, number: mine }) });
     const j = await r.json();
@@ -121,9 +123,11 @@ async function act(action) {
       await watch(2); say(`Your copy is ${mine}. Now pick what goes wrong.`);
     } else if (FIX[action]) {
       lastBreak = action; $('#r-pick').hidden = true; step(3);
-      await watch(action === 'reject' ? 5 : 3); step(4); $('#r-fix').hidden = false; say('Caught. Now fix it.');
+      const F = { self: 'c2_right_person', reject: 'c5_retailer_accepted', tamper: 'c7_record_untouched', short: 'c6_right_money' }[action];
+      await watch(60, j => j.live && j.record[F] === 'no' && (action !== 'reject' || j.incidents.length)); step(4); $('#r-fix').hidden = false; say('Caught. Now fix it.');
     } else {
-      $('#r-fix').hidden = true; await watch(action === 'fix_reject' ? 3 : 3);
+      $('#r-fix').hidden = true; const G = { fix_self: 'c2_right_person', fix_reject: 'c5_retailer_accepted', fix_tamper: 'c7_record_untouched', fix_short: 'c6_right_money' }[action];
+      await watch(60, j => j.live && j.record[G] === 'yes');
       ['#st1', '#st2', '#st3', '#st4'].forEach(s => $(s).className = 'done'); $('#r-again').hidden = false;
       say(action === 'fix_reject' ? 'Recovered, at a cost: the ₹11,520 GST cut is given up on the record.' : 'Recovered. The failure stays in the record, next to the fix.');
     }

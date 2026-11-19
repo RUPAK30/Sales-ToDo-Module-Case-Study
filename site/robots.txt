@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tentoday.vercel.app/sitemap.xml

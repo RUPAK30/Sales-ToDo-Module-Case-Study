@@ -47,6 +47,7 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 .tl li.sn::before{background:#3F2A22}.tl li.tt::before{background:#B45309}.tl li.er::before{background:#0F766E}
 .tl small{display:block;color:#78716C;font-size:.72rem}
 .note{font-size:.78rem;color:#78716C}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #D6D3D1;border-top-color:#1C1917;border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
 [hidden]{display:none!important}
 #n,#go{display:none}#status,.bs .note,.bs p{background:none}#status{padding:0}
 .steps{display:flex;gap:6px;list-style:none;padding:0;margin:8px 0 12px;flex-wrap:wrap;counter-reset:s}.steps li{counter-increment:s;font-size:.8rem;padding:5px 10px;border-radius:999px;background:#F5F2EE;color:#78716C}.steps li::before{content:counter(s) " · "}.steps li.on{background:#1C1917;color:#fff}.steps li.done{background:#DCFCE7;color:#15803D}
@@ -64,6 +65,11 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 @media(max-width:640px){.acts div{grid-template-columns:1fr 1fr}.acts div b,.acts div span{grid-column:1/3}}
 @media print{.noprint{display:none!important}body{background:#fff}.bs{break-inside:avoid;border-color:#ddd}}
 </style>
+<link rel="canonical" href="https://tentoday.vercel.app/case.html">
+<meta name="theme-color" content="#FAF8F5">
+<meta property="og:type" content="website"><meta property="og:url" content="https://tentoday.vercel.app/case.html"><meta property="og:title" content="The Meera File · verify it, break it">
+<meta property="og:description" content="One ₹64,000 discount followed through Ten Today, ServiceNow and Every Rupee: approved by the right person, rejected on the GST portal, caught, owned and recovered. Built by Rupak Ghanpathi."><meta property="og:image" content="https://tentoday.vercel.app/og.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://tentoday.vercel.app/og.png">
 </head>
 <body>
 <main class="cf">
@@ -99,7 +105,7 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     </div>
     <p class="note">For a case where everything passes, open <a href="?case=TTD0001001">Krishna Marketing, TTD0001001</a>.</p>
   </section>
-  <details class="bs ev"><summary><b>My decisions</b> · five calls I made, and what each one cost</summary><section style="border:0;padding:0;margin:0"><h2>Five calls I made, and what each one cost</h2>
+  <details class="bs ev" open><summary><b>My decisions</b> · five calls I made, and what each one cost</summary><section style="border:0;padding:0;margin:0"><h2>Five calls I made, and what each one cost</h2>
     <ul class="dec">
       <li><b>Finance approves, up to 8%.</b> Post-sale money is finance's call, so Vikram approves, not a sales manager. The limit lives in a ServiceNow decision table finance can change without a developer. Cost: one more hand-off for sales.</li>
       <li><b>Tamper-evident, not tamper-proof.</b> The seal can't stop an edit; it makes every edit visible. I won't claim more than it does.</li>
@@ -132,6 +138,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section></details>
 </main>
-<script type="module" src="case.js?v=8"></script>
+<script type="module" src="case.js?v=9"></script>
 </body>
 </html>
