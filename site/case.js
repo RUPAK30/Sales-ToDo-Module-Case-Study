@@ -19,15 +19,22 @@ async function browserHash(s) {
 const canonical = r => ['TT1', 'number', 'retailer', 'invoice_number', 'invoice_date', 'bill_value', 'discount_pct', 'discount_amount', 'approved_by_name', 'approved_on'].map((f, i) => i ? String(r[f] ?? '').trim() : f).join('|');
 const src = t => t.startsWith('[ServiceNow]') ? 'sn' : t.startsWith('[Ten Today]') ? 'tt' : t.startsWith('[Every Rupee]') ? 'er' : '';
 
+// Snapshot first, live second: the page answers in under a second even while the free ServiceNow instance wakes up.
+let SNAP = null;
 async function load(number) {
   $('#status').textContent = `Reading ${number} from ServiceNow…`; $('#out').innerHTML = ''; $('#vbox').innerHTML = '';
+  let liveDone = false;
+  if (number === 'TTD0001048') fetch('meera-snapshot.json').then(r => r.json()).then(s => { SNAP = s; if (!liveDone) render(s, 'snap'); }).catch(() => {});
   let j; try { const r = await fetch(`/api/case?number=${encodeURIComponent(number)}`); j = await r.json(); if (!r.ok) throw new Error(j.error); }
-  catch (e) { $('#status').textContent = e.message || 'Could not reach the server.'; return; }
-  if (!j.live) { $('#status').textContent = WHY[j.why] ?? 'ServiceNow did not answer.'; return; }
+  catch (e) { j = { live: false, why: 'net', err: e.message }; }
+  if (!j.live) { if (SNAP && number === 'TTD0001048') { render(SNAP, 'snap', WHY[j.why] ?? j.err ?? 'ServiceNow did not answer'); return; } $('#status').textContent = j.err || WHY[j.why] || 'ServiceNow did not answer.'; return; }
+  liveDone = true; render(j, 'live');
+}
+async function render(j, how, why) {
   const r = j.record, canon = canonical(r), mine = await browserHash(canon), engine = sha256(canon), stored = (r.approval_seal || '').toLowerCase();
   const sealed = Boolean(stored), match = sealed && stored === mine && mine === engine && j.engine_hash === engine && canon === j.canonical;
   $('#title').textContent = `The ${r.retailer.split(' ')[0]} File · ${r.number}`;
-  $('#status').textContent = `Read live from ServiceNow at ${new Date().toLocaleString('en-IN')}. Last changed there ${r.sys_updated_on} UTC.`;
+  $('#status').textContent = how === 'live' ? `Read live from ServiceNow at ${new Date().toLocaleString('en-IN')}. Last changed there ${r.sys_updated_on} UTC.` : `Saved snapshot of the live record, read ${j.read_on}. ${why ? 'Live read failed (' + why + '), so this is the snapshot; the fingerprints are still checked in your browser now.' : 'Reading it live from ServiceNow…'}`;
   const disc = +r.discount_amount, gst = +r.gst_at_stake, gap = +r.gap_amount;
   const hrow = (who, h, how) => `<div><b>${who}</b><code>${esc(h || '(no seal yet)')}</code><span class="${h && h === stored ? 'ok' : 'bad'}">${h && h === stored ? '✓' : '✗'}</span><small class="note" style="grid-column:2/4">${how}</small></div>`;
   const parts = `
@@ -51,7 +58,11 @@ async function load(number) {
     <p class="note">Brown: ServiceNow. Amber: Ten Today. Teal: Every Rupee. Entries are timestamped when they happened and marked "Sample walkthrough"; nothing is back-dated.</p></section>
   <section class="bs"><p class="k">What would change my mind</p><h2>Where this case file could be wrong</h2>
     <ul><li>The 51.15% margin is a stand-in. With the brand's real margin, the break-even and check 1 could change.</li><li>"Bought nothing extra" compares this bill with the usual order in the sample. A seasonal dip would make the usual order the wrong yardstick.</li><li>The retailer's IMS response is recorded by finance from the GST portal. Ten Today and ServiceNow never connect to the portal, so they can't see a response finance hasn't recorded.</li><li>The seal proves the approved terms didn't change. It can't prove the approval was a good decision.</li></ul></section>`;
-  const [v, rest] = parts.split('@@SPLIT@@'); $('#vbox').innerHTML = v; $('#out').innerHTML = rest;
+  const aud = j.audit ?? [];
+  const audit = `<section class="bs"><p class="k">Field history · sys_audit</p><h2>${aud.length ? `${aud.length} recorded change${aud.length > 1 ? 's' : ''} to the key fields` : 'No recorded changes to the key fields'}</h2>
+    ${aud.length ? `<div style="overflow-x:auto"><table><thead><tr><th>When (UTC)</th><th>Field</th><th>From</th><th>To</th><th>By</th></tr></thead><tbody>${aud.map(a => `<tr><td>${esc(a.on)}</td><td>${esc(a.field)}</td><td>${esc(a.from)}</td><td>${esc(a.to)}</td><td>${esc(a.by)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    <p class="note">This is ServiceNow's own audit table, separate from the seal. A UI policy stops edits in the form; anything that bypasses the form still lands here, and C7 fails. Auditing was switched on for this table on 19 Nov 2026, so earlier changes are in the work notes only. Break the amount in the Case Room to see a row appear.</p></section>`;
+  const [v, rest] = parts.split('@@SPLIT@@'); $('#vbox').innerHTML = v; $('#out').innerHTML = rest + audit;
 }
 $('#go').addEventListener('click', () => load($('#n').value.trim().toUpperCase()));
 $('#n').addEventListener('keydown', e => e.key === 'Enter' && $('#go').click());

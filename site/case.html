@@ -119,13 +119,13 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <tr><td>Scoped app; the discount table extends Task</td><td>Approvals, work notes, audit history and SLAs come with the platform instead of being rebuilt</td></tr>
     <tr><td>Decision table: up to 8% → Vikram, above → CFO</td><td>The business owns the rule; finance changes a limit without a developer</td></tr>
     <tr><td>Self-approval refused</td><td>Maker-checker, the first thing an auditor tests</td></tr>
-    <tr><td>Every failed check becomes an incident: named owner, 48-hour SLA, email</td><td>Nothing ages silently, and someone is accountable</td></tr>
+    <tr><td>Every failed check becomes an incident: named owner, 48-hour SLA (a task_sla record), and an email notification</td><td>Nothing ages silently, and someone is accountable</td></tr>
     <tr><td>New discounts blocked while a rejection is open</td><td>Stops the same leak repeating</td></tr>
-    <tr><td>SHA-256 seal on approval; UI policy locks the sealed terms; C7 fails on any change</td><td>Prevent where possible, detect the rest, and show both</td></tr>
+    <tr><td>SHA-256 seal on approval. A UI policy stops edits in the form; anything that bypasses the form (an API write, a script) is caught by the seal and C7, and logged in sys_audit</td><td>Prevent where possible, detect the rest, and show both</td></tr>
     <tr><td>Nightly sweep at 01:00</td><td>Re-checks every seal and warns 7 days before each 30 Nov GST deadline, without anyone pressing a button</td></tr>
     <tr><td>Service Catalog item "Request a post-sale discount"</td><td>The requester's front door inside ServiceNow</td></tr>
-    <tr><td>6 REST endpoints and an integration user with minimum access</td><td>Ten Today and Every Rupee talk to it; the password stays on the server</td></tr>
-    <tr><td>6 ATF tests in one suite, all passing, each traced to a requirement</td><td>Requirement → control → test, the BA's job in one line</td></tr>
+    <tr><td>Five scripted REST operations (POST /payment, POST /seal, POST /room, GET /activity, GET /desk) plus the Table API to create a request, all through one integration user with minimum roles</td><td>Ten Today and Every Rupee talk to it; the password stays on the server</td></tr>
+    <tr><td>6 ATF tests in one suite, all passing, each traced to a requirement, including the limit boundary: exactly 8% to Vikram, 9% to the CFO</td><td>Requirement → control → test, the BA's job in one line</td></tr>
     </tbody></table></div><p class="note">A free ServiceNow developer instance with sample data. It sleeps when idle, which is why this file can be printed.</p></section></details>
   <details class="bs ev"><summary><b>The evidence</b> · money, checks, owners, the full record, and the desk of ten</summary>
   <div id="out"></div>
@@ -139,6 +139,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section></details>
 </main>
-<script type="module" src="case.js?v=11"></script>
+<script type="module" src="case.js?v=12"></script>
 </body>
 </html>

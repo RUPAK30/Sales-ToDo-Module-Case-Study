@@ -27,5 +27,6 @@ export default async function handler(req, res) {
     engine_hash: sha256(canon),
     incidents: act.body?.result?.incidents ?? [],
     activity: act.body?.result?.activity ?? null,
+    audit: act.body?.result?.audit ?? [],
   });
 }
