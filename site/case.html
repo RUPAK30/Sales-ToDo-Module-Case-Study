@@ -77,15 +77,15 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
   <p class="k" style="margin-top:14px">Case file · read live from ServiceNow</p>
   <h1 id="title">The Meera File</h1>
   <p class="lede">One ₹64,000 discount, followed from the sales ask in Ten Today to the record in ServiceNow and the payment in Every Rupee. Everything below is read from ServiceNow just now, and one fingerprint lets you check that nobody changed the approved deal.</p>
-  <div class="row noprint"><input id="n" value="TTD0001002" aria-label="Case ID" spellcheck="false"><button class="pri" id="go" type="button">Verify this case</button><button id="print" type="button">Print or save the case file</button></div>
+  <div class="row noprint"><input id="n" value="TTD0001048" aria-label="Case ID" spellcheck="false"><button class="pri" id="go" type="button">Verify this case</button><button id="print" type="button">Print or save the case file</button></div>
   <p class="note noprint" id="status">Loading…</p>
-  <section class="bs story"><p class="k">The story · 5 beats</p>
+  <section class="bs story"><p class="k">The story · 5 beats, in the order the record logged them</p>
     <ol class="beats">
       <li><b>₹64,000 given back.</b> Neha in sales asks to give Meera Trading 8% back on an ₹8 lakh March bill. To pay for itself, Meera has to buy 18.5% more than usual.</li>
       <li><b>Approved by the right person.</b> Neha tries to approve it herself and is refused. Vikram in finance approves it, at exactly his 8% limit. The approved terms are sealed.</li>
-      <li><b>Rejected on the GST portal.</b> Meera rejects the credit note: "slab not met". ₹11,520 of tax relief is at risk, ₹75,520 in total.</li>
-      <li><b>Caught, owned, on a clock.</b> ServiceNow opens an incident for Asha in Receivables with a 48-hour SLA and blocks new discounts to Meera. The cash, ₹7,36,000, matched to the rupee.</li>
-      <li><b>Today it is still open with Asha.</b> The way it closes: Meera was right, so the note is settled as a financial credit note and the ₹11,520 is given up on the record, not hidden. Run that ending yourself in the Case Room below. And the lesson stays: Meera bought nothing extra, so the ₹64,000 bought no sales.</li>
+      <li><b>Rejected on the GST portal.</b> The credit note goes out; Meera rejects it: "slab not met". ₹11,520 of tax relief is now at risk.</li>
+      <li><b>Caught, owned, on a clock.</b> ServiceNow opens an incident for Asha in Receivables, with a 48-hour SLA tracked by the platform, and blocks new discounts to Meera. The cash, ₹7,36,000, arrives and matches to the rupee.</li>
+      <li><b>Settled, and judged.</b> Vikram settles it as a financial credit note: ₹11,520 of GST given up, stored on the case as a settlement, not hidden in a note. At period close C1 gives its verdict: Meera bought 0% more against 18.5% needed, so the ₹64,000 bought no sales. That opens an incident for Vikram.</li>
     </ol></section>
   <div id="vbox"></div>
   <section class="bs noprint" id="room"><p class="k">Case Room · press it yourself</p>
@@ -114,6 +114,7 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
       <li><b>Native first, code where it earns its place.</b> Approvals, SLAs, incidents, UI policies and tests use ServiceNow's own features. Custom code is kept for the seal and the endpoints other systems call.</li>
     </ul></section></details>
   <details class="bs ev"><summary><b>What I built in ServiceNow</b> · the checks run inside the platform</summary><section style="border:0;padding:0;margin:0"><h2>The checks run inside the platform, not beside it</h2>
+    <p><b>The split:</b> ServiceNow owns policy and evidence (who may approve, the seal, the incidents, the SLA clock, the settlement). Ten Today owns judgement and language. <b>Left out on purpose:</b> Service Portal, Virtual Agent, CMDB, IntegrationHub and deep Performance Analytics. None of them answers who approved it, what it cost, who owns it by when, or whether it changed.</p>
     <div style="overflow-x:auto"><table><thead><tr><th>Built</th><th>Why</th></tr></thead><tbody>
     <tr><td>Scoped app; the discount table extends Task</td><td>Approvals, work notes, audit history and SLAs come with the platform instead of being rebuilt</td></tr>
     <tr><td>Decision table: up to 8% → Vikram, above → CFO</td><td>The business owns the rule; finance changes a limit without a developer</td></tr>
@@ -138,6 +139,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section></details>
 </main>
-<script type="module" src="case.js?v=10"></script>
+<script type="module" src="case.js?v=11"></script>
 </body>
 </html>

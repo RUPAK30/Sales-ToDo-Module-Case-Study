@@ -212,7 +212,7 @@ function render() {
   root.innerHTML = `<div class="cr-top cr-center"><p class="eyebrow">Discount controls</p><h1>Every rupee you give back after a sale, checked.</h1>
       <p class="cr-sub">Seven questions for each discount. A "no" goes to a named person, with a deadline and the rupees at stake.</p>
       <div class="cr-tb"><a class="btn pri" href="case.html">The Meera File, live →</a><button class="btn" data-a="walk" type="button">▶ Walkthrough</button><a class="btn" href="ba.html">BA pack</a></div></div>
-    <a class="feat" href="case.html"><span class="feat-k">Featured case</span><b>The Meera File</b><span>₹64,000 given back · ₹75,520 at risk · open with Asha in ServiceNow</span><em>Open it live →</em></a>
+    <a class="feat" href="case.html"><span class="feat-k">Featured case</span><b>The Meera File</b><span>₹64,000 given back · ₹11,520 GST given up · C1 open with Vikram in ServiceNow</span><em>Open it live →</em></a>
     <details class="card st1 st1-fold"><summary>The seven questions, told through Meera</summary><ol class="st1-l">
       <li><span class="ck-n">1</span><div><b>Is it worth it?</b><span>Meera had to buy 18.5% more than usual for the ₹64,000 to pay for itself. She bought nothing extra, so no: the whole ₹64,000 bought no sales. Paying only on sales above her usual order would have cost nothing.</span></div></li>
       <li><span class="ck-n">2</span><div><b>Did the right person say yes?</b><span>Neha tried to approve her own request: refused. Vikram approved it, at exactly his 8% limit.</span></div></li>

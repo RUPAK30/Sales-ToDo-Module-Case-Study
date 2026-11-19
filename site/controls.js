@@ -331,7 +331,7 @@ export const OPENED = { 'D-102-C5': '2026-11-09', 'D-103-C4': '2026-11-02', 'D-1
 
 /* ---------- 90-second walkthrough: one discount, end to end, through the real actions ---------- */
 export function walkthrough(today) {
-  // The Meera File: the one case told on every surface (site, app, BA pack, ServiceNow TTD0001002, Every Rupee).
+  // The Meera File: the one case told on every surface (site, app, BA pack, ServiceNow TTD0001048, Every Rupee).
   const b = base('D-102', 'Meera Trading', 'INV-2603-208', '2026-03-20', 800000, 800000, 8);
   const S = [];
   let d = request(b, today, 'Neha'); S.push({ d, t: 'Request', s: `Neha asks to give Meera Trading 8% (${inr(discountOf(d))}) back on a ₹8 lakh March bill. Before anyone can say yes, Ten Today works out what would make it worth it: Meera must buy ${breakEven(d.pct, d.margin)}% more than usual.` });

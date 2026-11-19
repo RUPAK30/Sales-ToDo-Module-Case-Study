@@ -37,10 +37,15 @@ async function load(number) {
   @@SPLIT@@<section class="bs"><p class="k">The money</p><h2>${esc(r.retailer)} · ${esc(r.invoice_number)} · ${STAGE[r.lifecycle_stage] ?? esc(r.lifecycle_stage)}</h2>
     <div class="money"><div><small>Bill</small><b>${rs(r.bill_value)}</b></div><div><small>Given back (${esc(r.discount_pct)}%)</small><b>${rs(disc)}</b></div><div><small>GST at stake (18%)</small><b>${rs(gst)}</b></div><div><small>Money at risk</small><b class="${+r.money_at_risk ? 'bad' : 'ok'}">${rs(r.money_at_risk)}</b></div><div><small>Received${r.collection_date ? ' on ' + esc(r.collection_date) : ''}</small><b>${r.amount_collected ? rs(r.amount_collected) : '—'}</b></div><div><small>Gap</small><b class="${gap ? 'bad' : 'ok'}">${r.amount_collected ? rs(gap) : '—'}</b></div></div>
     <p class="note">The arithmetic: given back = ${rs(r.bill_value)} × ${esc(r.discount_pct)}% = ${rs(disc)}. GST at stake = ${rs(disc)} × 18% = ${rs(gst)}. Break-even = discount ÷ (margin − discount) = ${esc(r.discount_pct)} ÷ (${esc(r.margin_pct)} − ${esc(r.discount_pct)}) = ${esc(r.break_even_pct)}% more buying needed; the retailer bought ${esc(r.uplift_pct)}% more. Gap = bill − discount − received. Money at risk = the discount if it didn't pay for itself, plus the GST if the retailer rejected the credit note, plus any amount paid short. The 51.15% margin is a stated stand-in, not a fact about any retailer.</p></section>
+  <section class="bs"><p class="k">Two things ServiceNow records, not this page</p><h2>Was it worth it, and what did we give up?</h2>
+    <ul class="checks"><li><b>C1</b><span>Forecast at approval${r.c1_forecast_on ? ' · ' + esc(r.c1_forecast_on) : ''}<small class="note" style="display:block">${esc(r.c1_forecast || 'Set when the discount is approved.')}</small></span><span class="pill waiting">forecast</span></li>
+    <li><b>C1</b><span>Verdict at period close${r.c1_confirmed_on ? ' · ' + esc(r.c1_confirmed_on) : ''}<small class="note" style="display:block">${r.c1_confirmed_on ? `The retailer bought ${esc(r.uplift_pct)}% more against ${esc(r.break_even_pct)}% needed.` : 'Not known until the period closes.'}</small></span><span class="pill ${r.c1_worth_it}">${LABEL[r.c1_worth_it] ?? esc(r.c1_worth_it)}</span></li>
+    <li><b>₹</b><span>Settlement${r.settled_on ? ' · ' + esc(r.settled_on) : ''}<small class="note" style="display:block">${r.settlement_type ? `${esc(r.settlement_type)}: ${rs(r.settlement_amount)}, approved by ${esc(r.settled_by)}. Stored as fields on the case, so it totals across every retailer.` : 'Nothing settled yet.'}</small></span><span class="pill ${r.settlement_type ? 'no' : 'waiting'}">${r.settlement_type ? rs(r.settlement_amount) + ' given up' : 'none'}</span></li></ul>
+    <p class="note">C1 is checked twice on purpose: at approval nobody knows yet whether the retailer will buy more, so it is a forecast; the verdict comes at period close, and only then can it fail and open an incident.</p></section>
   <section class="bs"><p class="k">Seven questions</p><h2>Where each check stands in ServiceNow</h2>
     <ul class="checks">${CHECKS.map(([f, id, name, uat]) => `<li><b>${id}</b><span>${name}<small class="note" style="display:block">Covered by ${uat}${uat.startsWith('UAT') ? ' in the <a href="ba.html#uat">BA pack</a>' : ''}</small></span><span class="pill ${r[f]}">${LABEL[r[f]] ?? esc(r[f])}</span></li>`).join('')}</ul></section>
   <section class="bs"><p class="k">Who is fixing it</p><h2>${j.incidents.length ? `${j.incidents.length} incident${j.incidents.length > 1 ? 's' : ''}, each with a named owner and a 48-hour SLA` : 'No incidents: nothing failed'}</h2>
-    ${j.incidents.length ? `<div style="overflow-x:auto"><table><thead><tr><th>Incident</th><th>What failed</th><th>Owner</th><th>State</th><th>Opened (UTC)</th></tr></thead><tbody>${j.incidents.map(i => `<tr><td><b>${esc(i.number)}</b></td><td>${esc(i.title)}</td><td>${esc(i.owner)} · ${esc(i.group)}</td><td>${esc(i.state)}</td><td>${esc(i.opened)}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
+    ${j.incidents.length ? `<div style="overflow-x:auto"><table><thead><tr><th>Incident</th><th>What failed</th><th>Owner</th><th>State</th><th>Opened (UTC)</th><th>SLA (ServiceNow)</th></tr></thead><tbody>${j.incidents.map(i => `<tr><td><b>${esc(i.number)}</b></td><td>${esc(i.title)}</td><td>${esc(i.owner)} · ${esc(i.group)}</td><td>${esc(i.state)}</td><td>${esc(i.opened)}</td><td>${i.sla ? esc(i.sla.breached ? 'Breached · due ' + i.sla.due : i.sla.stage === 'completed' ? 'Met · fixed before ' + i.sla.due : 'Due ' + i.sla.due) : '—'}${i.close_notes ? `<small class="note" style="display:block">${esc(i.close_notes)}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}</section>
   <section class="bs"><p class="k">The record, in order</p><h2>Every line written by one of three systems</h2>
     ${j.activity ? `<ol class="tl">${j.activity.map(a => `<li class="${src(a.text)}">${esc(a.text)}<small>${esc(a.on)} UTC</small></li>`).join('')}</ol>` : '<p class="note">The activity log is visible inside ServiceNow; this read-only connection is not allowed to read it.</p>'}
     <p class="note">Brown: ServiceNow. Amber: Ten Today. Teal: Every Rupee. Entries are timestamped when they happened and marked "Sample walkthrough"; nothing is back-dated.</p></section>
@@ -84,10 +89,12 @@ const say = (t, busy) => { $('#r-status').innerHTML = (busy ? '<span class="spin
 const step = n => ['#st1', '#st2', '#st3', '#st4'].forEach((s, i) => { $(s).className = i < n - 1 ? 'done' : i === n - 1 ? 'on' : ''; });
 const lane = t => t.startsWith('[Every Rupee]') ? '#l-er' : t.startsWith('[Ten Today]') ? '#l-tt' : '#l-sn';
 const clean = t => esc(t.replace(/^\[[^\]]+\]\s*/, '').replace(/ Sample walkthrough\.?$/, ''));
-function sla(opened) {
-  const due = new Date(opened.replace(' ', 'T') + 'Z').getTime() + 48 * 3600e3, left = due - Date.now();
-  if (left <= 0) return 'SLA breached';
-  return `${Math.floor(left / 3600e3)}h ${Math.floor(left % 3600e3 / 60e3)}m left`;
+function sla(i) { // ServiceNow's own task_sla record: due time and breach flag come from the platform
+  const s = i.sla; if (!s) return 'no SLA';
+  if (s.breached) return 'SLA breached';
+  if (s.stage === 'completed') return 'fixed inside SLA';
+  const left = new Date(s.due.replace(' ', 'T') + 'Z').getTime() - Date.now();
+  return left <= 0 ? 'SLA breached' : `${Math.floor(left / 3600e3)}h ${Math.floor(left % 3600e3 / 60e3)}m left (SLA due ${s.due} UTC)`;
 }
 async function watch(rounds, done) {
   for (let k = 0; k < rounds; k++) {
@@ -97,7 +104,7 @@ async function watch(rounds, done) {
       $('#chips').innerHTML = CHECKS.map(([f, id]) => `<span class="${r[f]}" title="${id}">${id} ${({ yes: '✓', no: '✗', waiting: '…' })[r[f]] ?? '·'}</span>`).join('');
       $('#r-risk').textContent = rs(+r.money_at_risk);
       const open = j.incidents.filter(i => !/resolved|closed/i.test(i.state)), last = j.incidents.at(-1);
-      $('#r-inc').innerHTML = last ? `<small>Incident ${esc(last.number)}</small><b>${esc(last.owner)} · ${open.length ? sla(last.opened) : 'resolved ✓'}</b>` : '<small>Incident</small><b>none</b>';
+      $('#r-inc').innerHTML = last ? `<small>Incident ${esc(last.number)}</small><b>${esc(last.owner)} · ${open.length ? sla(last) : 'resolved ✓'}</b>` : '<small>Incident</small><b>none</b>';
       document.querySelectorAll('.lane li.new').forEach(li => li.classList.remove('new'));
       for (const a of j.activity ?? []) {
         const key = a.on + a.text; if (seen.has(key)) continue; seen.add(key);
@@ -138,4 +145,4 @@ $('#r-start').addEventListener('click', () => act('start'));
 $('#r-pick').addEventListener('click', e => { const a = e.target.closest('[data-r]')?.dataset.r; if (a) act(a); });
 $('#r-fix').addEventListener('click', () => act(FIX[lastBreak]));
 $('#r-again').addEventListener('click', () => { $('#r-again').hidden = true; $('#r-pick').hidden = false; step(2); say('Pick another.'); });
-load(new URLSearchParams(location.search).get('case')?.toUpperCase() || 'TTD0001002');
+load(new URLSearchParams(location.search).get('case')?.toUpperCase() || 'TTD0001048');
