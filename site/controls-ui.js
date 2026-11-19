@@ -117,7 +117,7 @@ function detail(d, k) {
       <p class="cr-s">We assume the brand keeps <b>₹${Math.round(d.margin)}</b> of every ₹100 (<b>${d.margin}%</b> margin). At that margin the retailer had to buy <b>${e.breakEvenPct}%</b> more than their usual ${inr(d.baseline)}. They bought <b>${e.upliftPct}%</b> more · ${e.paidBack ? `<span class="ok">so it paid for itself: ${e.multiple}× the discount in extra profit</span>` : `<span class="bad">so it lost ${inr(-e.net)}</span>`}<br>
       ${br.recoveryPct === null ? 'No credit notes with this retailer yet.' : `This retailer accepted <b>${br.accepted} of ${br.notes}</b> past credit notes on the GST portal, so expect about ${br.recoveryPct}% of the ${inr(r.gst)} tax saving to hold.`} Last date for the tax credit note: ${fmt(r.deadline.date)}.</p></div>
       <button class="btn" data-a="pack" type="button">Open audit pack</button></div>
-    <ol class="cr-c">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b>${c.id} ${c.name}</b>${pill(c.status)}<span>${esc(c.text)}</span><small>${esc(c.owner.who)} · ${esc(c.owner.role)} · <a href="./#${c.id.toLowerCase()}">why this check →</a></small></li>`).join('')}</ol>
+    <ol class="cr-c cr-x">${r.controls.map(c => `<li class="${c.status}${S.focus === c.id ? ' focus' : ''}" id="cr-${c.id}"><b title="Why this check">${c.id} ${c.name}</b><span>${esc(c.text)}</span><small>${esc(c.owner.who)}</small></li>`).join('')}</ol>
     ${S.err ? `<p class="cr-err" role="alert">${esc(S.err)}</p>` : ''}${S.note ? `<p class="cr-note" role="status">${esc(S.note)}</p>` : ''}
     ${payout(d)}
     ${routes(d)}

@@ -747,3 +747,14 @@ details.cr-rt>summary{cursor:pointer;margin:8px 0}
 .sn-steps li{color:#1C1917!important}.sn-steps li.ok::before{background:#16A34A}.sn-steps li.wait::before{background:#F59E0B;animation:dmp 1.6s ease-in-out infinite}
 .sn-req{margin-top:8px}.sn-req summary{cursor:pointer;font-size:.78rem;color:#57534E}
 .sn-req pre{margin:6px 0 0;padding:10px;border-radius:10px;background:#1C1917;color:#E7E5E4;font:12px/1.5 'IBM Plex Mono',ui-monospace,monospace;overflow:auto;max-height:260px}
+
+/* compact check list: one line per check, colour bar for status, text wraps only when it says no or waits */
+.cr-c.cr-x{gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.cr-c.cr-x li{grid-template-columns:170px 1fr auto;gap:10px;border:0;border-radius:0;border-bottom:1px solid #F5F2EE;border-left:3px solid var(--ok);padding:7px 12px;background:#fff;font-size:.82rem;align-items:baseline}
+.cr-c.cr-x li:last-child{border-bottom:0}
+.cr-c.cr-x li.fail{border-left-color:var(--bad);background:#FFF7F6}.cr-c.cr-x li.wait{border-left-color:#E7B66A;background:#FFFCF5}
+.cr-c.cr-x li.pass span{color:#78716C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-c.cr-x li.fail span{color:#991B1B}.cr-c.cr-x li.wait span{color:#92400E}
+.cr-c.cr-x li b{font-size:.8rem;font-weight:600;color:#1C1917!important}
+.cr-c.cr-x li small{grid-column:auto;font-size:.72rem;color:#A8A29E;white-space:nowrap}
+@media (max-width:560px){.cr-c.cr-x li{grid-template-columns:1fr auto}.cr-c.cr-x li span{grid-column:1/-1;grid-row:2;white-space:normal}}
