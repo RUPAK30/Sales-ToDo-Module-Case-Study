@@ -47,6 +47,14 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
 .tl li.sn::before{background:#3F2A22}.tl li.tt::before{background:#B45309}.tl li.er::before{background:#0F766E}
 .tl small{display:block;color:#78716C;font-size:.72rem}
 .note{font-size:.78rem;color:#78716C}
+.steps{display:flex;gap:6px;list-style:none;padding:0;margin:8px 0 12px;flex-wrap:wrap;counter-reset:s}.steps li{counter-increment:s;font-size:.8rem;padding:5px 10px;border-radius:999px;background:#F5F2EE;color:#78716C}.steps li::before{content:counter(s) " · "}.steps li.on{background:#1C1917;color:#fff}.steps li.done{background:#DCFCE7;color:#15803D}
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.pick button{text-align:left;padding:12px;border-radius:12px;display:grid;gap:3px}.pick button span{font-size:.75rem;color:#78716C;font-weight:500}.pick button:hover{border-color:#1C1917}
+.strip{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;border:1px solid #F0EBE5;border-radius:12px;padding:10px 12px;margin-bottom:10px}.strip small{display:block;font-size:.68rem;color:#78716C;text-transform:uppercase;letter-spacing:.06em}.strip b{font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:4px;flex-wrap:wrap}.chips span{font:700 .72rem Inter,sans-serif;padding:4px 7px;border-radius:7px;background:#F5F2EE;color:#78716C;transition:background .4s}.chips .yes{background:#DCFCE7;color:#15803D}.chips .no{background:#DC2626;color:#fff}.chips .waiting,.chips .not_yet{background:#FEF3C7;color:#92400E}
+.lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.lane{border:1px solid #F0EBE5;border-radius:12px;padding:10px;min-height:120px;background:#FDFCFB}.lane h3{font-size:.85rem;margin:0 0 6px}.lane h3 small{display:block;font-weight:500;color:#78716C;font-size:.7rem}.lane.tt{border-top:3px solid #B45309}.lane.sn{border-top:3px solid #3F2A22}.lane.er{border-top:3px solid #0F766E}
+.lane ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}.lane li{font-size:.78rem;line-height:1.4;background:#fff;border:1px solid #F0EBE5;border-radius:9px;padding:7px 8px;animation:pop .5s ease}.lane li.new{border-color:#1C1917;box-shadow:0 0 0 2px #1C191714}.lane li small{display:block;color:#A8A29E;font-size:.68rem;margin-top:2px}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}.strip{grid-template-columns:1fr}}
 .beats,.dec{margin:6px 0 0;padding-left:20px}.beats li,.dec li{margin:6px 0;font-size:.92rem;line-height:1.5}.ev>summary{cursor:pointer;font-size:.95rem;padding:2px 0}.ev[open]>summary{margin-bottom:8px}
 .mx td.c{text-align:center;font-weight:700}.mx .yes{color:#15803D}.mx .no{color:#fff;background:#DC2626;border-radius:6px}.mx .waiting,.mx .not_yet{color:#B45309}
 .dw{display:grid;gap:6px;margin-top:8px}.dw div{display:grid;grid-template-columns:150px 1fr 120px;gap:10px;align-items:center;font-size:.84rem}.dw i{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,#B45309,#FCD34D)}.dw .past i{background:#DC2626}
@@ -73,15 +81,21 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     </ol></section>
   <div id="vbox"></div>
   <section class="bs noprint" id="room"><p class="k">Case Room · press it yourself</p>
-    <h2>Don't take my word for it. Break a control, then fix it.</h2>
-    <p>You get your own copy of the Meera File in ServiceNow, approved by Vikram and sealed. Each button below makes ServiceNow do the real thing: refuse, open an incident for a named owner with a 48-hour SLA, break the seal. Each fix runs the real recovery. Then the file reloads from ServiceNow so you can read what happened. For a case where everything passes, open <a href="?case=TTD0001001">Krishna Marketing, TTD0001001</a>.</p>
-    <div class="row"><button class="pri" id="r-start" type="button">Start my copy</button><span class="note" id="r-status"></span></div>
-    <div id="r-acts" class="acts" hidden>
-      <div><b>C2 · Right person?</b><span>Neha approves her own request.</span><button data-r="self" type="button">Break it</button><button data-r="fix_self" type="button">Fix it</button></div>
-      <div><b>C5 · Retailer accepted?</b><span>Meera rejects the credit note on the GST portal.</span><button data-r="reject" type="button">Break it</button><button data-r="fix_reject" type="button">Fix it</button></div>
-      <div><b>C7 · Record untouched?</b><span>Someone changes ₹64,000 to ₹74,000 after approval.</span><button data-r="tamper" type="button">Break it</button><button data-r="fix_tamper" type="button">Fix it</button></div>
-      <div><b>C6 · Right money?</b><span>Meera pays ₹36,000 short.</span><button data-r="short" type="button">Break it</button><button data-r="fix_short" type="button">Fix it</button></div>
+    <h2>Break one control. Watch three systems react. Then fix it.</h2>
+    <ol class="steps"><li id="st1" class="on">Get your own copy</li><li id="st2">Pick what goes wrong</li><li id="st3">Watch it caught</li><li id="st4">Fix it</li></ol>
+    <div id="r-start-box"><p>You get a private copy of the Meera File in ServiceNow: requested by Neha, approved by Vikram, sealed. Nothing you do touches the real record.</p><button class="pri" id="r-start" type="button">Start my copy</button></div>
+    <div id="r-pick" class="pick" hidden>
+      <button data-r="self" type="button"><b>Neha approves her own request</b><span>C2 · right person?</span></button>
+      <button data-r="reject" type="button"><b>Meera rejects the credit note</b><span>C5 · retailer accepted?</span></button>
+      <button data-r="tamper" type="button"><b>Someone changes ₹64,000 to ₹74,000</b><span>C7 · record untouched?</span></button>
+      <button data-r="short" type="button"><b>Meera pays ₹36,000 short</b><span>C6 · right money?</span></button>
     </div>
+    <div id="r-live" hidden>
+      <div class="strip"><div id="chips" class="chips"></div><div><small>Money at risk</small><b id="r-risk">—</b></div><div id="r-inc"><small>Incident</small><b>—</b></div></div>
+      <div class="lanes"><div class="lane tt"><h3>Ten Today <small>decides and checks</small></h3><ol id="l-tt"></ol></div><div class="lane sn"><h3>ServiceNow <small>records, routes, enforces</small></h3><ol id="l-sn"></ol></div><div class="lane er"><h3>Every Rupee <small>matches the cash</small></h3><ol id="l-er"></ol></div></div>
+      <div class="row" style="margin-top:10px"><button class="pri" id="r-fix" type="button" hidden>Fix it</button><button id="r-again" type="button" hidden>Break something else</button><span class="note" id="r-status"></span></div>
+    </div>
+    <p class="note">For a case where everything passes, open <a href="?case=TTD0001001">Krishna Marketing, TTD0001001</a>.</p>
   </section>
   <section class="bs"><p class="k">My decisions</p><h2>Five calls I made, and what each one cost</h2>
     <ul class="dec">
@@ -117,6 +131,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section>
 </main>
-<script type="module" src="case.js?v=6"></script>
+<script type="module" src="case.js?v=7"></script>
 </body>
 </html>

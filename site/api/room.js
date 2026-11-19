@@ -22,7 +22,11 @@ export default async function handler(req, res) {
   }
   last.set(ip, now);
 
-  const out = await sn('/api/x_2315670_ten_to_0/discount/room', { method: 'POST', body: JSON.stringify({ action: b.action, number: b.number }) });
+  // A short payment and its balance go through the same endpoint Every Rupee's own button uses.
+  const pay = { short: 700000, fix_short: 736000 }[b.action];
+  const out = pay
+    ? await sn('/api/x_2315670_ten_to_0/discount/payment', { method: 'POST', body: JSON.stringify({ number: b.number, invoice_number: 'INV-2603-208', amount_collected: pay, collection_date: new Date().toISOString().slice(0, 10), reference: `Case Room ${b.action === 'short' ? 'part' : 'balance'} payment`, source: 'Every Rupee' }) })
+    : await sn('/api/x_2315670_ten_to_0/discount/room', { method: 'POST', body: JSON.stringify({ action: b.action, number: b.number }) });
   if (out.asleep) return res.status(200).json({ live: false, why: 'asleep' });
   if (out.status !== 200) return res.status(200).json({ live: false, why: 'refused', detail: out.body?.result?.error ?? null });
   return res.status(200).json({ live: true, number: out.body.result.number });

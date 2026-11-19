@@ -79,24 +79,60 @@ async function deskView() {
     <div class="dw">${open.map(r => `<div class="${r.deadline.daysLeft < 0 ? 'past' : ''}"><span><b>${esc(r.retailer)}</b><small class="note" style="display:block">${r.deadline.date} · ${r.deadline.daysLeft < 0 ? 'passed' : r.deadline.daysLeft + ' days left'}</small></span><i style="width:${Math.max(6, 100 - r.deadline.daysLeft / max * 94)}%"></i><span>${rs(r.deadline.gst)} GST<small class="note" style="display:block">${r.deadline.daysLeft > 0 ? rs(r.deadline.gst / r.deadline.daysLeft) + ' per day left' : 'deadline passed'}</small></span></div>`).join('') || '<p class="note">No GST waiting: every credit note is safe.</p>'}</div>`;
 }
 deskView();
-let mine = null;
+let mine = null, seen = new Set(), lastBreak = null;
+const FIX = { self: 'fix_self', reject: 'fix_reject', tamper: 'fix_tamper', short: 'fix_short' };
 const say = t => { $('#r-status').textContent = t; };
-async function room(action) {
-  const btns = document.querySelectorAll('#room button'); btns.forEach(b => b.disabled = true);
-  say(action === 'start' ? 'Creating your copy in ServiceNow…' : 'ServiceNow is working…');
+const step = n => ['#st1', '#st2', '#st3', '#st4'].forEach((s, i) => { $(s).className = i < n - 1 ? 'done' : i === n - 1 ? 'on' : ''; });
+const lane = t => t.startsWith('[Every Rupee]') ? '#l-er' : t.startsWith('[Ten Today]') ? '#l-tt' : '#l-sn';
+const clean = t => esc(t.replace(/^\[[^\]]+\]\s*/, '').replace(/ Sample walkthrough\.?$/, ''));
+function sla(opened) {
+  const due = new Date(opened.replace(' ', 'T') + 'Z').getTime() + 48 * 3600e3, left = due - Date.now();
+  if (left <= 0) return 'SLA breached';
+  return `${Math.floor(left / 3600e3)}h ${Math.floor(left % 3600e3 / 60e3)}m left`;
+}
+async function watch(rounds) {
+  for (let k = 0; k < rounds; k++) {
+    let j; try { j = await (await fetch(`/api/case?number=${mine}`)).json(); } catch { j = {}; }
+    if (j.live) {
+      const r = j.record;
+      $('#chips').innerHTML = CHECKS.map(([f, id]) => `<span class="${r[f]}" title="${id}">${id} ${({ yes: '✓', no: '✗', waiting: '…' })[r[f]] ?? '·'}</span>`).join('');
+      $('#r-risk').textContent = rs(+r.money_at_risk + Math.max(0, +r.gap_amount || 0));
+      const open = j.incidents.filter(i => !/resolved|closed/i.test(i.state)), last = j.incidents.at(-1);
+      $('#r-inc').innerHTML = last ? `<small>Incident ${esc(last.number)}</small><b>${esc(last.owner)} · ${open.length ? sla(last.opened) : 'resolved ✓'}</b>` : '<small>Incident</small><b>none</b>';
+      document.querySelectorAll('.lane li.new').forEach(li => li.classList.remove('new'));
+      for (const a of j.activity ?? []) {
+        const key = a.on + a.text; if (seen.has(key)) continue; seen.add(key);
+        $(lane(a.text)).insertAdjacentHTML('beforeend', `<li class="new">${clean(a.text)}<small>${esc(a.on.slice(11))} UTC</small></li>`);
+      }
+      if (j.incidents.length) for (const i of j.incidents) { const key = 'inc' + i.number + i.state; if (seen.has(key)) continue; seen.add(key); $('#l-sn').insertAdjacentHTML('beforeend', `<li class="new">Incident <b>${esc(i.number)}</b> · ${esc(i.title)} · ${esc(i.owner)} · <b>${esc(i.state)}</b></li>`); }
+    }
+    await new Promise(t => setTimeout(t, 2000));
+  }
+}
+async function act(action) {
+  document.querySelectorAll('#room button').forEach(b => b.disabled = true);
+  say(action === 'start' ? 'Creating your copy in ServiceNow…' : 'Sent. Watching the three systems…');
   try {
     const r = await fetch('/api/room', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, number: mine }) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error);
     if (!j.live) throw new Error(WHY[j.why] ?? (j.detail || 'ServiceNow refused it.'));
-    mine = j.number; $('#n').value = mine; $('#r-acts').hidden = false;
-    await new Promise(t => setTimeout(t, action === 'reject' ? 3500 : 1200)); // the flow that opens the C5 incident runs a moment later
-    await load(mine);
-    say(`Your copy is ${mine}. Read it above.`);
-    document.querySelector('#vbox').scrollIntoView({ behavior: 'smooth' });
+    if (action === 'start') {
+      mine = j.number; $('#r-start-box').hidden = true; $('#r-live').hidden = false; $('#r-pick').hidden = false; step(2);
+      await watch(2); say(`Your copy is ${mine}. Now pick what goes wrong.`);
+    } else if (FIX[action]) {
+      lastBreak = action; $('#r-pick').hidden = true; step(3);
+      await watch(action === 'reject' ? 5 : 3); step(4); $('#r-fix').hidden = false; say('Caught. Now fix it.');
+    } else {
+      $('#r-fix').hidden = true; await watch(action === 'fix_reject' ? 3 : 3);
+      ['#st1', '#st2', '#st3', '#st4'].forEach(s => $(s).className = 'done'); $('#r-again').hidden = false;
+      say(action === 'fix_reject' ? 'Recovered, at a cost: the ₹11,520 GST cut is given up on the record.' : 'Recovered. The failure stays in the record, next to the fix.');
+    }
   } catch (e) { say(e.message || 'Could not reach the server.'); }
-  finally { btns.forEach(b => b.disabled = false); }
+  finally { document.querySelectorAll('#room button').forEach(b => b.disabled = false); }
 }
-$('#r-start').addEventListener('click', () => room('start'));
-$('#r-acts').addEventListener('click', e => { const a = e.target.closest('[data-r]')?.dataset.r; if (a) room(a); });
+$('#r-start').addEventListener('click', () => act('start'));
+$('#r-pick').addEventListener('click', e => { const a = e.target.closest('[data-r]')?.dataset.r; if (a) act(a); });
+$('#r-fix').addEventListener('click', () => act(FIX[lastBreak]));
+$('#r-again').addEventListener('click', () => { $('#r-again').hidden = true; $('#r-pick').hidden = false; step(2); say('Pick another.'); });
 load(new URLSearchParams(location.search).get('case')?.toUpperCase() || 'TTD0001002');
