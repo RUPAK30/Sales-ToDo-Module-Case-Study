@@ -77,13 +77,24 @@ const RCM = [
   [6, 'The approved terms change after approval', 'Vikram · Finance', r => r.discount, 'UAT-08 · ATF-04, 05'],
 ];
 async function deskView() {
+  // Snapshot first (instant, works while the free instance sleeps), then the live desk replaces it.
+  let liveDone = false;
+  fetch('desk-snapshot.json').then(r => r.json()).then(snap => {
+    if (liveDone) return;
+    const today = new Date(new Date().toISOString().slice(0, 10));
+    for (const r of snap.rows) if (r.deadline) r.deadline.daysLeft = Math.round((new Date(r.deadline.date) - today) / 864e5);
+    drawDesk(snap, `Saved snapshot of the live desk, read ${snap.read_on}. Reading it live from ServiceNow…`);
+  }).catch(() => {});
   let j; try { j = await (await fetch('/api/desk')).json(); } catch { j = {}; }
-  if (!j.live) { $('#desk-out').innerHTML = `<p class="note">${WHY[j.why] ?? 'ServiceNow did not answer.'}</p>`; return; }
+  if (!j.live) { const n = $('#desk-snap'); if (n) n.textContent = `Saved snapshot, read ${n.dataset.on}. ServiceNow did not answer (${WHY[j.why] ?? 'no response'}), so this is the snapshot.`; else $('#desk-out').innerHTML = `<p class="note">${WHY[j.why] ?? 'ServiceNow did not answer.'}</p>`; return; }
+  liveDone = true; drawDesk(j, `Read live from ServiceNow at ${new Date().toLocaleString('en-IN')}.`);
+}
+function drawDesk(j, label) {
   const R = j.rows, sum = f => R.reduce((s, r) => s + f(r), 0), clean = R.filter(r => r.checks.every(c => c === 'yes')).length;
   const sym = { yes: '✓', no: '✗', waiting: '…', not_yet: '·' };
-  const open = R.filter(r => r.deadline && !r.deadline.safe && r.gst).sort((a, b) => a.deadline.daysLeft - b.deadline.daysLeft);
+  const open = R.filter(r => r.deadline && !r.deadline.safe && r.gst && !r.settled).sort((a, b) => a.deadline.daysLeft - b.deadline.daysLeft);
   const max = Math.max(...open.map(r => r.deadline.daysLeft), 1);
-  $('#desk-out').innerHTML = `<div class="money"><div><small>All seven checks pass</small><b class="ok">${clean} of ${R.length}</b></div><div><small>Incidents open, with an owner</small><b class="bad">${sum(r => r.open)}</b></div><div><small>Incidents recovered</small><b class="ok">${sum(r => r.resolved)}</b></div><div><small>Money at risk</small><b class="bad">${rs(sum(r => r.at_risk))}</b></div></div>
+  $('#desk-out').innerHTML = `<p class="note" id="desk-snap" data-on="${esc(j.read_on || '')}">${esc(label)}</p><div class="money"><div><small>All seven checks pass</small><b class="ok">${clean} of ${R.length}</b></div><div><small>Incidents open, with an owner</small><b class="bad">${sum(r => r.open)}</b></div><div><small>Incidents recovered</small><b class="ok">${sum(r => r.resolved)}</b></div><div><small>Money at risk</small><b class="bad">${rs(sum(r => r.at_risk))}</b></div></div>
     <div style="overflow-x:auto;margin-top:12px"><table class="mx"><thead><tr><th>Case</th><th>Retailer</th>${CHECKS.map(c => `<th title="${c[2]}">${c[1]}</th>`).join('')}<th>At risk</th><th>Open</th></tr></thead><tbody>${R.map(r => `<tr><td><a href="?case=${r.number}">${r.number}</a></td><td>${esc(r.retailer)}</td>${r.checks.map(c => `<td class="c"><span class="${c}">${sym[c] ?? esc(c)}</span></td>`).join('')}<td>${r.at_risk ? rs(r.at_risk) : '—'}</td><td>${r.open || '—'}</td></tr>`).join('')}</tbody></table></div>
     <p class="note">✓ yes · ✗ no, routed to its owner with a 48-hour SLA · … waiting on a named person. Click a case to open its file.</p>
     <h2 style="margin-top:16px">Risk and control matrix</h2>
@@ -149,7 +160,7 @@ async function act(action) {
       ['#st1', '#st2', '#st3', '#st4'].forEach(s => $(s).className = 'done'); $('#r-again').hidden = false;
       say(action === 'fix_reject' ? 'Recovered, at a cost: the ₹11,520 GST cut is given up on the record.' : 'Recovered. The failure stays in the record, next to the fix.');
     }
-  } catch (e) { say(e.message || 'Could not reach the server.'); }
+  } catch (e) { say(action === 'start' ? 'ServiceNow did not answer: the free demo instance sleeps when idle and takes a minute or two to wake. The file above still verifies from the saved snapshot; press Start again in a minute.' : (e.message || 'Could not reach the server.')); }
   finally { document.querySelectorAll('#room button').forEach(b => b.disabled = false); }
 }
 $('#r-start').addEventListener('click', () => act('start'));
