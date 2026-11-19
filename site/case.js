@@ -167,4 +167,7 @@ $('#r-start').addEventListener('click', () => act('start'));
 $('#r-pick').addEventListener('click', e => { const a = e.target.closest('[data-r]')?.dataset.r; if (a) act(a); });
 $('#r-fix').addEventListener('click', () => act(FIX[lastBreak]));
 $('#r-again').addEventListener('click', () => { $('#r-again').hidden = true; $('#r-pick').hidden = false; step(2); say('Pick another.'); });
-load(new URLSearchParams(location.search).get('case')?.toUpperCase() || 'TTD0001048');
+// TTD0001002 was the first build of the Meera File; its history was out of order, so it was rebuilt as TTD0001048.
+let asked = new URLSearchParams(location.search).get('case')?.toUpperCase() || 'TTD0001048';
+if (asked === 'TTD0001002') { asked = 'TTD0001048'; history.replaceState(null, '', '?case=TTD0001048'); setTimeout(() => { const s = $('#status'); if (s) s.textContent = 'TTD0001002 was the first build of this file and has been retired. This is the rebuilt record. ' + s.textContent; }, 1500); }
+load(asked);

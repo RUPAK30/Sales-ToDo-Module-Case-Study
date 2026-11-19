@@ -16,5 +16,5 @@ export default async function handler(req, res) {
   if (got.asleep) return res.status(200).json({ live: false, why: 'asleep' });
   if (got.status !== 200) return res.status(200).json({ live: false, why: 'refused' });
   const dl = deadlines();
-  return res.status(200).json({ live: true, rows: got.body.result.rows.map(r => ({ ...r, deadline: dl[r.invoice] ?? null })) });
+  return res.status(200).json({ live: true, rows: got.body.result.rows.map(r => ({ ...r, deadline: r.settled && dl[r.invoice] ? { ...dl[r.invoice], gst: 0, safe: true, settled: `${r.settled}: Rs ${r.settled_amount} given up, nothing left to expire` } : dl[r.invoice] ?? null })) });
 }

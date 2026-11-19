@@ -76,8 +76,8 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
   <div class="top noprint"><a href="./">← Ten Today</a><span class="row"><a href="app.html#controls">The app</a> · <a href="ba.html">BA pack</a> · <a href="https://everyrupee-o2c.vercel.app" target="_blank" rel="noopener">Every Rupee ↗</a></span></div>
   <p class="k" style="margin-top:14px">Case file · read live from ServiceNow</p>
   <h1 id="title">The Meera File</h1>
-  <p class="lede">One ₹64,000 discount, followed from the sales ask in Ten Today to the record in ServiceNow and the payment in Every Rupee. Everything below is read from ServiceNow just now, and one fingerprint lets you check that nobody changed the approved deal.</p>
-  <div class="row noprint"><input id="n" value="TTD0001048" aria-label="Case ID" spellcheck="false"><button class="pri" id="go" type="button">Verify this case</button><button id="print" type="button">Print or save the case file</button></div>
+  <p class="lede">One ₹64,000 discount, followed from the sales ask in Ten Today to the record in ServiceNow and the payment in Every Rupee. Everything below is read from ServiceNow (a saved read appears first, timestamped below, and the live read replaces it), and one fingerprint lets you check that nobody changed the approved deal.</p>
+  <div class="row noprint"><input id="n" value="TTD0001048" aria-label="Case ID" spellcheck="false"><button class="pri" id="go" type="button">Verify this case</button><a class="btn" href="meera-file.pdf" download>Download the 2-page PDF</a><button id="print" type="button">Print or save the case file</button></div>
   <p class="note noprint" id="status">Loading…</p>
   <section class="bs story"><p class="k">The story · 5 beats, in the order the record logged them</p>
     <ol class="beats">
@@ -139,6 +139,6 @@ td{padding:7px 6px;border-bottom:1px solid #F5F2EE;vertical-align:top}
     <p>If all three agree, the approved terms are exactly what was approved. If anyone changed the amount, the retailer or the approver afterwards, the line changes, the hash changes, and check 7 fails. This is <b>tamper-evident</b>, not tamper-proof: it can't stop an edit, it makes every edit visible.</p>
   </section></details>
 </main>
-<script type="module" src="case.js?v=13"></script>
+<script type="module" src="case.js?v=14"></script>
 </body>
 </html>

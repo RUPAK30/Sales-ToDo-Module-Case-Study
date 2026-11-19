@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
   const number = String(req.query?.number ?? '').toUpperCase();
+  if (number === 'TTD0001002') return res.status(410).json({ error: 'TTD0001002 was the first build of the Meera File and has been retired. Open TTD0001048.', moved_to: 'TTD0001048' });
   if (!/^TTD\d{7}$/.test(number)) return res.status(400).json({ error: 'Case IDs look like TTD0001048.' });
   if (!process.env.SN_INSTANCE || !process.env.SN_USER || !process.env.SN_PASSWORD) return res.status(200).json({ live: false, why: 'not_configured' });
   const got = await sn(`/api/now/table/${TABLE}?sysparm_query=number=${number}&sysparm_fields=${FIELDS.join(',')}&sysparm_limit=1`);
